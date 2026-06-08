@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>김현아 QR 교육 강사 | 디지털로 세상을 연결합니다</title>
+    <meta name="description" content="시니어 디지털 리터러시, 소상공인 QR 마케팅, 스마트오더 및 지자체 맞춤형 디지털 활용 교육 전문 강사 김현아입니다. 쉽고 친절한 강의로 디지털 전환을 돕습니다.">
+    <meta name="keywords" content="QR 강사, 디지털 리터러시, 키오스크 교육, 시니어 스마트폰 교육, QR 마케팅, 스마트오더 교육, 김현아 강사">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="김현아 QR 교육 강사 | 디지털로 세상을 연결합니다">
+    <meta property="og:description" content="시니어 디지털 리터러시, 소상공인 QR 마케팅 및 지자체 맞춤형 디지털 활용 교육 전문 강사 김현아입니다.">
+    <meta property="og:image" content="assets/qr_illustration.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- QR Code Library (QRious) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" defer></script>
+</head>
+<body class="dark-theme">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="container navbar-container">
+            <a href="#" class="logo">
+                <span class="logo-accent">QR</span> Instructor
+            </a>
+            
+            <nav class="nav-links" id="nav-links">
+                <a href="#about" class="nav-link">강사 소개</a>
+                <a href="#programs" class="nav-link">교육 프로그램</a>
+                <a href="#qrlab" class="nav-link">QR 연구소</a>
+                <a href="#testimonials" class="nav-link">교육 후기</a>
+                <a href="#contact" class="nav-link">강의 문의</a>
+            </nav>
+            
+            <div class="nav-actions">
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" class="theme-toggle" aria-label="화면 테마 변경">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+                
+                <a href="https://open.kakao.com/o/spJPuEyi" target="_blank" rel="noopener noreferrer" class="btn btn-primary nav-cta">
+                    <span>빠른 상담</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+                
+                <!-- Mobile Menu Button -->
+                <button class="menu-toggle" id="menu-toggle" aria-label="메뉴 열기">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-glow-1"></div>
+        <div class="hero-glow-2"></div>
+        <div class="container hero-container">
+            <div class="hero-content">
+                <div class="badge fade-in-up">DIGITAL CONNECTION EXPERT</div>
+                <h1 class="hero-title fade-in-up">
+                    세상을 연결하는 가장 빠른 방법,<br>
+                    <span class="gradient-text">QR 코드</span>로 디지털 세상을 엽니다.
+                </h1>
+                <p class="hero-description fade-in-up">
+                    스마트폰 터치 한 번으로 세상과 연결되는 기술. 복잡하고 어려운 디지털 활용부터 
+                    소상공인의 스마트 실무 마케팅까지, 강사 김현아가 쉽고 명쾌하게 가이드해 드립니다.
+                </p>
+                <div class="hero-actions fade-in-up">
+                    <a href="#contact" class="btn btn-gradient btn-lg">강의 의뢰하기</a>
+                    <a href="https://open.kakao.com/o/spJPuEyi" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
+                        <svg class="kakao-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                            <path d="M12 3c-5.52 0-10 3.58-10 8 0 2.92 1.95 5.51 4.96 6.89l-1.2 4.41c-.08.28.1.56.39.48l5.12-1.42c.24.03.49.04.73.04 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/>
+                        </svg>
+                        카카오톡 문의
+                    </a>
+                </div>
+                
+                <div class="hero-stats fade-in-up">
+                    <div class="stat-item">
+                        <span class="stat-num" data-target="150">0</span><span class="stat-plus">+</span>
+                        <span class="stat-label">누적 강의 횟수</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-num" data-target="3000">0</span><span class="stat-plus">+</span>
+                        <span class="stat-label">교육 수강생 수</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-num" data-target="98">0</span><span class="stat-plus">%</span>
+                        <span class="stat-label">강의 만족도</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual fade-in-up">
+                <div class="image-wrapper glass-card">
+                    <img src="assets/qr_illustration.png" alt="스마트폰 QR 코드 스캔 일러스트" class="floating-img">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Me Section -->
+    <section id="about" class="about-section section-padding">
+        <div class="container">
+            <div class="section-header text-center">
+                <h2 class="section-title">소통하고 신뢰받는 강사</h2>
+                <div class="section-divider"></div>
+                <p class="section-subtitle">배움의 깊이와 활용의 넓이를 키우는 맞춤형 디지털 강사 김현아입니다.</p>
+            </div>
+            
+            <div class="about-grid">
+                <div class="about-image-col">
+                    <div class="profile-card glass-card">
+                        <img src="assets/instructor_profile.png" alt="김현아 강사 프로필 사진" class="profile-img">
+                        <div class="profile-info">
+                            <h3 class="profile-name">김현아</h3>
+                            <p class="profile-title">디지털 리터러시 & QR 교육 전문가</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="about-content-col">
+                    <div class="about-bio">
+                        <h3 class="bio-title">"어려운 기술을 가장 따뜻하고 쉬운 언어로 전달합니다."</h3>
+                        <p class="bio-text">
+                            빠르게 변화하는 디지털 세상 속에서 소외되는 이들이 없도록, 
+                            그리고 기술을 몰라 경영에 어려움을 겪는 소상공인들이 없도록 돕는 것이 저의 사명입니다.<br><br>
+                            QR 코드는 정보의 연결을 의미합니다. 교육을 통해 사람과 사람, 사람과 사회를 연결하는 
+                            징검다리 역할을 충실히 해내고 있습니다. 눈높이에 맞춘 일대일 맞춤 코칭부터 
+                            지자체 대형 교육까지, 실전에서 바로 사용하는 핵심만을 교육합니다.
+                        </p>
+                    </div>
+                    
+                    <div class="tabs-container">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="career">핵심 약력</button>
+                            <button class="tab-btn" data-tab="values">교육 철학</button>
+                            <button class="tab-btn" data-tab="certs">자격 및 활동</button>
+                        </div>
+                        
+                        <div class="tab-content active" id="tab-career">
+                            <ul class="timeline">
+                                <li>
+                                    <span class="timeline-date">현재</span>
+                                    <p class="timeline-desc">시니어 IT 평생교육 전문 출강 및 스마트 디바이스 전임 강사</p>
+                                </li>
+                                <li>
+                                    <span class="timeline-date">현재</span>
+                                    <p class="timeline-desc">소상공인 시장진흥공단 디지털 융합 지원 강사 & 컨설턴트</p>
+                                </li>
+                                <li>
+                                    <span class="timeline-date">2024 - 2025</span>
+                                    <p class="timeline-desc">지자체(서울시, 경기도 등) 스마트 경로당 및 복지관 Kiosk/QR 교육 진행</p>
+                                </li>
+                                <li>
+                                    <span class="timeline-date">2022 - 2023</span>
+                                    <p class="timeline-desc">청년창업사관학교 디지털 마케팅 및 오프라인 QR 스마트오더 컨설팅</p>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-values">
+                            <div class="values-grid">
+                                <div class="value-item">
+                                    <div class="value-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                    </div>
+                                    <div class="value-info">
+                                        <h4>100% 눈높이 이해</h4>
+                                        <p>수강생의 연령대와 숙련도에 정확하게 맞춘 반복 실습 위주 교육을 진행합니다.</p>
+                                    </div>
+                                </div>
+                                <div class="value-item">
+                                    <div class="value-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                                    </div>
+                                    <div class="value-info">
+                                        <h4>실무 즉시 활용</h4>
+                                        <p>배운 당일 바로 자신의 모바일 기기에 적용하여 실행해 볼 수 있는 결과물을 만듭니다.</p>
+                                    </div>
+                                </div>
+                                <div class="value-item">
+                                    <div class="value-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                    </div>
+                                    <div class="value-info">
+                                        <h4>따뜻한 디지털 리더</h4>
+                                        <p>기술 교육에 그치지 않고, 수강생이 자신감을 갖도록 격려하고 신뢰를 쌓습니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-certs">
+                            <ul class="cert-list">
+                                <li>
+                                    <span class="cert-bullet"></span>
+                                    <div>
+                                        <strong>디지털 리터러시 교육 지도사 1급</strong>
+                                        <p>한국디지털교육협회</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span class="cert-bullet"></span>
+                                    <div>
+                                        <strong>평생교육사 2급</strong>
+                                        <p>교육부</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span class="cert-bullet"></span>
+                                    <div>
+                                        <strong>소상공인 디지털 경영 지원 전문가 과정 수료</strong>
+                                        <p>소상공인시장진흥공단</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span class="cert-bullet"></span>
+                                    <div>
+                                        <strong>스마트폰 활용지도 강사 자격</strong>
+                                        <p>대한스마트폰지도사협회</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Programs Section -->
+    <section id="programs" class="programs-section section-padding bg-alternate">
+        <div class="container">
+            <div class="section-header text-center">
+                <h2 class="section-title">교육 프로그램</h2>
+                <div class="section-divider"></div>
+                <p class="section-subtitle">맞춤형 커리큘럼으로 학습 효과를 극대화하는 세 가지 핵심 강좌입니다.</p>
+            </div>
+            
+            <div class="programs-grid">
+                <!-- Program 1 -->
+                <div class="program-card glass-card">
+                    <div class="program-badge">인기</div>
+                    <div class="program-icon-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="program-icon">
+                            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                            <line x1="7" y1="2" x2="7" y2="22"></line>
+                            <line x1="17" y1="2" x2="17" y2="22"></line>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <line x1="2" y1="7" x2="7" y2="7"></line>
+                            <line x1="2" y1="17" x2="7" y2="17"></line>
+                            <line x1="17" y1="17" x2="22" y2="17"></line>
+                            <line x1="17" y1="7" x2="22" y2="7"></line>
+                        </svg>
+                    </div>
+                    <h3 class="program-title">소상공인 QR 마케팅 & 스마트오더</h3>
+                    <p class="program-desc">테이블 오더 및 스마트 결제 솔루션을 도입하여 가게 운영을 효율화하고, 맞춤형 홍보 QR을 제작하여 모바일 고객 유입을 극대화합니다.</p>
+                    <ul class="program-features">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            스마트오더 및 QR 메뉴판 연동 실습
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            네이버/구글 플레이스 연동 QR 제작
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            리뷰 유도 및 온오프라인 마케팅 기법
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Program 2 -->
+                <div class="program-card glass-card">
+                    <div class="program-badge">필수</div>
+                    <div class="program-icon-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="program-icon">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        </svg>
+                    </div>
+                    <h3 class="program-title">시니어 디지털 리터러시 & 스마트 기기</h3>
+                    <p class="program-desc">스마트폰 기본 조작부터 일상생활에 필수적인 무인 키오스크, QR 코드 체크인, 버스/열차 예매 앱 실습으로 당당한 디지털 일상을 되찾아 드립니다.</p>
+                    <ul class="program-features">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            생활 밀착형 스마트폰 완전 정복
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            음식점·병원 무인 키오스크 실전 연습
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            공공 및 금융 앱 안전하고 쉽게 쓰기
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Program 3 -->
+                <div class="program-card glass-card">
+                    <div class="program-badge">맞춤</div>
+                    <div class="program-icon-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="program-icon">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <h3 class="program-title">지자체 및 공공기관 맞춤형 교육</h3>
+                    <p class="program-desc">구청, 복지관, 평생학습원 및 도서관 대상의 맞춤형 디지털 트렌드 교육입니다. 연령 및 기관 목표에 최적화된 강의 자료와 워크북을 제공합니다.</p>
+                    <ul class="program-features">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            기관 맞춤 교육 설계 및 출강
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            디지털 역량 강화 캠페인 연계 교육
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            체계적인 교육 피드백 및 만족도 분석
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="action-box text-center fade-in-up" style="margin-top: 4rem;">
+                <p class="action-text">특정 연령대나 주제에 맞는 맞춤 커리큘럼 구성도 가능합니다.</p>
+                <a href="#contact" class="btn btn-primary">상세 커리큘럼 제안서 받기</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- QR Lab Section (Interactive QR) -->
+    <section id="qrlab" class="qrlab-section section-padding">
+        <div class="container">
+            <div class="section-header text-center">
+                <h2 class="section-title">김현아 강사의 QR 연구소</h2>
+                <div class="section-divider"></div>
+                <p class="section-subtitle">쉽고 편리하게 QR 기술을 경험해 볼 수 있는 인터랙티브 공간입니다.</p>
+            </div>
+            
+            <div class="qrlab-grid">
+                <!-- Digital Business Card QR -->
+                <div class="qrlab-card glass-card">
+                    <div class="card-glow"></div>
+                    <h3 class="qrlab-card-title">강사 디지털 명함 QR</h3>
+                    <p class="qrlab-card-desc">아래의 QR 코드를 스마트폰 카메라로 스캔하시면 김현아 강사의 카카오톡 오픈채팅방으로 즉시 연결되어 빠른 상담과 강의 문의가 가능합니다.</p>
+                    <div class="qr-display-box">
+                        <div class="qr-frame">
+                            <!-- Statically generated QR code pointing to Open Chat link -->
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https%3A%2F%2Fopen.kakao.com%2Fo%2FspJPuEyi&color=6366f1" alt="김현아 강사 카카오톡 오픈채팅 QR코드" class="profile-qr-code">
+                            <div class="qr-scan-line"></div>
+                        </div>
+                    </div>
+                    <div class="qr-action-buttons">
+                        <a href="https://open.kakao.com/o/spJPuEyi" target="_blank" rel="noopener noreferrer" class="btn btn-gradient btn-sm w-full">
+                            카카오톡 오픈채팅 바로가기
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Custom QR Generator -->
+                <div class="qrlab-card glass-card">
+                    <div class="card-glow"></div>
+                    <h3 class="qrlab-card-title">나만의 커스텀 QR 코드 생성기</h3>
+                    <p class="qrlab-card-desc">웹사이트 주소(URL)나 텍스트를 입력하고 QR 생성 버튼을 누르면 다운로드 가능한 고화질 QR 코드가 즉석에서 만들어집니다.</p>
+                    
+                    <div class="qr-generator-form">
+                        <div class="form-group">
+                            <label for="qr-input" class="form-label">QR 링크 또는 텍스트 입력</label>
+                            <input type="text" id="qr-input" class="form-input" placeholder="https://example.com" value="https://open.kakao.com/o/spJPuEyi">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="qr-color" class="form-label">테마 색상 선택</label>
+                                <div class="color-picker-wrapper">
+                                    <input type="color" id="qr-color" class="color-picker-input" value="#6366f1">
+                                    <span class="color-hex">#6366F1</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="qr-size" class="form-label">크기 (px)</label>
+                                <select id="qr-size" class="form-select">
+                                    <option value="150">150 x 150</option>
+                                    <option value="200" selected>200 x 200</option>
+                                    <option value="300">300 x 300</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="generate-qr-btn" class="btn btn-primary w-full" style="margin-top: 1rem;">QR 코드 생성하기</button>
+                    </div>
+                    
+                    <div class="qr-output-box" id="qr-output-box" style="display: none;">
+                        <canvas id="qr-canvas"></canvas>
+                        <div class="qr-output-actions">
+                            <button id="download-qr-btn" class="btn btn-secondary btn-sm">QR 다운로드 (PNG)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials-section section-padding bg-alternate">
+        <div class="container">
+            <div class="section-header text-center">
+                <h2 class="section-title">교육 현장 이야기 & 후기</h2>
+                <div class="section-divider"></div>
+                <p class="section-subtitle">많은 학생들이 김현아 강사의 쉽고 따뜻한 강의에 감동했습니다.</p>
+            </div>
+            
+            <div class="testimonials-grid">
+                <!-- Testimonial 1 -->
+                <div class="testimonial-card glass-card">
+                    <div class="quote-icon">“</div>
+                    <p class="testimonial-text">
+                        "손주들에게 용돈을 보낼 때나, 카페에서 커피 주문할 때 키오스크 앞에서 매번 작아지기만 했습니다. 
+                        김현아 선생님께서 스마트폰 쥐는 법부터 차근차근, 화 한번 내지 않고 친절하게 알려주셔서 
+                        이제는 혼자서도 햄버거 주문도 하고 QR코드도 척척 댑니다. 인생이 더 젊어진 기분이에요."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">이</div>
+                        <div class="author-info">
+                            <h4 class="author-name">이옥분 (72세, 시니어 스마트폰 과정 수강생)</h4>
+                            <p class="author-org">마포노인종합복지관</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Testimonial 2 -->
+                <div class="testimonial-card glass-card">
+                    <div class="quote-icon">“</div>
+                    <p class="testimonial-text">
+                        "가게 인건비 부담이 커서 테이블 오더나 스마트 플레이스 QR 주문을 도입하고 싶었지만 기계 다루기가 막막했습니다. 
+                        현아 강사님의 1:1 컨설팅 교육 덕분에 하루 만에 연동 작업을 끝내고, 홍보물 인쇄까지 완료했습니다. 
+                        현재 테이블 회전율이 30% 증가했고 주문 실수도 사라졌습니다. 강력 추천합니다."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">박</div>
+                        <div class="author-info">
+                            <h4 class="author-name">박성진 (45세, 카페 플래닛 대표)</h4>
+                            <p class="author-org">소상공인 QR 마케팅 지원 사업</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Testimonial 3 -->
+                <div class="testimonial-card glass-card">
+                    <div class="quote-icon">“</div>
+                    <p class="testimonial-text">
+                        "구청 주민자치 교육을 기획하며 많은 강사님을 만났지만, 김현아 강사님만큼 강의 자료가 체계적이고 
+                        주민 밀착형인 분은 드물었습니다. 지루할 틈 없는 실습 위주 커리큘럼으로 교육생 만족도 조사에서 
+                        역대 최고 점수(99.4점)를 받았습니다. 하반기 교육도 재요청 드렸습니다."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">최</div>
+                        <div class="author-info">
+                            <h4 class="author-name">최서연 (교육 기획 주무관)</h4>
+                            <p class="author-org">서울시 강서구청 평생교육원</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section section-padding">
+        <div class="container">
+            <div class="section-header text-center">
+                <h2 class="section-title">강의 의뢰 & 문의</h2>
+                <div class="section-divider"></div>
+                <p class="section-subtitle">성공적인 디지털 교육을 위한 첫걸음, 지금 시작해 보세요.</p>
+            </div>
+            
+            <div class="contact-grid">
+                <!-- Contact Info Col -->
+                <div class="contact-info-col">
+                    <div class="contact-info-card glass-card">
+                        <h3 class="info-card-title">빠른 연락처</h3>
+                        <p class="info-card-desc">강의 일정, 예산 설정, 커리큘럼 등 자유롭게 연락해 주시면 빠르게 피드백을 전달해 드립니다.</p>
+                        
+                        <div class="contact-links">
+                            <div class="contact-link-item">
+                                <div class="link-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                </div>
+                                <div class="link-details">
+                                    <span>이메일 문의</span>
+                                    <a href="mailto:hyuna.kim.qr@gmail.com">hyuna.kim.qr@gmail.com</a>
+                                </div>
+                            </div>
+                            
+                            <div class="contact-link-item">
+                                <div class="link-icon">
+                                    <!-- Kakao Chat Icon SVG -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 3c-5.52 0-10 3.58-10 8 0 2.92 1.95 5.51 4.96 6.89l-1.2 4.41c-.08.28.1.56.39.48l5.12-1.42c.24.03.49.04.73.04 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/>
+                                    </svg>
+                                </div>
+                                <div class="link-details">
+                                    <span>카카오톡 1:1 오픈채팅</span>
+                                    <a href="https://open.kakao.com/o/spJPuEyi" target="_blank" rel="noopener noreferrer" class="link-highlight">open.kakao.com/o/spJPuEyi</a>
+                                </div>
+                            </div>
+                            
+                            <div class="contact-link-item">
+                                <div class="link-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                </div>
+                                <div class="link-details">
+                                    <span>네이버 블로그</span>
+                                    <a href="#" target="_blank">blog.naver.com/hyuna_qr</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Form Col -->
+                <div class="contact-form-col">
+                    <div class="contact-form-card glass-card">
+                        <form id="contact-form" class="contact-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="contact-name" class="form-label">의뢰자 성함 *</label>
+                                    <input type="text" id="contact-name" class="form-input" required placeholder="홍길동">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-org" class="form-label">소속 기관 / 상호명</label>
+                                    <input type="text" id="contact-org" class="form-input" placeholder="ㅇㅇ구 평생학습원 / 카페명">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="contact-phone" class="form-label">연락처 *</label>
+                                    <input type="tel" id="contact-phone" class="form-input" required placeholder="010-0000-0000">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-email" class="form-label">이메일 주소 *</label>
+                                    <input type="email" id="contact-email" class="form-input" required placeholder="example@email.com">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contact-program" class="form-label">희망 교육 분야</label>
+                                <select id="contact-program" class="form-select">
+                                    <option value="qr-marketing">소상공인 QR 마케팅 & 스마트오더</option>
+                                    <option value="senior-digital">시니어 디지털 리터러시 & 스마트 기기</option>
+                                    <option value="gov-custom">지자체 및 공공기관 맞춤형 강좌</option>
+                                    <option value="others">기타 교육 및 맞춤형 컨설팅</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contact-message" class="form-label">상세 의뢰 내용 *</label>
+                                <textarea id="contact-message" class="form-textarea" required placeholder="희망 일정, 교육 인원, 수강 연령대 및 요청 사항을 자세히 적어주시면 보다 구체적인 상담이 가능합니다."></textarea>
+                            </div>
+                            
+                            <div class="form-checkbox">
+                                <input type="checkbox" id="contact-privacy" required>
+                                <label for="contact-privacy">개인정보 수집 및 이용 동의 (연락처 및 이메일 주소는 문의 답변 목적 외에 절대 사용되지 않습니다.) *</label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-gradient w-full submit-btn">
+                                <span>문의 접수하기</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-container">
+            <div class="footer-brand">
+                <a href="#" class="logo">
+                    <span class="logo-accent">QR</span> Instructor
+                </a>
+                <p class="footer-desc">디지털로 소외 없는 세상을 향해, 따뜻한 마음으로 소통하고 교육합니다.</p>
+            </div>
+            
+            <div class="footer-links-group">
+                <div class="footer-link-col">
+                    <h4>바로가기</h4>
+                    <a href="#about">강사 소개</a>
+                    <a href="#programs">교육 프로그램</a>
+                    <a href="#qrlab">QR 연구소</a>
+                    <a href="#contact">강의 문의</a>
+                </div>
+                <div class="footer-link-col">
+                    <h4>연락 채널</h4>
+                    <a href="https://open.kakao.com/o/spJPuEyi" target="_blank" rel="noopener noreferrer">카카오톡 오픈챗</a>
+                    <a href="mailto:hyuna.kim.qr@gmail.com">이메일 문의</a>
+                    <a href="#">네이버 블로그</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container footer-bottom">
+            <p>&copy; 2026 QR Instructor 김현아. All rights reserved.</p>
+            <button id="scroll-to-top" class="scroll-to-top" aria-label="맨 위로 가기">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </button>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="app.js" defer></script>
+</body>
+</html>
