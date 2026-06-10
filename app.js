@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let qr = null;
     
     // Function to generate the custom QR code
-    function generateCustomQR() {
+    function generateCustomQR(shouldScroll = true) {
         const text = qrInput.value.trim();
         if (!text) {
             alert('QR 코드에 들어갈 주소나 텍스트를 입력해 주세요.');
@@ -142,7 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Scroll slightly to reveal output on smaller screens
-        qrOutputBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (shouldScroll === true) {
+            qrOutputBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     }
     
     // Check if QRious library is loaded before activating features
@@ -151,9 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(checkQRiousInterval);
             
             // Generate default QR code on load
-            generateCustomQR();
+            generateCustomQR(false);
             
-            generateBtn.addEventListener('click', generateCustomQR);
+            generateBtn.addEventListener('click', () => generateCustomQR(true));
             
             // Update color hex code label when selected
             qrColor.addEventListener('input', (e) => {
