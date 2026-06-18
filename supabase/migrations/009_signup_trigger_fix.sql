@@ -1,6 +1,5 @@
--- Phone-based auth: store display phone on profiles
--- Requires expired_at (007). If signup fails with "Database error saving new user",
--- run 007_profiles_expired_at.sql first, or apply 009_signup_trigger_fix.sql.
+-- Fix signup "Database error saving new user" when 008 was applied without 007.
+-- handle_new_user (007/008) inserts expired_at; this column must exist first.
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS expired_at TIMESTAMPTZ;
@@ -15,6 +14,7 @@ ALTER TABLE public.profiles
 ALTER TABLE public.profiles
   ALTER COLUMN expired_at SET NOT NULL;
 
+-- Phone column (idempotent; same as 008)
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS phone TEXT;
 
@@ -22,7 +22,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS profiles_phone_unique_idx
   ON public.profiles (phone)
   WHERE phone IS NOT NULL;
 
--- Store phone from signup metadata when creating profile
+-- Ensure trigger function matches latest schema (phone + expired_at)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -65,3 +65,9 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();

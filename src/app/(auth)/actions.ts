@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { phoneToAuthEmail } from "@/lib/auth/phone-auth";
 import {
   devSignupLog,
@@ -81,6 +82,13 @@ export async function signupAction(
 
     if (password !== passwordConfirm) {
       return { error: "비밀번호가 일치하지 않습니다." };
+    }
+
+    if (!isSupabaseConfigured()) {
+      return {
+        error:
+          "Supabase 연결 설정이 없습니다. .env.local에 NEXT_PUBLIC_SUPABASE_URL과 NEXT_PUBLIC_SUPABASE_ANON_KEY를 설정한 뒤 개발 서버를 재시작해 주세요.",
+      };
     }
 
     const supabase = await createClient();
