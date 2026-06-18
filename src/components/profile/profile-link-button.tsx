@@ -16,8 +16,12 @@ interface ProfileLinkButtonProps {
 }
 
 export function detectLinkVariant(url: string, href?: string): LinkVariant {
-  if (href) {
+  if (href?.includes("/transfer/")) {
     return "transfer";
+  }
+
+  if (href) {
+    return "link";
   }
 
   try {

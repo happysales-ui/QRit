@@ -1,4 +1,4 @@
-import { isMecardUrl } from "@/lib/link-presets";
+import { getContactLinkHref } from "@/lib/contact-link";
 import { getTransferLinkHref } from "@/lib/transfer-link";
 import type { LinkBlock } from "@/types";
 
@@ -15,13 +15,14 @@ export function resolveLinkRedirect(
     return { type: "internal", path: transferPath };
   }
 
+  const contactPath = getContactLinkHref(username, link);
+  if (contactPath) {
+    return { type: "internal", path: contactPath };
+  }
+
   const url = link.url.trim();
   if (!url) {
     return null;
-  }
-
-  if (isMecardUrl(url)) {
-    return { type: "external", url };
   }
 
   return { type: "external", url };

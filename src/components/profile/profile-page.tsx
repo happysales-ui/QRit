@@ -5,6 +5,7 @@ import {
   QritShopBanner,
   QRIT_SHOP_BANNER_OFFSET_CLASS,
 } from "@/components/profile/qrit-shop-banner";
+import { getContactLinkHref } from "@/lib/contact-link";
 import { getTransferLinkHref } from "@/lib/transfer-link";
 import type { LinkBlock, Profile } from "@/types";
 
@@ -39,7 +40,11 @@ export function ProfilePage({ profile, links }: ProfilePageProps) {
               key={link.id}
               title={link.title}
               url={link.url}
-              href={getTransferLinkHref(profile.username, link) ?? undefined}
+              href={
+                getTransferLinkHref(profile.username, link) ??
+                getContactLinkHref(profile.username, link) ??
+                undefined
+              }
             />
           ))}
         </nav>
