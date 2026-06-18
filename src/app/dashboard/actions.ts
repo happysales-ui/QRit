@@ -20,6 +20,17 @@ type SupabaseLikeError = {
   hint?: string;
 };
 
+function formatDevSupabaseDetail(error: SupabaseLikeError): string {
+  const parts = [
+    error.code ? `code=${error.code}` : "",
+    error.message ?? "",
+    error.details ? `details=${error.details}` : "",
+    error.hint ? `hint=${error.hint}` : "",
+  ].filter(Boolean);
+
+  return parts.join(" | ");
+}
+
 function formatLinkActionError(
   action: "add" | "update" | "delete" | "move",
   error: SupabaseLikeError,
@@ -39,21 +50,29 @@ function formatLinkActionError(
 
   const message = error.message ?? "";
   const code = error.code ?? "";
+  const devDetail =
+    process.env.NODE_ENV === "development"
+      ? formatDevSupabaseDetail(error)
+      : "";
 
   if (
     message.includes("bank_code") ||
     message.includes("account_no") ||
     message.includes("schema cache")
   ) {
-    return `${fallback} (데이터베이스 마이그레이션 003/005 적용이 필요할 수 있습니다.)`;
+    const hint =
+      "데이터베이스 마이그레이션 010_links_complete.sql 적용이 필요할 수 있습니다.";
+    return devDetail ? `${fallback} (${hint} — ${devDetail})` : `${fallback} (${hint})`;
   }
 
   if (code === "23514" || message.includes("check constraint")) {
-    return `${fallback} (제목/URL 제한 조건 위반 — Supabase에서 005_fix_links_constraints.sql 실행 필요)`;
+    const hint =
+      "제목/URL 제한 조건 위반 — Supabase에서 010_links_complete.sql 실행 필요";
+    return devDetail ? `${fallback} (${hint} — ${devDetail})` : `${fallback} (${hint})`;
   }
 
-  if (process.env.NODE_ENV === "development" && message) {
-    return `${fallback} (${message})`;
+  if (devDetail) {
+    return `${fallback} (${devDetail})`;
   }
 
   return fallback;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   addLinkAction,
@@ -54,7 +54,7 @@ function LinkFormFields({
   variant?: "add" | "edit";
 }) {
   const inferred = inferPresetFromTitle(initialTitle ?? "");
-  const initialPreset = initialTitle ? inferred.preset : LINK_TITLE_PRESETS[0];
+  const initialPreset = initialTitle ? inferred.preset : CONTACT_LINK_TITLE;
   const parsedTransfer =
     initialPreset === BANK_TRANSFER_LINK_TITLE
       ? initialBankCode && initialAccountNo
@@ -139,7 +139,7 @@ function LinkFormFields({
       <input type="hidden" name="title" value={resolvedTitle} />
 
       {isBankTransfer ? (
-        <div className="space-y-3">
+        <div key="bank-transfer-fields" className="space-y-3">
           <div>
             <label
               htmlFor={`link-bank-${variant}`}
@@ -192,15 +192,22 @@ function LinkFormFields({
           </p>
         </div>
       ) : (
-        <div>
+        <div key="url-fields">
+          <label
+            htmlFor={`link-url-${variant}`}
+            className="block text-sm font-medium text-zinc-700"
+          >
+            {isContact ? "연락처 (MECARD)" : "링크 URL"}
+          </label>
           <input
+            id={`link-url-${variant}`}
             name="url"
             type={isContact ? "text" : "url"}
             required
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             placeholder={getLinkUrlPlaceholder(titlePreset)}
-            className={fieldClassName}
+            className={cn(fieldClassName, variant === "add" && "mt-1")}
           />
           {isContact ? (
             <p className="mt-1.5 text-sm text-sky-600">
@@ -355,12 +362,19 @@ function EditLinkForm({
 
 export function LinksManager({ links }: LinksManagerProps) {
   const [addState, addAction, isAdding] = useActionState(addLinkAction, initialState);
+  const [addFormKey, setAddFormKey] = useState(0);
+
+  useEffect(() => {
+    if (addState.success) {
+      setAddFormKey((key) => key + 1);
+    }
+  }, [addState.success]);
 
   return (
     <div className="space-y-6">
       <form action={addAction} className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-4 space-y-3">
         <h3 className="text-sm font-semibold text-zinc-800">새 링크 추가</h3>
-        <LinkFormFields variant="add" />
+        <LinkFormFields key={addFormKey} variant="add" />
 
         {addState.error ? (
           <p className="text-sm text-red-600">{addState.error}</p>
