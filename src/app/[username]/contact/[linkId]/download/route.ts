@@ -12,7 +12,7 @@ import { getMockProfileByUsername } from "@/lib/mock-profile";
 import { getProfileByUsername } from "@/lib/profile";
 import { isProfileExpired } from "@/lib/service-expiry";
 
-interface ContactRouteProps {
+interface ContactDownloadRouteProps {
   params: Promise<{ username: string; linkId: string }>;
 }
 
@@ -30,7 +30,11 @@ async function resolveProfile(username: string) {
   return getProfileByUsername(normalized);
 }
 
-export async function GET(request: Request, { params }: ContactRouteProps) {
+/** Fallback `.vcf` attachment route — used by iframe / direct fetch when blob save fails. */
+export async function GET(
+  request: Request,
+  { params }: ContactDownloadRouteProps,
+) {
   const { username, linkId } = await params;
   const data = await resolveProfile(username);
 

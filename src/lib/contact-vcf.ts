@@ -74,7 +74,9 @@ export function buildVcfFilename(name: string): string {
   return sanitized ? `${sanitized}.vcf` : "contact.vcf";
 }
 
-/** Client-side fallback: trigger a `.vcf` download from generated content. */
+/** Client-side fallback: trigger a `.vcf` download from generated content.
+ *  On iOS Safari this may open an "Add to Contacts" sheet instead of a file save dialog.
+ *  Programmatic downloads without user gesture are best-effort only. */
 export function downloadVcf(vcfContent: string, filename: string): void {
   const blob = new Blob([vcfContent], { type: "text/vcard;charset=utf-8" });
   const objectUrl = URL.createObjectURL(blob);

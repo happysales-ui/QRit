@@ -18,6 +18,13 @@ export function getContactLinkPath(username: string, linkId: string): string {
   return `/${username}/contact/${linkId}`;
 }
 
+export function getContactDownloadPath(
+  username: string,
+  linkId: string,
+): string {
+  return `/${username}/contact/${linkId}/download`;
+}
+
 export function getContactLinkHref(
   username: string,
   link: Pick<LinkBlock, "id" | "title" | "url">,
