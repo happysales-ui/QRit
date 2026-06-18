@@ -36,18 +36,23 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
-            이메일
+          <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
+            휴대폰 번호
           </label>
           <input
-            id="email"
-            name="email"
-            type="email"
+            id="phone"
+            name="phone"
+            type="tel"
             required
-            autoComplete="email"
+            autoComplete="tel"
+            inputMode="numeric"
+            pattern="[0-9\-+\s]{10,13}"
             className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-            placeholder="you@example.com"
+            placeholder="01012345678"
           />
+          <p className="mt-1 text-xs text-zinc-400">
+            숫자만 입력 (하이픈 없이 10~11자리)
+          </p>
         </div>
 
         <div>
@@ -63,6 +68,22 @@ export default function SignupPage() {
             autoComplete="new-password"
             className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             placeholder="6자 이상"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="passwordConfirm" className="block text-sm font-medium text-zinc-700">
+            비밀번호 확인
+          </label>
+          <input
+            id="passwordConfirm"
+            name="passwordConfirm"
+            type="password"
+            required
+            minLength={6}
+            autoComplete="new-password"
+            className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            placeholder="비밀번호 다시 입력"
           />
         </div>
 

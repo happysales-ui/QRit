@@ -10,6 +10,7 @@ const DEMO_TIMESTAMP = "2026-06-18T00:00:00.000Z";
 const demoProfile: Profile = {
   id: "profile-demo-001",
   username: "demo",
+  phone: null,
   display_name: "김지우",
   bio: "디자이너 · 크리에이터 · QRit Jewelry 데모 프로필입니다.",
   avatar_url:

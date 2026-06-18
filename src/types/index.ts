@@ -1,6 +1,7 @@
 export interface Profile {
   id: string;
   username: string;
+  phone: string | null;
   display_name: string | null;
   bio: string | null;
   avatar_url: string | null;

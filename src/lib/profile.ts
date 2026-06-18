@@ -16,6 +16,7 @@ function normalizeProfileRow(profile: Record<string, unknown>): Profile {
   const row = profile as unknown as Profile;
   return {
     ...row,
+    phone: row.phone ?? null,
     default_link_id: row.default_link_id ?? null,
     expired_at:
       row.expired_at ??

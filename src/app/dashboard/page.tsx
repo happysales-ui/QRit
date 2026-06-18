@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutAction } from "@/app/(auth)/actions";
+import { authEmailToPhone } from "@/lib/auth/phone-auth";
 import { getSiteUrl } from "@/lib/site-url";
 import { BraceletModeSetting } from "@/components/dashboard/bracelet-mode-setting";
 import { ProfileForm } from "@/components/dashboard/profile-form";
@@ -37,6 +38,7 @@ export default async function DashboardPage() {
   const links = await getLinksForProfile(profile.id);
   const siteUrl = await getSiteUrl();
   const publicUrl = `${siteUrl}/${profile.username}`;
+  const displayPhone = profile.phone ?? authEmailToPhone(user.email);
 
   return (
     <main className="min-h-dvh bg-gradient-to-b from-violet-50 to-white px-4 py-12">
@@ -50,7 +52,7 @@ export default async function DashboardPage() {
               ← QRit Jewelry
             </Link>
             <h1 className="mt-2 text-2xl font-bold text-zinc-900">대시보드</h1>
-            <p className="mt-1 text-sm text-zinc-500">{user.email}</p>
+            <p className="mt-1 text-sm text-zinc-500">{displayPhone ?? "—"}</p>
           </div>
           <form action={logoutAction}>
             <button

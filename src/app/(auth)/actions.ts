@@ -2,9 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getSiteUrl } from "@/lib/site-url";
+import { phoneToAuthEmail } from "@/lib/auth/phone-auth";
 import {
+  normalizePhone,
   normalizeUsername,
+  validatePhone,
   validateUsername,
 } from "@/lib/auth/validation";
 
@@ -17,18 +19,26 @@ export async function loginAction(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const email = String(formData.get("email") ?? "").trim();
+  const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const password = String(formData.get("password") ?? "");
 
-  if (!email || !password) {
-    return { error: "이메일과 비밀번호를 입력해 주세요." };
+  if (!phone || !password) {
+    return { error: "휴대폰 번호와 비밀번호를 입력해 주세요." };
+  }
+
+  const phoneError = validatePhone(phone);
+  if (phoneError) {
+    return { error: phoneError };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email: phoneToAuthEmail(phone),
+    password,
+  });
 
   if (error) {
-    return { error: "이메일 또는 비밀번호가 올바르지 않습니다." };
+    return { error: "휴대폰 번호 또는 비밀번호가 올바르지 않습니다." };
   }
 
   redirect("/dashboard");
@@ -38,12 +48,18 @@ export async function signupAction(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const email = String(formData.get("email") ?? "").trim();
+  const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const password = String(formData.get("password") ?? "");
+  const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
   const username = normalizeUsername(String(formData.get("username") ?? ""));
 
-  if (!email || !password || !username) {
+  if (!phone || !password || !passwordConfirm || !username) {
     return { error: "모든 필드를 입력해 주세요." };
+  }
+
+  const phoneError = validatePhone(phone);
+  if (phoneError) {
+    return { error: phoneError };
   }
 
   const usernameError = validateUsername(username);
@@ -55,25 +71,37 @@ export async function signupAction(
     return { error: "비밀번호는 6자 이상이어야 합니다." };
   }
 
-  const supabase = await createClient();
-  const origin = await getSiteUrl();
+  if (password !== passwordConfirm) {
+    return { error: "비밀번호가 일치하지 않습니다." };
+  }
 
-  const { data: existing } = await supabase
+  const supabase = await createClient();
+
+  const { data: existingUsername } = await supabase
     .from("profiles")
     .select("id")
     .eq("username", username)
     .maybeSingle();
 
-  if (existing) {
+  if (existingUsername) {
     return { error: "이미 사용 중인 사용자명입니다." };
   }
 
+  const { data: existingPhone } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (existingPhone) {
+    return { error: "이미 가입된 휴대폰 번호입니다." };
+  }
+
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: phoneToAuthEmail(phone),
     password,
     options: {
-      data: { username },
-      emailRedirectTo: `${origin}/auth/callback`,
+      data: { username, phone },
     },
   });
 
@@ -86,8 +114,7 @@ export async function signupAction(
   }
 
   return {
-    success:
-      "가입이 완료되었습니다. 이메일 인증 링크를 확인한 후 로그인해 주세요.",
+    success: "가입이 완료되었습니다. 로그인해 주세요.",
   };
 }
 

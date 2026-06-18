@@ -21,17 +21,19 @@ export function LoginForm({ authError }: LoginFormProps) {
 
       <form action={formAction} className="mt-6 space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
-            이메일
+          <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
+            휴대폰 번호
           </label>
           <input
-            id="email"
-            name="email"
-            type="email"
+            id="phone"
+            name="phone"
+            type="tel"
             required
-            autoComplete="email"
+            autoComplete="tel"
+            inputMode="numeric"
+            pattern="[0-9\-+\s]{10,13}"
             className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-            placeholder="you@example.com"
+            placeholder="01012345678"
           />
         </div>
 
