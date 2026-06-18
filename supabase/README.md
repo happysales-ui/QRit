@@ -61,9 +61,11 @@ Fill in values from **Project Settings → API** in the Supabase Dashboard:
 | Variable | Where to find it |
 |----------|------------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `anon` `public` key |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **anon** `public` key (JWT `eyJ...`) **or** **publishable** key (`sb_publishable_...`) |
 
 Restart the Next.js dev server after changing env vars.
+
+**Vercel:** `.env.local` is not deployed. Add the same variables under **Settings → Environment Variables**, then **redeploy** ( `NEXT_PUBLIC_*` values are baked in at build time).
 
 **한국어**
 
@@ -78,9 +80,11 @@ Supabase 대시보드 **Project Settings → API**에서 아래 값을 입력합
 | 변수 | 위치 |
 |------|------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `anon` `public` 키 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **anon** `public` 키 (JWT `eyJ...`) **또는** **publishable** 키 (`sb_publishable_...`) |
 
 환경 변수 변경 후 Next.js 개발 서버를 재시작하세요.
+
+**Vercel:** `.env.local`은 배포되지 않습니다. **Settings → Environment Variables**에 동일 변수를 추가한 뒤 **재배포**하세요 (`NEXT_PUBLIC_*` 값은 빌드 시점에 포함됩니다).
 
 ---
 

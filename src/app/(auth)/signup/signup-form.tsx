@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, type FormEvent } from "react";
 import { signupAction, type AuthActionState } from "@/app/(auth)/actions";
+import {
+  getSupabaseConfigErrorMessageForClient,
+  isSupabaseConfigured,
+} from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
 
 const initialState: AuthActionState = {};
@@ -54,11 +58,18 @@ export function SignupForm() {
   }
 
   const displayError = clientError ?? state.error;
+  const supabaseMissing = !isSupabaseConfigured();
 
   return (
     <div>
       <h1 className="text-xl font-bold text-zinc-900">회원가입</h1>
       <p className="mt-1 text-sm text-zinc-500">프로필 URL에 사용할 사용자명을 함께 설정하세요.</p>
+
+      {supabaseMissing ? (
+        <p className="mt-4 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
+          {getSupabaseConfigErrorMessageForClient()}
+        </p>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
