@@ -7,6 +7,8 @@ import { BraceletModeSetting } from "@/components/dashboard/bracelet-mode-settin
 import { ProfileForm } from "@/components/dashboard/profile-form";
 import { LinksManager } from "@/components/dashboard/links-manager";
 import { ServiceExpiryBanner } from "@/components/dashboard/service-expiry-banner";
+import { AdminPanel } from "@/components/dashboard/admin-panel";
+import { isAdmin } from "@/lib/auth/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getLinksForProfile, getProfileForUser } from "@/lib/profile";
 
@@ -51,7 +53,14 @@ export default async function DashboardPage() {
             >
               ← QRit Jewelry
             </Link>
-            <h1 className="mt-2 text-2xl font-bold text-zinc-900">대시보드</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold text-zinc-900">대시보드</h1>
+              {isAdmin(profile) ? (
+                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                  관리자
+                </span>
+              ) : null}
+            </div>
             <p className="mt-1 text-sm text-zinc-500">{displayPhone ?? "—"}</p>
           </div>
           <form action={logoutAction}>
@@ -65,6 +74,8 @@ export default async function DashboardPage() {
         </div>
 
         <ServiceExpiryBanner profile={profile} />
+
+        {isAdmin(profile) ? <AdminPanel /> : null}
 
         <BraceletModeSetting profile={profile} links={links} />
 

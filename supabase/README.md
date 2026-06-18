@@ -153,3 +153,44 @@ This permanently deletes all links, profiles, and auth users. It is **not** run 
 3. 붙여넣고 **Run**을 클릭합니다.
 
 모든 링크·프로필·인증 사용자가 영구 삭제됩니다. 마이그레이션으로 자동 실행되지 않습니다.
+
+---
+
+## 7. Admin users / 관리자 계정
+
+**English**
+
+Run `supabase/migrations/011_profiles_is_admin.sql` in the SQL Editor (or apply all migrations in order). This adds `profiles.is_admin` and grants admin to username `hyun1016` if that account exists.
+
+To grant admin on an existing database without re-running the full migration:
+
+1. Open **SQL Editor**.
+2. Run `supabase/scripts/grant-admin.sql` (edit the username if needed).
+
+**What admins can do**
+
+| Capability | Where |
+|------------|--------|
+| QR code generator for jewelry production | `/admin/maker` (login + admin required) |
+| Look up any customer by username | Dashboard → **관리자** panel |
+| Extend a customer's service expiry (`expired_at`) | Dashboard → **관리자** panel |
+| Admin badge on dashboard | Shown when `is_admin = true` |
+
+Admin privileges cannot be self-granted through the app API. Only direct SQL (postgres role) can set `is_admin = true`.
+
+**한국어**
+
+SQL Editor에서 `supabase/migrations/011_profiles_is_admin.sql`을 실행합니다(또는 마이그레이션을 순서대로 모두 적용). `profiles.is_admin` 컬럼이 추가되고, `hyun1016` 계정이 있으면 관리자로 설정됩니다.
+
+이미 운영 중인 DB에만 관리자를 부여하려면 `supabase/scripts/grant-admin.sql`을 실행하세요(필요 시 사용자명 수정).
+
+**관리자 권한**
+
+| 기능 | 위치 |
+|------|------|
+| 팔찌용 QR 코드 제작 | `/admin/maker` (로그인 + 관리자) |
+| 사용자명으로 고객 조회 | 대시보드 → **관리자** 패널 |
+| 서비스 만료일(`expired_at`) 연장 | 대시보드 → **관리자** 패널 |
+| 대시보드 관리자 뱃지 | `is_admin = true`일 때 표시 |
+
+앱 API로는 `is_admin`을 스스로 올릴 수 없습니다. SQL Editor(postgres)에서만 부여할 수 있습니다.

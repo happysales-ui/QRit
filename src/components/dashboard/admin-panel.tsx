@@ -1,0 +1,117 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState } from "react";
+import {
+  extendExpiryAction,
+  lookupUserAction,
+  type AdminActionState,
+} from "@/app/dashboard/admin-actions";
+
+const initialState: AdminActionState = {};
+
+export function AdminPanel() {
+  const [lookupState, lookupFormAction, lookupPending] = useActionState(
+    lookupUserAction,
+    initialState,
+  );
+  const [extendState, extendFormAction, extendPending] = useActionState(
+    extendExpiryAction,
+    initialState,
+  );
+
+  const user = extendState.user ?? lookupState.user;
+  const error = extendState.error ?? lookupState.error;
+  const success = extendState.success;
+
+  return (
+    <section className="mb-8 rounded-xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-900">관리자</h2>
+          <p className="mt-1 text-sm text-zinc-600">
+            고객 조회, 서비스 만료일 연장, QR 제작 도구
+          </p>
+        </div>
+        <Link
+          href="/admin/maker"
+          className="shrink-0 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
+        >
+          QR 제작 →
+        </Link>
+      </div>
+
+      <form action={lookupFormAction} className="flex flex-wrap gap-3">
+        <input
+          type="text"
+          name="username"
+          placeholder="사용자명 (예: hyun1016)"
+          defaultValue={user?.username ?? ""}
+          className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+        />
+        <button
+          type="submit"
+          disabled={lookupPending}
+          className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50"
+        >
+          {lookupPending ? "조회 중…" : "조회"}
+        </button>
+      </form>
+
+      {error ? (
+        <p className="mt-3 text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {success ? (
+        <p className="mt-3 text-sm text-emerald-700" role="status">
+          {success}
+        </p>
+      ) : null}
+
+      {user ? (
+        <div className="mt-4 rounded-xl border border-amber-100 bg-white p-4">
+          <dl className="grid gap-2 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-zinc-500">사용자명</dt>
+              <dd className="font-medium text-zinc-900">{user.username}</dd>
+            </div>
+            {user.displayName ? (
+              <div className="flex justify-between gap-4">
+                <dt className="text-zinc-500">표시 이름</dt>
+                <dd className="text-zinc-900">{user.displayName}</dd>
+              </div>
+            ) : null}
+            <div className="flex justify-between gap-4">
+              <dt className="text-zinc-500">서비스 만료일</dt>
+              <dd className="font-medium text-zinc-900">
+                {user.expiredAtFormatted}
+              </dd>
+            </div>
+          </dl>
+
+          <form action={extendFormAction} className="mt-4 flex flex-wrap gap-3">
+            <input type="hidden" name="username" value={user.username} />
+            <input
+              type="number"
+              name="days"
+              min={1}
+              max={3650}
+              defaultValue={365}
+              className="w-28 rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            />
+            <span className="self-center text-sm text-zinc-500">일 연장</span>
+            <button
+              type="submit"
+              disabled={extendPending}
+              className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
+            >
+              {extendPending ? "처리 중…" : "만료일 연장"}
+            </button>
+          </form>
+        </div>
+      ) : null}
+    </section>
+  );
+}

@@ -23,6 +23,7 @@ function normalizeProfileRow(profile: Record<string, unknown>): Profile {
       new Date(
         Date.parse(String(row.created_at)) + 2 * 365 * 24 * 60 * 60 * 1000,
       ).toISOString(),
+    is_admin: row.is_admin === true,
   };
 }
 

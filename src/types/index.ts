@@ -8,6 +8,7 @@ export interface Profile {
   theme: string;
   default_link_id: string | null;
   expired_at: string;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }
