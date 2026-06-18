@@ -6,11 +6,12 @@ import {
   QritShopBanner,
   QRIT_SHOP_BANNER_OFFSET_CLASS,
 } from "@/components/profile/qrit-shop-banner";
+import { Toast } from "@/components/ui/toast";
 import {
   autoOpenContactDialerOnMobile,
   buildTelHref,
   formatContactTelDisplay,
-  saveContactToAddressBook,
+  saveContactFromMecard,
 } from "@/lib/contact-gateway";
 import type { MecardContact } from "@/lib/contact-vcf";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,10 @@ export function ContactGateway({
   const telHref = buildTelHref(contact.tel);
   const formattedTel = formatContactTelDisplay(contact.tel);
   const [mobileRedirectAttempted, setMobileRedirectAttempted] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
   const autoDialStartedRef = useRef(false);
+  const toastTimerRef = useRef<number | null>(null);
 
   const runAutoDial = useCallback(async () => {
     if (!telHref) {
@@ -45,6 +49,20 @@ export function ContactGateway({
     }
   }, [telHref]);
 
+  const showToast = useCallback((message: string) => {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+
+    setToastMessage(message);
+    setToastVisible(true);
+
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastVisible(false);
+      window.setTimeout(() => setToastMessage(null), 300);
+    }, 2500);
+  }, []);
+
   useEffect(() => {
     if (autoDialStartedRef.current || !telHref) {
       return;
@@ -54,8 +72,20 @@ export function ContactGateway({
     void runAutoDial();
   }, [runAutoDial, telHref]);
 
-  function handleSaveToAddressBook() {
-    saveContactToAddressBook({ contact, downloadUrl });
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current !== null) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  async function handleSaveContact() {
+    const result = await saveContactFromMecard(contact, { downloadUrl });
+
+    if (result === "ios-download") {
+      showToast("연락처 앱에서 열기");
+    }
   }
 
   return (
@@ -114,11 +144,18 @@ export function ContactGateway({
 
           <button
             type="button"
-            onClick={handleSaveToAddressBook}
-            className="mt-4 text-xs font-medium text-violet-600 underline-offset-2 hover:text-violet-700 hover:underline"
+            onClick={() => void handleSaveContact()}
+            className={cn(
+              "inline-flex w-full items-center justify-center rounded-xl border-2 border-violet-600 px-4 py-4 text-[16px] font-semibold transition-all duration-200",
+              "bg-white text-violet-700 hover:bg-violet-50 active:scale-[0.99]",
+              telHref ? "mt-4" : undefined,
+            )}
           >
-            주소록에 저장 (.vcf)
+            번호 저장
           </button>
+          <p className="mt-3 text-xs leading-relaxed text-zinc-400">
+            연락처 앱에서 저장 창이 열립니다
+          </p>
         </section>
 
         <footer className="mt-10 pb-2 text-center">
@@ -129,6 +166,10 @@ export function ContactGateway({
       </div>
 
       <QritShopBanner />
+
+      {toastMessage ? (
+        <Toast message={toastMessage} visible={toastVisible} />
+      ) : null}
     </div>
   );
 }
