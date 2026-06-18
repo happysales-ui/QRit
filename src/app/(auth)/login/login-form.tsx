@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type AuthActionState } from "@/app/(auth)/actions";
+import { QRIT_ADMIN_KAKAO_CHAT_URL } from "@/lib/qrit-config";
 import { cn } from "@/lib/utils";
 
 const initialState: AuthActionState = {};
@@ -75,6 +76,18 @@ export function LoginForm({ authError }: LoginFormProps) {
           {isPending ? "로그인 중..." : "로그인"}
         </button>
       </form>
+
+      <p className="mt-4 text-center text-sm text-zinc-500">
+        비밀번호를 잊으셨나요?{" "}
+        <a
+          href={QRIT_ADMIN_KAKAO_CHAT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-violet-600 hover:text-violet-700"
+        >
+          관리자 카카오톡 1:1 채팅으로 문의해 주세요.
+        </a>
+      </p>
 
       <p className="mt-6 text-center text-sm text-zinc-500">
         계정이 없으신가요?{" "}

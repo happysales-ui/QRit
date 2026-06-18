@@ -125,3 +125,27 @@ The `/demo` route continues to use mock data and does not require Supabase.
 3. `/{your-username}`에서 공개 프로필을 확인합니다.
 
 `/demo` 경로는 Supabase 없이 목(mock) 데이터를 사용합니다.
+
+---
+
+## 6. Reset all users (manual) / 전체 사용자 초기화 (수동)
+
+**English**
+
+To wipe every registered account so users can sign up again (e.g. after testing):
+
+1. Open **SQL Editor** in the Supabase Dashboard (runs as `postgres` — required to delete `auth.users`).
+2. Copy the contents of `supabase/scripts/reset-users.sql`.
+3. Paste and click **Run**.
+
+This permanently deletes all links, profiles, and auth users. It is **not** run automatically by migrations.
+
+**한국어**
+
+등록된 모든 계정을 삭제하고 다시 회원가입할 수 있게 하려면:
+
+1. Supabase 대시보드 **SQL Editor**를 엽니다 (`postgres` 권한 필요 — `auth.users` 삭제).
+2. `supabase/scripts/reset-users.sql` 내용을 복사합니다.
+3. 붙여넣고 **Run**을 클릭합니다.
+
+모든 링크·프로필·인증 사용자가 영구 삭제됩니다. 마이그레이션으로 자동 실행되지 않습니다.
