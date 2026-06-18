@@ -1,38 +1,91 @@
 /**
- * Contact auto-save helpers (best-effort, not zero-click on every device).
+ * Contact dialer helpers — tel-first UX (native dialer with number pre-filled).
  *
  * Platform notes:
- * - Android: `mecard:` may open the Contacts app on some OEM browsers; after a short
- *   timeout we fall back to `.vcf` if the page is still visible.
- * - iOS Safari: `mecard:` is largely blocked; auto `.vcf` via iframe/download is the
- *   main path and may show an "Add to Contacts" sheet rather than a file download.
- * - Desktop: behavior varies; users may get a `.vcf` file or a contacts import prompt.
- *
- * True zero-click contact save is impossible on all browsers due to security sandboxes.
+ * - iOS / Android: `tel:` opens the native Phone app with the number filled in;
+ *   the user taps the green call button to place the call. Contact name cannot
+ *   be passed via `tel:` — show it on our landing page instead.
+ * - Programmatic `tel:` navigation on page load may be blocked; always keep
+ *   a visible "전화 걸기" button as fallback.
+ * - Optional `.vcf` save remains available for users who want address-book import.
  */
 
+import { normalizePhone } from "@/lib/auth/validation";
 import {
   buildVcf,
   buildVcfFilename,
   downloadVcf,
   type MecardContact,
 } from "@/lib/contact-vcf";
-import { isAndroidUserAgent, isIOSUserAgent } from "@/lib/transfer-gateway";
+import { isIOSUserAgent, isMobileUserAgent } from "@/lib/transfer-gateway";
 
-const MECARD_TIMEOUT_MS = 300;
+const TEL_REDIRECT_DELAY_MS = 400;
+
+export function normalizeContactTel(tel: string): string {
+  return normalizePhone(tel);
+}
+
+/** Builds a `tel:` href from raw phone text (digits-only in URI). */
+export function buildTelHref(tel: string): string | null {
+  const normalized = normalizeContactTel(tel);
+  if (!normalized) {
+    return null;
+  }
+
+  return `tel:${normalized}`;
+}
+
+/** Formats a Korean mobile number for display (e.g. 010-1234-5678). */
+export function formatContactTelDisplay(tel: string): string {
+  const digits = normalizeContactTel(tel);
+
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+
+  const trimmed = tel.trim();
+  return trimmed || digits;
+}
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-/** Client-side `.vcf` blob download (avoids an extra network round trip). */
+/** Opens the native dialer with the number pre-filled (user confirms the call). */
+export function openContactDialer(telHref: string): void {
+  window.location.href = telHref;
+}
+
+/**
+ * On mobile only, soft-open the dialer shortly after mount.
+ * Returns true when a redirect was attempted.
+ */
+export async function autoOpenContactDialerOnMobile(
+  telHref: string,
+): Promise<boolean> {
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+
+  if (!isMobileUserAgent(ua)) {
+    return false;
+  }
+
+  await wait(TEL_REDIRECT_DELAY_MS);
+  openContactDialer(telHref);
+  return true;
+}
+
+/** Client-side `.vcf` blob download (optional secondary action). */
 export function triggerVcfBlobSave(contact: MecardContact): void {
   const vcf = buildVcf(contact);
   const filename = buildVcfFilename(contact.name);
   downloadVcf(vcf, filename);
 }
 
-/** Server `.vcf` route via hidden iframe — useful when blob downloads are ignored. */
+/** Server `.vcf` route via hidden iframe — useful when blob downloads are ignored on iOS. */
 export function triggerVcfIframeSave(downloadUrl: string): void {
   const iframe = document.createElement("iframe");
   iframe.style.display = "none";
@@ -42,56 +95,17 @@ export function triggerVcfIframeSave(downloadUrl: string): void {
   document.body.appendChild(iframe);
 }
 
-function triggerVcfSave(contact: MecardContact, downloadUrl: string): void {
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-
-  if (isIOSUserAgent(ua)) {
-    triggerVcfIframeSave(downloadUrl);
-    return;
-  }
-
-  triggerVcfBlobSave(contact);
-}
-
-/**
- * Auto-save on page load:
- * 1) Android → try stored MECARD URL, then `.vcf` if still on page after 300ms.
- * 2) iOS / others → `.vcf` immediately (MECARD skipped on iOS).
- */
-export async function attemptContactAutoSave(options: {
+/** Optional address-book save — user-initiated only. */
+export function saveContactToAddressBook(options: {
   contact: MecardContact;
-  mecardUrl: string;
-  downloadUrl: string;
-}): Promise<void> {
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-  const isAndroid = isAndroidUserAgent(ua);
-
-  if (isAndroid && options.mecardUrl) {
-    window.location.href = options.mecardUrl;
-    await wait(MECARD_TIMEOUT_MS);
-
-    if (document.visibilityState === "visible") {
-      triggerVcfSave(options.contact, options.downloadUrl);
-    }
-
-    return;
-  }
-
-  triggerVcfSave(options.contact, options.downloadUrl);
-}
-
-/** Manual fallback — same strategy as auto-save but always user-gesture friendly. */
-export function manualContactSave(options: {
-  contact: MecardContact;
-  mecardUrl: string;
   downloadUrl: string;
 }): void {
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
 
-  if (isAndroidUserAgent(ua) && options.mecardUrl) {
-    window.location.href = options.mecardUrl;
+  if (isIOSUserAgent(ua)) {
+    triggerVcfIframeSave(options.downloadUrl);
     return;
   }
 
-  triggerVcfSave(options.contact, options.downloadUrl);
+  triggerVcfBlobSave(options.contact);
 }

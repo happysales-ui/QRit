@@ -44,8 +44,8 @@ export async function generateMetadata({
   const displayName = data.profile.display_name ?? data.profile.username;
 
   return {
-    title: `${displayName} 연락처 저장 | QRit Jewelry`,
-    description: `${displayName}의 연락처를 저장합니다`,
+    title: `${displayName} 연락처 | QRit Jewelry`,
+    description: `${displayName}에게 전화 걸기`,
   };
 }
 
@@ -81,7 +81,6 @@ export default async function ContactPage({ params }: ContactPageProps) {
       ownerName={ownerName}
       username={data.profile.username}
       contact={contact}
-      mecardUrl={link.url.trim()}
       downloadUrl={downloadUrl}
     />
   );
