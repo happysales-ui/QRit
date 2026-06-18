@@ -4,6 +4,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { phoneToAuthEmail } from "@/lib/auth/phone-auth";
 import {
+  devSignupLog,
+  mapProfileQueryError,
+  mapSignUpError,
+  resolveSignUpResult,
+} from "@/lib/auth/signup-helpers";
+import {
   normalizePhone,
   normalizeUsername,
   validatePhone,
@@ -13,6 +19,7 @@ import {
 export type AuthActionState = {
   error?: string;
   success?: string;
+  redirectTo?: string;
 };
 
 export async function loginAction(
@@ -48,74 +55,83 @@ export async function signupAction(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const phone = normalizePhone(String(formData.get("phone") ?? ""));
-  const password = String(formData.get("password") ?? "");
-  const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
-  const username = normalizeUsername(String(formData.get("username") ?? ""));
+  try {
+    const phone = normalizePhone(String(formData.get("phone") ?? ""));
+    const password = String(formData.get("password") ?? "");
+    const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
+    const username = normalizeUsername(String(formData.get("username") ?? ""));
 
-  if (!phone || !password || !passwordConfirm || !username) {
-    return { error: "모든 필드를 입력해 주세요." };
+    if (!phone || !password || !passwordConfirm || !username) {
+      return { error: "모든 필드를 입력해 주세요." };
+    }
+
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      return { error: phoneError };
+    }
+
+    const usernameError = validateUsername(username);
+    if (usernameError) {
+      return { error: usernameError };
+    }
+
+    if (password.length < 6) {
+      return { error: "비밀번호는 6자 이상이어야 합니다." };
+    }
+
+    if (password !== passwordConfirm) {
+      return { error: "비밀번호가 일치하지 않습니다." };
+    }
+
+    const supabase = await createClient();
+
+    const { data: existingUsername, error: usernameQueryError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
+
+    if (usernameQueryError) {
+      return { error: mapProfileQueryError(usernameQueryError) };
+    }
+
+    if (existingUsername) {
+      return { error: "이미 사용 중인 사용자명입니다." };
+    }
+
+    const { data: existingPhone, error: phoneQueryError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("phone", phone)
+      .maybeSingle();
+
+    if (phoneQueryError) {
+      return { error: mapProfileQueryError(phoneQueryError) };
+    }
+
+    if (existingPhone) {
+      return { error: "이미 가입된 휴대폰 번호입니다." };
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: phoneToAuthEmail(phone),
+      password,
+      options: {
+        data: { username, phone },
+      },
+    });
+
+    if (error) {
+      return { error: mapSignUpError(error) };
+    }
+
+    return resolveSignUpResult(data);
+  } catch (error) {
+    devSignupLog("unexpected error", error);
+    return {
+      error: "회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+    };
   }
-
-  const phoneError = validatePhone(phone);
-  if (phoneError) {
-    return { error: phoneError };
-  }
-
-  const usernameError = validateUsername(username);
-  if (usernameError) {
-    return { error: usernameError };
-  }
-
-  if (password.length < 6) {
-    return { error: "비밀번호는 6자 이상이어야 합니다." };
-  }
-
-  if (password !== passwordConfirm) {
-    return { error: "비밀번호가 일치하지 않습니다." };
-  }
-
-  const supabase = await createClient();
-
-  const { data: existingUsername } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("username", username)
-    .maybeSingle();
-
-  if (existingUsername) {
-    return { error: "이미 사용 중인 사용자명입니다." };
-  }
-
-  const { data: existingPhone } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("phone", phone)
-    .maybeSingle();
-
-  if (existingPhone) {
-    return { error: "이미 가입된 휴대폰 번호입니다." };
-  }
-
-  const { data, error } = await supabase.auth.signUp({
-    email: phoneToAuthEmail(phone),
-    password,
-    options: {
-      data: { username, phone },
-    },
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (data.session) {
-    redirect("/dashboard");
-  }
-
-  return {
-    success: "가입이 완료되었습니다. 로그인해 주세요.",
-  };
 }
 
 export async function logoutAction(): Promise<void> {
