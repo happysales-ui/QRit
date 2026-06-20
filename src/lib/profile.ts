@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import type { SubscriptionStatus } from "@/lib/subscription";
 import type { LinkBlock, Profile } from "@/types";
 import type { ProfileWithLinks } from "@/lib/mock-profile";
 
@@ -13,17 +14,30 @@ function normalizeLinkRow(link: Record<string, unknown>): LinkBlock {
   };
 }
 
+function normalizeSubscriptionStatus(value: unknown): SubscriptionStatus {
+  if (value === "paid" || value === "expired" || value === "free") {
+    return value;
+  }
+  return "free";
+}
+
 function normalizeProfileRow(profile: Record<string, unknown>): Profile {
   const row = profile as unknown as Profile;
+  const fallbackFreeUntil = new Date(
+    Date.parse(String(row.created_at)) + 2 * 365 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const freeUntil =
+    (row.free_until as string | undefined) ??
+    (row.expired_at as string | undefined) ??
+    fallbackFreeUntil;
+
   return {
     ...row,
     phone: row.phone ?? null,
     default_link_id: row.default_link_id ?? null,
-    expired_at:
-      row.expired_at ??
-      new Date(
-        Date.parse(String(row.created_at)) + 2 * 365 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
+    expired_at: (row.expired_at as string | undefined) ?? freeUntil,
+    free_until: freeUntil,
+    subscription_status: normalizeSubscriptionStatus(row.subscription_status),
     is_admin: row.is_admin === true,
   };
 }

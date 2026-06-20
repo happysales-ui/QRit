@@ -20,6 +20,8 @@ export interface Database {
           theme: string;
           default_link_id: string | null;
           expired_at: string;
+          free_until: string;
+          subscription_status: "free" | "expired" | "paid";
           is_admin: boolean;
           created_at: string;
           updated_at: string;
@@ -34,6 +36,8 @@ export interface Database {
           theme?: string;
           default_link_id?: string | null;
           expired_at?: string;
+          free_until?: string;
+          subscription_status?: "free" | "expired" | "paid";
           is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -48,6 +52,8 @@ export interface Database {
           theme?: string;
           default_link_id?: string | null;
           expired_at?: string;
+          free_until?: string;
+          subscription_status?: "free" | "expired" | "paid";
           is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -101,6 +107,7 @@ export interface Database {
           theme: string;
           default_link_id: string | null;
           expired_at: string;
+          free_until: string;
           created_at: string;
           updated_at: string;
         };
@@ -148,6 +155,7 @@ export interface Database {
           theme: string;
           default_link_id: string | null;
           expired_at: string;
+          free_until: string;
           created_at: string;
           updated_at: string;
         };

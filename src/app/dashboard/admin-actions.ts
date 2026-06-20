@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdminProfile } from "@/lib/auth/admin";
 import { normalizeUsername } from "@/lib/auth/validation";
 import { formatExpiryDate } from "@/lib/service-expiry";
+import { formatFreeUntilDate } from "@/lib/subscription";
 
 export type AdminActionState = {
   error?: string;
@@ -13,6 +14,7 @@ export type AdminActionState = {
     displayName: string | null;
     expiredAt: string;
     expiredAtFormatted: string;
+    freeUntilFormatted: string;
   };
 };
 
@@ -31,7 +33,7 @@ export async function lookupUserAction(
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, display_name, expired_at")
+      .select("username, display_name, expired_at, free_until")
       .eq("username", username)
       .maybeSingle();
 
@@ -49,6 +51,9 @@ export async function lookupUserAction(
         displayName: data.display_name,
         expiredAt: data.expired_at,
         expiredAtFormatted: formatExpiryDate(data.expired_at),
+        freeUntilFormatted: formatFreeUntilDate(
+          data.free_until ?? data.expired_at,
+        ),
       },
     };
   } catch (error) {
@@ -79,7 +84,7 @@ export async function extendExpiryAction(
 
     const { data: existing, error: fetchError } = await supabase
       .from("profiles")
-      .select("username, display_name, expired_at")
+      .select("username, display_name, expired_at, free_until")
       .eq("username", username)
       .maybeSingle();
 
@@ -91,14 +96,17 @@ export async function extendExpiryAction(
       return { error: `'${username}' 사용자를 찾을 수 없습니다.` };
     }
 
-    const currentExpiry = new Date(existing.expired_at);
+    const currentExpiry = new Date(existing.free_until ?? existing.expired_at);
     const now = new Date();
     const base = currentExpiry.getTime() > now.getTime() ? currentExpiry : now;
     const newExpiry = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
 
     const { error: updateError } = await supabase
       .from("profiles")
-      .update({ expired_at: newExpiry.toISOString() })
+      .update({
+        free_until: newExpiry.toISOString(),
+        subscription_status: "free",
+      })
       .eq("username", username);
 
     if (updateError) {
@@ -106,6 +114,7 @@ export async function extendExpiryAction(
     }
 
     revalidatePath("/dashboard");
+    revalidatePath("/admin/users");
     revalidatePath(`/${username}`);
 
     return {
@@ -115,6 +124,7 @@ export async function extendExpiryAction(
         displayName: existing.display_name,
         expiredAt: newExpiry.toISOString(),
         expiredAtFormatted: formatExpiryDate(newExpiry.toISOString()),
+        freeUntilFormatted: formatFreeUntilDate(newExpiry.toISOString()),
       },
     };
   } catch (error) {

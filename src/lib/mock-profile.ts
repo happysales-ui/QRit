@@ -18,6 +18,8 @@ const demoProfile: Profile = {
   theme: "default",
   default_link_id: null,
   expired_at: "2028-06-18T00:00:00.000Z",
+  free_until: "2028-06-18T00:00:00.000Z",
+  subscription_status: "free",
   is_admin: false,
   created_at: DEMO_TIMESTAMP,
   updated_at: DEMO_TIMESTAMP,

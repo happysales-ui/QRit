@@ -36,6 +36,12 @@ export function AdminPanel() {
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
+            href="/admin/users"
+            className={qritBrand.secondaryButton + " !w-auto px-4 py-2.5 text-sm"}
+          >
+            사용자 →
+          </Link>
+          <Link
             href="/admin/invite-codes"
             className={qritBrand.secondaryButton + " !w-auto px-4 py-2.5 text-sm"}
           >
@@ -93,9 +99,9 @@ export function AdminPanel() {
               </div>
             ) : null}
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">서비스 만료일</dt>
+              <dt className="text-zinc-500">무료 이용 종료</dt>
               <dd className="font-medium text-zinc-900">
-                {user.expiredAtFormatted}
+                {user.freeUntilFormatted}
               </dd>
             </div>
           </dl>

@@ -1,3 +1,5 @@
+import type { SubscriptionStatus } from "@/lib/subscription";
+
 export interface Profile {
   id: string;
   username: string;
@@ -8,6 +10,8 @@ export interface Profile {
   theme: string;
   default_link_id: string | null;
   expired_at: string;
+  free_until: string;
+  subscription_status: SubscriptionStatus;
   is_admin: boolean;
   created_at: string;
   updated_at: string;
