@@ -100,16 +100,19 @@ function GlobeIcon({ className }: { className?: string }) {
   );
 }
 
-function ChatIcon({ className }: { className?: string }) {
+function BankShortLabel({ shortName }: { shortName: string }) {
+  const compact = shortName.length >= 3;
+
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-      className={cn(ICON_GLYPH, className)}
+    <span
+      className={cn(
+        "whitespace-nowrap font-extrabold leading-none",
+        compact ? "text-[10px] tracking-tighter" : "text-sm",
+      )}
+      aria-hidden
     >
-      <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h3l3.5 4.5L14 18h6c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2Z" />
-    </svg>
+      {shortName}
+    </span>
   );
 }
 
@@ -147,20 +150,16 @@ export function LinkTypeIcon({ link, className }: LinkTypeIconProps) {
     case BANK_TRANSFER_LINK_TITLE:
       return (
         <IconShell bgClassName="bg-[#FEE500] text-[#191919]" className={className}>
-          {bank ? (
-            <span className="text-base font-extrabold leading-none">
-              {bank.shortName}
-            </span>
-          ) : (
-            <BankIcon />
-          )}
+          {bank ? <BankShortLabel shortName={bank.shortName} /> : <BankIcon />}
         </IconShell>
       );
 
     case "1:1 상담":
       return (
         <IconShell bgClassName="bg-[#F5C518]/25 text-[#094347]" className={className}>
-          <ChatIcon />
+          <span className="select-none text-[1.75rem] leading-none" aria-hidden>
+            💬
+          </span>
         </IconShell>
       );
 
