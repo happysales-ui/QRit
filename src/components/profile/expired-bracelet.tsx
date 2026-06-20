@@ -15,7 +15,7 @@ export function ExpiredBracelet() {
           ⏳
         </p>
         <h1 className="mt-4 text-lg font-semibold text-zinc-900">
-          사용 기간이 만료된 팔찌입니다.
+          서비스 사용 기간이 만료되었습니다.
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-600">
           서비스 연장 후 이용해 주세요.

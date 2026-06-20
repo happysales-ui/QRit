@@ -188,7 +188,7 @@ SQL Editor에서 `supabase/migrations/011_profiles_is_admin.sql`을 실행합니
 
 | 기능 | 위치 |
 |------|------|
-| 팔찌용 QR 코드 제작 | `/admin/maker` (로그인 + 관리자) |
+| QRit 구매고객용 QR 코드 제작 | `/admin/maker` (로그인 + 관리자) |
 | 사용자명으로 고객 조회 | 대시보드 → **관리자** 패널 |
 | 서비스 만료일(`expired_at`) 연장 | 대시보드 → **관리자** 패널 |
 | 대시보드 관리자 뱃지 | `is_admin = true`일 때 표시 |

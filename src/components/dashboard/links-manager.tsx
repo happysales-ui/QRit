@@ -487,7 +487,7 @@ export function LinksManager({ links }: LinksManagerProps) {
 
       <footer className={theme.footer}>
         <p className={theme.footerPrimary}>
-          QRit은 팔찌 구매 고객 전용 서비스입니다.
+          QRit 구매고객 전용 서비스입니다.
         </p>
         <p className={theme.footerSecondary}>
           © QRit Jewelry. 무단 복제 및 배포를 금합니다.

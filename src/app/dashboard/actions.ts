@@ -379,7 +379,7 @@ export async function updateDefaultLinkAction(
     revalidatePath("/dashboard");
     revalidatePath(`/${profile.username}`);
 
-    return { success: "팔찌 작동 모드가 저장되었습니다." };
+    return { success: "QRit 작동 모드가 저장되었습니다." };
   } catch {
     return { error: "로그인이 필요합니다." };
   }

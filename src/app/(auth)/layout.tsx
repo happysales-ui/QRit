@@ -10,7 +10,7 @@ export default function AuthLayout({
     <div className={qritBrand.authPageBg}>
       <div className="mb-8 text-center">
         <QritBrandLogo href="/" size="lg" className="justify-center" />
-        <p className="mt-2 text-sm text-zinc-500">팔찌 구매 고객 전용 링크 프로필 서비스</p>
+        <p className="mt-2 text-sm text-zinc-500">QRit 구매고객 전용 링크 프로필 서비스</p>
       </div>
       <div className={qritBrand.authCard}>{children}</div>
     </div>

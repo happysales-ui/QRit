@@ -36,7 +36,7 @@ export function BraceletModeSetting({ profile, links }: BraceletModeSettingProps
   return (
     <section className={`mb-8 ${qritBrand.card}`}>
       <h2 className="text-lg font-semibold text-zinc-900">
-        QRit 팔찌 작동 모드 설정
+        QRit 작동 모드 설정
       </h2>
 
       <form
@@ -69,7 +69,7 @@ export function BraceletModeSetting({ profile, links }: BraceletModeSettingProps
         </div>
 
         <p className="text-sm text-[#0d5c63]">
-          💡 팔찌를 스캔했을 때 처음으로 보여줄 화면을 선택하세요. 개별 메뉴를
+          💡 QRit을 스캔했을 때 처음으로 보여줄 화면을 선택하세요. 개별 메뉴를
           선택하시면 스캔 시 해당 기능으로 1초 만에 바로 직행합니다.
         </p>
 
