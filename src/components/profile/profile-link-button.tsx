@@ -24,7 +24,7 @@ export function ProfileLinkButton({
         : {})}
       className={cn(qritBrand.profileLinkCard, className)}
     >
-      <LinkTypeIcon link={link} className="size-10 rounded-xl" />
+      <LinkTypeIcon link={link} className="size-12 rounded-xl sm:size-10" />
       <span className={qritBrand.profileLinkTitle}>{link.title}</span>
       <span className={qritBrand.profileLinkChevron} aria-hidden>
         →

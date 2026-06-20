@@ -76,10 +76,11 @@ export const qritBrand = {
   profileHeaderBio:
     "mt-2 max-w-xs text-sm leading-snug text-white/80 line-clamp-2",
   profileLinkCard:
-    "group flex w-full items-center gap-3 rounded-2xl border border-[#e8f0f1] bg-[#fffef9] px-4 py-3.5 shadow-[0_2px_12px_rgba(13,92,99,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#d4e8ea] hover:shadow-[0_4px_16px_rgba(13,92,99,0.1)] active:scale-[0.99]",
-  profileLinkTitle: "min-w-0 flex-1 font-semibold text-[#0d5c63]",
+    "group flex min-h-[3.75rem] w-full items-center gap-3.5 rounded-2xl border border-[#e8f0f1] bg-[#fffef9] px-4 py-4 shadow-[0_2px_12px_rgba(13,92,99,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#d4e8ea] hover:shadow-[0_4px_16px_rgba(13,92,99,0.1)] active:scale-[0.99] sm:min-h-0 sm:gap-3 sm:py-3.5",
+  profileLinkTitle:
+    "min-w-0 flex-1 truncate text-xl font-semibold text-[#0d5c63] sm:text-base",
   profileLinkChevron:
-    "shrink-0 text-[#3d7a80] transition-transform group-hover:translate-x-0.5",
+    "shrink-0 text-lg text-[#3d7a80] transition-transform group-hover:translate-x-0.5 sm:text-base",
   username: "mt-1 text-sm font-medium text-[#0d5c63]/80",
   manageLink:
     "inline-flex items-center justify-center rounded-lg border border-[#d4e8ea]/80 bg-white/50 px-3 py-1.5 text-[11px] font-medium tracking-wide text-[#3d7a80] transition-colors hover:border-[#147278]/60 hover:bg-[#e8f4f5]/60 hover:text-[#0d5c63]",

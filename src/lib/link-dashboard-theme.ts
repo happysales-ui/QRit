@@ -22,7 +22,7 @@ export const linkDashboardTheme = {
     "rounded-lg border border-[#d4e8ea] bg-white px-2 py-1 text-xs text-[#3d7a80] transition-colors hover:bg-[#e8f4f5] disabled:opacity-40",
   linkCard:
     "rounded-2xl border border-[#e8f0f1] bg-[#fffef9] p-4 shadow-[0_2px_12px_rgba(13,92,99,0.06)]",
-  linkTitle: "font-semibold text-[#0d5c63]",
+  linkTitle: "truncate text-xl font-semibold text-[#0d5c63] sm:text-base",
   linkSubtitle: "mt-0.5 truncate text-sm text-[#3d7a80]",
   emptyState: "text-center text-sm text-[#3d7a80]",
   footer: "mt-8 border-t border-[#d4e8ea] pt-6 text-center",
