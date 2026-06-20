@@ -27,10 +27,10 @@ export function ProfileHeader({ profile, className }: ProfileHeaderProps) {
           <img
             src={`${profile.avatar_url}?v=${encodeURIComponent(profile.updated_at)}`}
             alt={`${displayName} 프로필 사진`}
-            className={qritBrand.avatarImage}
+            className={qritBrand.profileAvatarImage}
           />
         ) : (
-          <div aria-hidden="true" className={qritBrand.avatarFallback}>
+          <div aria-hidden="true" className={qritBrand.profileAvatarFallback}>
             {initials}
           </div>
         )}
