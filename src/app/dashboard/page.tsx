@@ -96,8 +96,8 @@ export default async function DashboardPage() {
           <ProfileForm profile={profile} />
         </section>
 
-        <section className="rounded-xl border border-violet-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-900">링크 관리</h2>
+        <section className="rounded-2xl border border-[#d4e4dc] bg-[#faf8f3] p-6 shadow-[0_4px_24px_rgba(27,67,50,0.08)]">
+          <h2 className="mb-5 text-lg font-semibold text-[#1b4332]">링크 관리</h2>
           <LinksManager links={links} />
         </section>
       </div>

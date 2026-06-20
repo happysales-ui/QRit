@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   addLinkAction,
@@ -9,10 +9,12 @@ import {
   updateLinkAction,
   type ActionState,
 } from "@/app/dashboard/actions";
+import { LinkTypeIcon } from "@/components/dashboard/link-type-icon";
 import {
   KOREAN_BANKS,
   parseTransferUrl,
 } from "@/lib/bank-transfer";
+import { linkDashboardTheme as theme } from "@/lib/link-dashboard-theme";
 import {
   BANK_TRANSFER_LINK_TITLE,
   CONTACT_LINK_TITLE,
@@ -34,11 +36,26 @@ import { cn } from "@/lib/utils";
 
 const initialState: ActionState = {};
 
-const inputClassName =
-  "w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100";
-
-const addInputClassName =
-  "w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100";
+function FieldCard({
+  label,
+  htmlFor,
+  children,
+  className,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn(theme.ivoryCard, className)}>
+      <label htmlFor={htmlFor} className={theme.fieldLabel}>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
 
 function LinkFormFields({
   initialTitle,
@@ -71,11 +88,11 @@ function LinkFormFields({
   const [bankCode, setBankCode] = useState(parsedTransfer?.bankCode ?? "");
   const [accountNo, setAccountNo] = useState(parsedTransfer?.accountNo ?? "");
 
-  const fieldClassName = variant === "add" ? addInputClassName : inputClassName;
   const resolvedTitle = resolveLinkTitle(titlePreset, customTitle);
   const isCustom = titlePreset === CUSTOM_LINK_TITLE;
   const isContact = titlePreset === CONTACT_LINK_TITLE;
   const isBankTransfer = titlePreset === BANK_TRANSFER_LINK_TITLE;
+  const inputClassName = isContact ? theme.mecardInput : theme.input;
 
   function handlePresetChange(nextPreset: LinkTitlePreset) {
     setUrl((currentUrl) =>
@@ -92,21 +109,15 @@ function LinkFormFields({
   }
 
   return (
-    <>
-      <div>
-        <label
-          htmlFor={`link-title-preset-${variant}`}
-          className="block text-sm font-medium text-zinc-700"
-        >
-          링크 제목
-        </label>
+    <div className="space-y-3">
+      <FieldCard label="링크 제목" htmlFor={`link-title-preset-${variant}`}>
         <select
           id={`link-title-preset-${variant}`}
           value={titlePreset}
           onChange={(event) =>
             handlePresetChange(event.target.value as LinkTitlePreset)
           }
-          className={cn(fieldClassName, variant === "add" && "mt-1")}
+          className={theme.input}
         >
           {LINK_TITLE_PRESETS.map((preset) => (
             <option key={preset} value={preset}>
@@ -114,16 +125,10 @@ function LinkFormFields({
             </option>
           ))}
         </select>
-      </div>
+      </FieldCard>
 
       {isCustom ? (
-        <div>
-          <label
-            htmlFor={`link-custom-title-${variant}`}
-            className="block text-sm font-medium text-zinc-700"
-          >
-            직접 입력 제목
-          </label>
+        <FieldCard label="직접 입력 제목" htmlFor={`link-custom-title-${variant}`}>
           <input
             id={`link-custom-title-${variant}`}
             type="text"
@@ -131,29 +136,23 @@ function LinkFormFields({
             value={customTitle}
             onChange={(event) => setCustomTitle(event.target.value)}
             placeholder="링크 제목을 입력하세요"
-            className={cn(fieldClassName, variant === "add" && "mt-1")}
+            className={theme.input}
           />
-        </div>
+        </FieldCard>
       ) : null}
 
       <input type="hidden" name="title" value={resolvedTitle} />
 
       {isBankTransfer ? (
-        <div key="bank-transfer-fields" className="space-y-3">
-          <div>
-            <label
-              htmlFor={`link-bank-${variant}`}
-              className="block text-sm font-medium text-zinc-700"
-            >
-              은행 선택
-            </label>
+        <>
+          <FieldCard label="은행 선택" htmlFor={`link-bank-${variant}`}>
             <select
               id={`link-bank-${variant}`}
               name="bank_code"
               required
               value={bankCode}
               onChange={(event) => setBankCode(event.target.value)}
-              className={cn(fieldClassName, variant === "add" && "mt-1")}
+              className={theme.input}
             >
               <option value="">은행을 선택하세요</option>
               {KOREAN_BANKS.map((bank) => (
@@ -162,15 +161,9 @@ function LinkFormFields({
                 </option>
               ))}
             </select>
-          </div>
+          </FieldCard>
 
-          <div>
-            <label
-              htmlFor={`link-account-${variant}`}
-              className="block text-sm font-medium text-zinc-700"
-            >
-              계좌번호
-            </label>
+          <FieldCard label="계좌번호" htmlFor={`link-account-${variant}`}>
             <input
               id={`link-account-${variant}`}
               name="account_no"
@@ -180,25 +173,27 @@ function LinkFormFields({
               value={accountNo}
               onChange={(event) => setAccountNo(event.target.value)}
               placeholder="계좌번호를 입력하세요 (숫자만)"
-              className={cn(fieldClassName, variant === "add" && "mt-1")}
+              className={theme.input}
             />
-          </div>
+          </FieldCard>
 
           <input type="hidden" name="url" value={TRANSFER_URL_MARKER} />
 
-          <p className="text-sm text-sky-600">
-            💡 은행과 계좌번호를 입력하시면 스캔 시 송금 게이트웨이에서 토스,
-            카카오페이, 네이버페이 등 원하는 앱으로 송금할 수 있습니다.
+          <p className={theme.hint}>
+            <span className={theme.hintIcon} aria-hidden>
+              💡
+            </span>
+            <span>
+              은행과 계좌번호를 입력하시면 스캔 시 송금 게이트웨이에서 토스,
+              카카오페이, 네이버페이 등 원하는 앱으로 송금할 수 있습니다.
+            </span>
           </p>
-        </div>
+        </>
       ) : (
-        <div key="url-fields">
-          <label
-            htmlFor={`link-url-${variant}`}
-            className="block text-sm font-medium text-zinc-700"
-          >
-            {isContact ? "연락처 (MECARD)" : "링크 URL"}
-          </label>
+        <FieldCard
+          label={isContact ? "연락처 (MECARD)" : "링크 URL"}
+          htmlFor={`link-url-${variant}`}
+        >
           <input
             id={`link-url-${variant}`}
             name="url"
@@ -207,21 +202,20 @@ function LinkFormFields({
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             placeholder={getLinkUrlPlaceholder(titlePreset)}
-            className={cn(fieldClassName, variant === "add" && "mt-1")}
+            className={inputClassName}
           />
           {isContact ? (
-            <p className="mt-1.5 text-sm text-sky-600">
-              💡 위 입력창에서 이름과 연락처만 수정해서 등록하세요.
+            <p className={theme.hint}>
+              <span className={theme.hintIcon} aria-hidden>
+                💡
+              </span>
+              <span>위 입력창에서 이름과 연락처만 수정해서 등록하세요.</span>
             </p>
           ) : null}
-        </div>
+        </FieldCard>
       )}
-    </>
+    </div>
   );
-}
-
-interface LinksManagerProps {
-  links: LinkBlock[];
 }
 
 function LinkItem({ link, index, total }: { link: LinkBlock; index: number; total: number }) {
@@ -234,7 +228,7 @@ function LinkItem({ link, index, total }: { link: LinkBlock; index: number; tota
   const [movePending, startMove] = useTransition();
 
   return (
-    <li className="rounded-xl border border-zinc-200 bg-white p-4">
+    <li className={theme.linkCard}>
       {isEditing ? (
         <EditLinkForm
           link={link}
@@ -242,51 +236,51 @@ function LinkItem({ link, index, total }: { link: LinkBlock; index: number; tota
           onSuccess={() => setIsEditing(false)}
         />
       ) : (
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <LinkTypeIcon link={link} />
+
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-zinc-900">{link.title}</p>
-            <p className="mt-0.5 truncate text-sm text-zinc-500">
-              {formatTransferLinkSummary(link)}
-            </p>
+            <p className={theme.linkTitle}>{link.title}</p>
+            <p className={theme.linkSubtitle}>{formatTransferLinkSummary(link)}</p>
             {deleteState.error ? (
               <p className="mt-2 text-sm text-red-600">{deleteState.error}</p>
             ) : null}
           </div>
 
-          <div className="flex shrink-0 flex-col gap-1">
-            <button
-              type="button"
-              disabled={index === 0 || movePending}
-              onClick={() =>
-                startMove(() => {
-                  void moveLinkAction(link.id, "up").then(() => router.refresh());
-                })
-              }
-              className="rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-600 hover:bg-zinc-50 disabled:opacity-40"
-              aria-label="위로 이동"
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              disabled={index === total - 1 || movePending}
-              onClick={() =>
-                startMove(() => {
-                  void moveLinkAction(link.id, "down").then(() => router.refresh());
-                })
-              }
-              className="rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-600 hover:bg-zinc-50 disabled:opacity-40"
-              aria-label="아래로 이동"
-            >
-              ↓
-            </button>
-          </div>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                disabled={index === 0 || movePending}
+                onClick={() =>
+                  startMove(() => {
+                    void moveLinkAction(link.id, "up").then(() => router.refresh());
+                  })
+                }
+                className={theme.reorderButton}
+                aria-label="위로 이동"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                disabled={index === total - 1 || movePending}
+                onClick={() =>
+                  startMove(() => {
+                    void moveLinkAction(link.id, "down").then(() => router.refresh());
+                  })
+                }
+                className={theme.reorderButton}
+                aria-label="아래로 이동"
+              >
+                ↓
+              </button>
+            </div>
 
-          <div className="flex shrink-0 gap-2">
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-50"
+              className={theme.secondaryButton}
             >
               수정
             </button>
@@ -294,7 +288,7 @@ function LinkItem({ link, index, total }: { link: LinkBlock; index: number; tota
               <button
                 type="submit"
                 disabled={isDeleting}
-                className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+                className={cn(theme.dangerButton, "disabled:opacity-60")}
               >
                 삭제
               </button>
@@ -344,14 +338,14 @@ function EditLinkForm({
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
+          className={cn(theme.primaryButton, "px-4 py-2 text-xs disabled:opacity-60")}
         >
           저장
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50"
+          className={theme.secondaryButton}
         >
           취소
         </button>
@@ -361,19 +355,22 @@ function EditLinkForm({
 }
 
 export function LinksManager({ links }: LinksManagerProps) {
-  const [addState, addAction, isAdding] = useActionState(addLinkAction, initialState);
   const [addFormKey, setAddFormKey] = useState(0);
-
-  useEffect(() => {
-    if (addState.success) {
-      setAddFormKey((key) => key + 1);
-    }
-  }, [addState.success]);
+  const [addState, addAction, isAdding] = useActionState(
+    async (prev: ActionState, formData: FormData) => {
+      const result = await addLinkAction(prev, formData);
+      if (result.success) {
+        setAddFormKey((key) => key + 1);
+      }
+      return result;
+    },
+    initialState,
+  );
 
   return (
-    <div className="space-y-6">
-      <form action={addAction} className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-800">새 링크 추가</h3>
+    <div>
+      <form action={addAction} className="space-y-4">
+        <h3 className="text-base font-semibold text-[#1b4332]">새 링크 추가</h3>
         <LinkFormFields key={addFormKey} variant="add" />
 
         {addState.error ? (
@@ -381,35 +378,43 @@ export function LinksManager({ links }: LinksManagerProps) {
         ) : null}
 
         {addState.success ? (
-          <p className="text-sm text-emerald-700">{addState.success}</p>
+          <p className="text-sm text-[#2d6a4f]">{addState.success}</p>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={isAdding}
-          className={cn(
-            "rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white",
-            "hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60",
-          )}
-        >
+        <button type="submit" disabled={isAdding} className={theme.primaryButton}>
           {isAdding ? "추가 중..." : "링크 추가"}
         </button>
       </form>
 
-      {links.length === 0 ? (
-        <p className="text-center text-sm text-zinc-500">아직 등록된 링크가 없습니다.</p>
-      ) : (
-        <ul className="space-y-3">
-          {links.map((link, index) => (
-            <LinkItem
-              key={link.id}
-              link={link}
-              index={index}
-              total={links.length}
-            />
-          ))}
-        </ul>
-      )}
+      <div className="mt-8">
+        {links.length === 0 ? (
+          <p className={theme.emptyState}>아직 등록된 링크가 없습니다.</p>
+        ) : (
+          <ul className="space-y-3">
+            {links.map((link, index) => (
+              <LinkItem
+                key={link.id}
+                link={link}
+                index={index}
+                total={links.length}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <footer className={theme.footer}>
+        <p className={theme.footerPrimary}>
+          QRit 웹 시제품은 누구나 무료로 이용할 수 있습니다.
+        </p>
+        <p className={theme.footerSecondary}>
+          © QRit Jewelry. 본 서비스는 시제품 버전이며, 무단 복제 및 배포를 금합니다.
+        </p>
+      </footer>
     </div>
   );
+}
+
+interface LinksManagerProps {
+  links: LinkBlock[];
 }
