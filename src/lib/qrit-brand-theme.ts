@@ -22,7 +22,7 @@ export const qritColors = {
 export const qritBrand = {
   pageBg: "min-h-dvh bg-gradient-to-b from-[#e8f4f5] to-white",
   authPageBg:
-    "flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-[#e8f4f5] to-white px-4 py-12",
+    "flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-[#faf8f3] via-[#e8f4f5] to-white px-4 py-12",
   pageBgProfile:
     "relative min-h-dvh bg-gradient-to-b from-[#e8f4f5]/80 via-[#faf8f3]/40 to-slate-50",
   profileGlowTeal:
@@ -35,6 +35,9 @@ export const qritBrand = {
     "rounded-2xl border border-[#e8f0f1] bg-[#faf8f3] p-6 shadow-[0_4px_24px_rgba(13,92,99,0.08)]",
   link: "text-sm font-medium text-[#0d5c63] transition-colors hover:text-[#094347]",
   linkLg: "font-medium text-[#0d5c63] transition-colors hover:text-[#094347]",
+  /** Kakao / external support links — orange accent from logo palette */
+  kakaoLink:
+    "font-medium text-[#F7941D] transition-colors hover:text-[#d4a812] underline decoration-[#F7941D]/30 underline-offset-2 hover:decoration-[#F7941D]/60",
   heading: "font-bold text-[#171717]",
   accentText: "text-sm font-medium text-[#0d5c63]",
   accentTextLg: "font-mono text-xl tracking-wide text-[#0d5c63]",

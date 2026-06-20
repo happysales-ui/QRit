@@ -81,7 +81,7 @@ export function LoginForm({ authError }: LoginFormProps) {
           href={QRIT_ADMIN_KAKAO_CHAT_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className={qritBrand.linkLg}
+          className={qritBrand.kakaoLink}
         >
           관리자 카카오톡 1:1 채팅으로 문의해 주세요.
         </a>
