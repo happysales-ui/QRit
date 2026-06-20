@@ -1,30 +1,26 @@
 "use client";
 
-import { useActionState } from "react";
-import {
-  updateProfileAction,
-  type ActionState,
-} from "@/app/dashboard/actions";
 import type { Profile } from "@/types";
 import { AvatarUpload } from "@/components/dashboard/avatar-upload";
 import { USERNAME_HELPER_TEXT } from "@/lib/auth/validation";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
-const initialState: ActionState = {};
+export type ProfileDraft = {
+  username: string;
+  displayName: string;
+  bio: string;
+};
 
 interface ProfileFormProps {
   profile: Profile;
+  draft: ProfileDraft;
+  onDraftChange: (patch: Partial<ProfileDraft>) => void;
 }
 
-export function ProfileForm({ profile }: ProfileFormProps) {
-  const [state, formAction, isPending] = useActionState(
-    updateProfileAction,
-    initialState,
-  );
-
+export function ProfileForm({ profile, draft, onDraftChange }: ProfileFormProps) {
   return (
-    <form action={formAction} className="space-y-4">
+    <div className="space-y-4">
       <div>
         <label htmlFor="username" className="block text-sm font-medium text-zinc-700">
           사용자명
@@ -33,12 +29,15 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           id="username"
           name="username"
           type="text"
-          defaultValue={profile.username}
+          value={draft.username}
+          onChange={(event) => onDraftChange({ username: event.target.value })}
           pattern="[a-z0-9]{3,30}"
           className={qritBrand.inputDashboard}
         />
         <p className="mt-1 text-xs text-zinc-400">{USERNAME_HELPER_TEXT}</p>
-        <p className="mt-0.5 text-xs text-zinc-400">프로필 URL: /{profile.username}</p>
+        <p className="mt-0.5 text-xs text-zinc-400">
+          프로필 주소: /{draft.username || profile.username}
+        </p>
       </div>
 
       <div>
@@ -49,7 +48,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           id="display_name"
           name="display_name"
           type="text"
-          defaultValue={profile.display_name ?? ""}
+          value={draft.displayName}
+          onChange={(event) => onDraftChange({ displayName: event.target.value })}
           className={qritBrand.inputDashboard}
           placeholder="홍길동"
         />
@@ -63,7 +63,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           id="bio"
           name="bio"
           rows={3}
-          defaultValue={profile.bio ?? ""}
+          value={draft.bio}
+          onChange={(event) => onDraftChange({ bio: event.target.value })}
           className={cn(qritBrand.inputDashboard, "resize-none")}
           placeholder="간단한 자기소개를 입력하세요"
         />
@@ -71,29 +72,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
       <AvatarUpload
         currentAvatarUrl={profile.avatar_url}
-        displayName={profile.display_name ?? profile.username}
+        displayName={draft.displayName || profile.display_name || profile.username}
         updatedAt={profile.updated_at}
       />
-
-      {state.error ? (
-        <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">
-          {state.error}
-        </p>
-      ) : null}
-
-      {state.success ? (
-        <p className="rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
-          {state.success}
-        </p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={isPending}
-        className={qritBrand.primaryButton}
-      >
-        {isPending ? "저장 중..." : "프로필 저장"}
-      </button>
-    </form>
+    </div>
   );
 }

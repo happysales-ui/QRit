@@ -327,6 +327,85 @@ export async function uploadAvatarAction(
   }
 }
 
+export async function saveDashboardSettingsAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const { supabase, user } = await requireUser();
+
+    const displayName = String(formData.get("display_name") ?? "").trim();
+    const bio = String(formData.get("bio") ?? "").trim();
+    const usernameInput = String(formData.get("username") ?? "").trim();
+    const defaultLinkId = String(formData.get("default_link_id") ?? "").trim();
+    const defaultLinkValue = defaultLinkId || null;
+
+    const updates: Record<string, string | null> = {
+      display_name: displayName || null,
+      bio: bio || null,
+    };
+
+    if (usernameInput) {
+      const username = normalizeUsername(usernameInput);
+      const usernameError = validateUsername(username);
+
+      if (usernameError) {
+        return { error: usernameError };
+      }
+
+      const available = await isUsernameAvailable(username, user.id);
+      if (!available) {
+        return { error: "이미 사용 중인 사용자명입니다." };
+      }
+
+      updates.username = username;
+    }
+
+    if (defaultLinkValue) {
+      const { data: link } = await supabase
+        .from("links")
+        .select("id")
+        .eq("id", defaultLinkValue)
+        .eq("profile_id", user.id)
+        .eq("is_active", true)
+        .eq("is_hidden", false)
+        .maybeSingle();
+
+      if (!link) {
+        return { error: "선택한 링크를 찾을 수 없습니다." };
+      }
+    }
+
+    updates.default_link_id = defaultLinkValue;
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", user.id)
+      .select("username")
+      .maybeSingle();
+
+    if (error) {
+      const message = error.message ?? "";
+      if (message.includes("default_link_id") || error.code === "23503") {
+        return { error: formatDefaultLinkActionError(error) };
+      }
+      return { error: "설정 저장에 실패했습니다." };
+    }
+
+    if (!profile) {
+      return { error: "설정 저장에 실패했습니다. 프로필을 찾을 수 없습니다." };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/${profile.username}`);
+
+    return { success: "설정이 저장되었습니다." };
+  } catch {
+    return { error: "로그인이 필요합니다." };
+  }
+}
+
 export async function updateDefaultLinkAction(
   _prevState: ActionState,
   formData: FormData,

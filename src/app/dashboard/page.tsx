@@ -4,15 +4,12 @@ import { redirect } from "next/navigation";
 import { logoutAction } from "@/app/(auth)/actions";
 import { authEmailToPhone } from "@/lib/auth/phone-auth";
 import { getSiteUrl } from "@/lib/site-url";
-import { BraceletModeSetting } from "@/components/dashboard/bracelet-mode-setting";
-import { ProfileForm } from "@/components/dashboard/profile-form";
-import { LinksManager } from "@/components/dashboard/links-manager";
+import { DashboardClient } from "@/components/dashboard/dashboard-client";
 import { ServiceExpiryBanner } from "@/components/dashboard/service-expiry-banner";
 import { AdminPanel } from "@/components/dashboard/admin-panel";
 import { isAdmin } from "@/lib/auth/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getLinksForProfile, getProfileForUser } from "@/lib/profile";
-import { linkDashboardTheme } from "@/lib/link-dashboard-theme";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 
 export default async function DashboardPage() {
@@ -46,7 +43,7 @@ export default async function DashboardPage() {
   const displayPhone = profile.phone ?? authEmailToPhone(user.email);
 
   return (
-    <main className={qritBrand.pageBg + " px-4 py-12"}>
+    <main className={qritBrand.pageBg + " px-4 py-12 pb-24"}>
       <div className="mx-auto max-w-2xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -85,29 +82,7 @@ export default async function DashboardPage() {
 
         {isAdmin(profile) ? <AdminPanel /> : null}
 
-        <BraceletModeSetting profile={profile} links={links} />
-
-        <section className={`mb-8 ${qritBrand.card}`}>
-          <h2 className="text-lg font-semibold text-zinc-900">공개 프로필</h2>
-          <p className="mt-2 break-all text-sm text-zinc-600">{publicUrl}</p>
-          <Link
-            href={`/${profile.username}`}
-            target="_blank"
-            className={`mt-3 inline-block ${qritBrand.link}`}
-          >
-            프로필 미리보기 →
-          </Link>
-        </section>
-
-        <section className={`mb-8 ${qritBrand.card}`}>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-900">프로필 설정</h2>
-          <ProfileForm profile={profile} />
-        </section>
-
-        <section className={linkDashboardTheme.section}>
-          <h2 className={`mb-5 ${linkDashboardTheme.sectionTitle}`}>링크 관리</h2>
-          <LinksManager links={links} />
-        </section>
+        <DashboardClient profile={profile} links={links} publicUrl={publicUrl} />
       </div>
     </main>
   );

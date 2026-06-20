@@ -201,13 +201,21 @@ function LinkFormFields({
               💡
             </span>
             <span>
-              은행과 계좌번호를 입력하시면 스캔 시 송금 게이트웨이에서 토스,
-              카카오페이, 네이버페이 등 원하는 앱으로 송금할 수 있습니다.
+              은행과 계좌번호를 입력하면 스캔 시 토스, 카카오페이, 네이버페이 등
+              원하는 앱으로 송금할 수 있습니다.
             </span>
           </p>
         </>
       ) : isContact ? (
         <>
+          <p className="text-sm font-semibold text-[#0d5c63]">연락처 정보 입력</p>
+          <p className={theme.hint}>
+            <span className={theme.hintIcon} aria-hidden>
+              💡
+            </span>
+            <span>예: 이름 홍길동, 연락처 010-1234-5678</span>
+          </p>
+
           <FieldCard label="이름" htmlFor={`link-contact-name-${variant}`}>
             <input
               id={`link-contact-name-${variant}`}
@@ -246,8 +254,7 @@ function LinkFormFields({
               💡
             </span>
             <span>
-              이름과 휴대폰 번호를 입력하면 스캔 시 전화 걸기·번호 저장 화면으로
-              연결됩니다.
+              스캔 시 전화 걸기·연락처 저장 화면으로 연결됩니다.
             </span>
           </p>
         </>
