@@ -51,7 +51,8 @@ export default async function AdminInviteCodesLayout({
           </h1>
         </div>
         <p className="mt-4 text-lg text-zinc-600">
-          회원가입용 인증코드를 생성하고 사용 현황을 확인하세요.
+          오프라인 판매 후 바로 코드를 생성하세요. 회원 정보 없이 메모만
+          추가하면 됩니다.
         </p>
       </div>
       {children}

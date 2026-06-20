@@ -60,6 +60,10 @@ export function InviteCodesPanel({ codes }: { codes: InviteCodeRow[] }) {
     <section className="mx-auto mt-10 max-w-4xl">
       <div className={qritBrand.cardLg}>
         <h2 className="text-lg font-semibold text-zinc-900">코드 생성</h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          사용자명·전화번호 입력 없이 생성합니다. 고객이 /signup에서 코드로
+          가입하면 자동으로 사용 처리됩니다.
+        </p>
         <form action={formAction} className="mt-4 flex flex-wrap items-end gap-3">
           <div className="min-w-[8rem]">
             <label htmlFor="count" className="block text-sm font-medium text-zinc-700">
