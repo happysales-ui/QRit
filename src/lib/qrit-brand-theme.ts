@@ -66,15 +66,15 @@ export const qritBrand = {
   avatarImage:
     "size-24 rounded-full object-cover shadow-lg ring-4 ring-[#F5C518]/50",
   profileAvatarFallback:
-    "flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-[#0d5c63] via-[#147278] to-[#094347] text-lg font-semibold text-white shadow-md ring-[3px] ring-[#F5C518]/50",
+    "flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-[#0d5c63] via-[#147278] to-[#094347] text-xl font-semibold text-white shadow-sm ring-2 ring-[#0d5c63]/10",
   profileAvatarImage:
-    "size-20 rounded-full object-cover shadow-md ring-[3px] ring-[#F5C518]/50",
+    "size-24 rounded-full object-cover shadow-sm ring-2 ring-[#0d5c63]/10",
   profileHeaderCard:
-    "w-full rounded-2xl border border-[#094347]/20 bg-gradient-to-br from-[#0d5c63] via-[#0d5c63] to-[#094347] px-5 py-4 text-center shadow-[0_8px_32px_rgba(13,92,99,0.22)]",
-  profileHeaderName: "mt-3 text-xl font-bold tracking-tight text-white",
-  profileHeaderUsername: "mt-0.5 text-sm font-medium text-[#F5C518]",
+    "flex w-full flex-col items-center px-2 pt-2 pb-1 text-center",
+  profileHeaderName: "mt-4 text-xl font-bold tracking-tight text-[#171717]",
+  profileHeaderUsername: "mt-1 text-sm font-medium text-[#0d5c63]",
   profileHeaderBio:
-    "mt-2 max-w-xs text-sm leading-snug text-white/80 line-clamp-2",
+    "mt-3 max-w-xs text-sm leading-relaxed text-[#64748b] line-clamp-3",
   profileLinkCard:
     "group flex min-h-[3.75rem] w-full items-center gap-3.5 rounded-2xl border border-[#e8f0f1] bg-[#fffef9] px-4 py-4 shadow-[0_2px_12px_rgba(13,92,99,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#d4e8ea] hover:shadow-[0_4px_16px_rgba(13,92,99,0.1)] active:scale-[0.99] sm:min-h-0 sm:gap-3 sm:py-3.5",
   profileLinkTitle:

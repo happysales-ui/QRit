@@ -21,26 +21,24 @@ export function ProfileHeader({ profile, className }: ProfileHeaderProps) {
 
   return (
     <header className={cn(qritBrand.profileHeaderCard, className)}>
-      <div className="relative mx-auto flex flex-col items-center">
-        {profile.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={`${profile.avatar_url}?v=${encodeURIComponent(profile.updated_at)}`}
-            alt={`${displayName} 프로필 사진`}
-            className={qritBrand.profileAvatarImage}
-          />
-        ) : (
-          <div aria-hidden="true" className={qritBrand.profileAvatarFallback}>
-            {initials}
-          </div>
-        )}
-      </div>
+      {profile.avatar_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`${profile.avatar_url}?v=${encodeURIComponent(profile.updated_at)}`}
+          alt={`${displayName} 프로필 사진`}
+          className={qritBrand.profileAvatarImage}
+        />
+      ) : (
+        <div aria-hidden="true" className={qritBrand.profileAvatarFallback}>
+          {initials}
+        </div>
+      )}
 
       <h1 className={qritBrand.profileHeaderName}>{displayName}</h1>
       <p className={qritBrand.profileHeaderUsername}>@{profile.username}</p>
 
       {profile.bio ? (
-        <p className={cn(qritBrand.profileHeaderBio, "mx-auto")}>{profile.bio}</p>
+        <p className={qritBrand.profileHeaderBio}>{profile.bio}</p>
       ) : null}
     </header>
   );
