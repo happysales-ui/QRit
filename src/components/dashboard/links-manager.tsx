@@ -487,10 +487,10 @@ export function LinksManager({ links }: LinksManagerProps) {
 
       <footer className={theme.footer}>
         <p className={theme.footerPrimary}>
-          QRit 웹 시제품은 누구나 무료로 이용할 수 있습니다.
+          QRit은 팔찌 구매 고객 전용 서비스입니다.
         </p>
         <p className={theme.footerSecondary}>
-          © QRit Jewelry. 본 서비스는 시제품 버전이며, 무단 복제 및 배포를 금합니다.
+          © QRit Jewelry. 무단 복제 및 배포를 금합니다.
         </p>
       </footer>
     </div>
