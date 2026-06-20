@@ -14,7 +14,7 @@ const demoProfile: Profile = {
   display_name: "김지우",
   bio: "디자이너 · 크리에이터 · QRit Jewelry 데모 프로필입니다.",
   avatar_url:
-    "https://ui-avatars.com/api/?name=Kim+Jiwoo&background=7c3aed&color=fff&size=256&bold=true",
+    "https://ui-avatars.com/api/?name=Kim+Jiwoo&background=0d5c63&color=fff&size=256&bold=true",
   theme: "default",
   default_link_id: null,
   expired_at: "2028-06-18T00:00:00.000Z",

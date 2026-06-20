@@ -39,8 +39,7 @@ export function ProfilePage({ profile, links }: ProfilePageProps) {
           {activeLinks.map((link) => (
             <ProfileLinkButton
               key={link.id}
-              title={link.title}
-              url={link.url}
+              link={link}
               href={
                 getTransferLinkHref(profile.username, link) ??
                 getContactLinkHref(profile.username, link) ??

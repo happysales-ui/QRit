@@ -59,7 +59,19 @@ export const qritBrand = {
   toast:
     "rounded-xl border border-[#d4e8ea]/90 bg-[#094347] px-4 py-3 text-center text-sm font-medium text-white shadow-lg shadow-[#094347]/25",
   avatarFallback:
-    "flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-[#0d5c63] to-[#147278] text-2xl font-semibold text-white shadow-lg ring-4 ring-white/80",
+    "flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-[#0d5c63] via-[#147278] to-[#094347] text-2xl font-semibold text-white shadow-lg ring-4 ring-[#F5C518]/50",
+  avatarImage:
+    "size-24 rounded-full object-cover shadow-lg ring-4 ring-[#F5C518]/50",
+  profileHeaderCard:
+    "w-full rounded-2xl border border-[#094347]/20 bg-gradient-to-br from-[#0d5c63] via-[#0d5c63] to-[#094347] px-6 py-8 text-center shadow-[0_8px_32px_rgba(13,92,99,0.22)]",
+  profileHeaderName: "mt-5 text-2xl font-bold tracking-tight text-white",
+  profileHeaderUsername: "mt-1 text-sm font-medium text-[#F5C518]",
+  profileHeaderBio: "mt-4 max-w-xs text-[15px] leading-relaxed text-white/80",
+  profileLinkCard:
+    "group flex w-full items-center gap-3 rounded-2xl border border-[#e8f0f1] bg-[#fffef9] px-4 py-3.5 shadow-[0_2px_12px_rgba(13,92,99,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#d4e8ea] hover:shadow-[0_4px_16px_rgba(13,92,99,0.1)] active:scale-[0.99]",
+  profileLinkTitle: "min-w-0 flex-1 font-semibold text-[#0d5c63]",
+  profileLinkChevron:
+    "shrink-0 text-[#3d7a80] transition-transform group-hover:translate-x-0.5",
   username: "mt-1 text-sm font-medium text-[#0d5c63]/80",
   manageLink:
     "inline-flex items-center justify-center rounded-lg border border-[#d4e8ea]/80 bg-white/50 px-3 py-1.5 text-[11px] font-medium tracking-wide text-[#3d7a80] transition-colors hover:border-[#147278]/60 hover:bg-[#e8f4f5]/60 hover:text-[#0d5c63]",
