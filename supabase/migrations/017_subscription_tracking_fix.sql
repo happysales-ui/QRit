@@ -1,11 +1,10 @@
--- Subscription tracking: free_until + subscription_status
--- Reconciles with existing expired_at (same 2-year window); free_until is canonical for subscription UI.
+-- Fix for 016 when public_profiles view update failed (42P16 column rename error).
+-- Safe to re-run: idempotent table changes + drop/recreate view.
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS free_until TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS subscription_status TEXT NOT NULL DEFAULT 'free';
 
--- Backfill free_until from expired_at, then created_at + 2 years
 UPDATE public.profiles
 SET free_until = COALESCE(expired_at, created_at + interval '2 years')
 WHERE free_until IS NULL;
@@ -27,13 +26,9 @@ BEGIN
   END IF;
 END $$;
 
--- Sync expired_at to match free_until for legacy public-profile checks
 UPDATE public.profiles
 SET expired_at = free_until
 WHERE expired_at IS DISTINCT FROM free_until;
-
-ALTER TABLE public.profiles
-  ALTER COLUMN subscription_status SET NOT NULL;
 
 ALTER TABLE public.profiles
   DROP CONSTRAINT IF EXISTS profiles_subscription_status_check;
@@ -42,13 +37,11 @@ ALTER TABLE public.profiles
   ADD CONSTRAINT profiles_subscription_status_check
   CHECK (subscription_status IN ('free', 'expired', 'paid'));
 
--- Mark users whose free period has ended (paid users unchanged)
 UPDATE public.profiles
 SET subscription_status = 'expired'
 WHERE subscription_status = 'free'
   AND free_until < now();
 
--- Keep expired_at aligned when free_until is updated (admin extend, future billing)
 CREATE OR REPLACE FUNCTION public.sync_expired_at_from_free_until()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -138,8 +131,6 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
--- CREATE OR REPLACE cannot add/reorder view columns (PG matches by position).
--- Drop and recreate so free_until can be inserted before created_at.
 DROP VIEW IF EXISTS public.public_profiles;
 
 CREATE VIEW public.public_profiles AS
