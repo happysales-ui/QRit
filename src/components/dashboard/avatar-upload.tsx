@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   uploadAvatarAction,
   type ActionState,
 } from "@/app/dashboard/actions";
+import { resizeImageForAvatar } from "@/lib/resize-image";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,22 @@ function avatarSrc(url: string, updatedAt: string): string {
   return `${url}${separator}v=${encodeURIComponent(updatedAt)}`;
 }
 
+function formatClientResizeError(error: unknown): string {
+  if (error instanceof Error) {
+    switch (error.message) {
+      case "IMAGE_LOAD_FAILED":
+        return "이미지를 불러올 수 없습니다. 다른 파일을 선택해 주세요.";
+      case "CANVAS_EXPORT_FAILED":
+      case "CANVAS_CONTEXT_FAILED":
+        return "이미지 처리에 실패했습니다. 브라우저를 새로고침한 뒤 다시 시도해 주세요.";
+      default:
+        break;
+    }
+  }
+
+  return "이미지 처리 중 오류가 발생했습니다. 다시 시도해 주세요.";
+}
+
 export function AvatarUpload({
   currentAvatarUrl,
   displayName,
@@ -44,35 +61,70 @@ export function AvatarUpload({
   );
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
 
   const avatarUrl = state.avatarUrl ?? previewUrl ?? currentAvatarUrl;
   const cacheKey = state.updatedAt ?? updatedAt;
   const error = clientError ?? state.error;
   const success = state.success;
+  const isBusy = isPending || isResizing;
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    };
+  }, []);
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     setClientError(null);
     const file = event.target.files?.[0];
+    event.target.value = "";
+
     if (!file) {
       return;
     }
 
     if (!ACCEPTED_TYPES.has(file.type)) {
       setClientError("JPEG, PNG, WebP 이미지만 업로드할 수 있습니다.");
-      event.target.value = "";
       return;
     }
 
-    if (file.size > MAX_SIZE) {
-      setClientError("파일 크기는 2MB 이하여야 합니다.");
-      event.target.value = "";
-      return;
-    }
+    setIsResizing(true);
 
-    setPreviewUrl(URL.createObjectURL(file));
-    formRef.current?.requestSubmit();
+    try {
+      const resizedFile = await resizeImageForAvatar(file, "jpeg");
+
+      if (resizedFile.size > MAX_SIZE) {
+        setClientError(
+          "이미지를 줄였지만 파일이 여전히 2MB를 초과합니다. 더 작은 사진을 선택해 주세요.",
+        );
+        return;
+      }
+
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+
+      const nextPreviewUrl = URL.createObjectURL(resizedFile);
+      previewUrlRef.current = nextPreviewUrl;
+      setPreviewUrl(nextPreviewUrl);
+
+      const formData = new FormData();
+      formData.set("avatar", resizedFile);
+
+      await formAction(formData);
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("[avatar-upload] resize or upload failed", error);
+      }
+      setClientError(formatClientResizeError(error));
+    } finally {
+      setIsResizing(false);
+    }
   }
 
   return (
@@ -99,30 +151,36 @@ export function AvatarUpload({
         )}
 
         <div className="flex min-w-0 flex-col gap-2">
-          <form ref={formRef} action={formAction}>
-            <input
-              ref={inputRef}
-              type="file"
-              name="avatar"
-              accept={ACCEPT}
-              className="sr-only"
-              onChange={handleFileChange}
-            />
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => inputRef.current?.click()}
-              className={qritBrand.primaryButton}
-            >
-              {isPending ? "업로드 중..." : "사진 선택"}
-            </button>
-          </form>
-          <p className="text-xs text-zinc-400">JPEG, PNG, WebP · 최대 2MB</p>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={ACCEPT}
+            className="sr-only"
+            onChange={handleFileChange}
+          />
+          <button
+            type="button"
+            disabled={isBusy}
+            onClick={() => inputRef.current?.click()}
+            className={qritBrand.primaryButton}
+          >
+            {isResizing
+              ? "이미지 처리 중..."
+              : isPending
+                ? "업로드 중..."
+                : "사진 선택"}
+          </button>
+          <p className="text-xs text-zinc-400">
+            JPEG, PNG, WebP · 최대 800px로 자동 조정 · 2MB 이하
+          </p>
         </div>
       </div>
 
       {error ? (
-        <p className="mt-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">
+        <p
+          role="alert"
+          className="mt-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600"
+        >
           {error}
         </p>
       ) : null}

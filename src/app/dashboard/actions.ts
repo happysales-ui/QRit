@@ -100,6 +100,60 @@ function formatLinkActionError(
   return fallback;
 }
 
+function formatAvatarUploadError(error: SupabaseLikeError): string {
+  const fallback = "프로필 이미지 업로드에 실패했습니다.";
+
+  if (process.env.NODE_ENV === "development") {
+    console.error("[uploadAvatarAction]", error);
+  }
+
+  const message = error.message ?? "";
+  const code = error.code ?? "";
+  const devDetail =
+    process.env.NODE_ENV === "development"
+      ? formatDevSupabaseDetail(error)
+      : "";
+
+  if (
+    message.includes("Bucket not found") ||
+    (message.includes("bucket") && message.includes("not found"))
+  ) {
+    const hint =
+      "Supabase Storage에 avatars 버킷이 없습니다. supabase/migrations/012_avatars_storage.sql을 실행해 주세요.";
+    return devDetail ? `${fallback} (${hint} — ${devDetail})` : `${fallback} (${hint})`;
+  }
+
+  if (
+    message.includes("row-level security") ||
+    message.includes("RLS") ||
+    code === "42501"
+  ) {
+    const hint =
+      "Storage 권한(RLS) 오류입니다. 012_avatars_storage.sql의 정책이 적용됐는지 확인해 주세요.";
+    return devDetail ? `${fallback} (${hint} — ${devDetail})` : `${fallback} (${hint})`;
+  }
+
+  if (
+    message.includes("file size") ||
+    message.includes("Payload too large") ||
+    message.includes("maximum allowed size")
+  ) {
+    const hint = "파일 크기가 2MB를 초과합니다. 더 작은 이미지를 선택해 주세요.";
+    return devDetail ? `${hint} (${devDetail})` : hint;
+  }
+
+  if (message.includes("mime type") || message.includes("not allowed")) {
+    const hint = "JPEG, PNG, WebP 형식만 업로드할 수 있습니다.";
+    return devDetail ? `${hint} (${devDetail})` : hint;
+  }
+
+  if (devDetail) {
+    return `${fallback} (${devDetail})`;
+  }
+
+  return `${fallback} Supabase Storage(avatars 버킷) 설정을 확인해 주세요.`;
+}
+
 function formatDefaultLinkActionError(error: SupabaseLikeError): string {
   const fallback = "작동 모드 저장에 실패했습니다.";
 
@@ -229,13 +283,7 @@ export async function uploadAvatarAction(
       });
 
     if (uploadError) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("[uploadAvatarAction]", uploadError);
-      }
-      return {
-        error:
-          "이미지 업로드에 실패했습니다. Supabase Storage(avatars 버킷) 설정을 확인해 주세요.",
-      };
+      return { error: formatAvatarUploadError(uploadError) };
     }
 
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
@@ -249,7 +297,14 @@ export async function uploadAvatarAction(
       .maybeSingle();
 
     if (updateError || !profile) {
-      return { error: "프로필 이미지 저장에 실패했습니다." };
+      if (process.env.NODE_ENV === "development" && updateError) {
+        console.error("[uploadAvatarAction] profile update failed", updateError);
+      }
+      const detail =
+        process.env.NODE_ENV === "development" && updateError
+          ? ` (${formatDevSupabaseDetail(updateError)})`
+          : "";
+      return { error: `프로필 이미지 URL 저장에 실패했습니다.${detail}` };
     }
 
     revalidatePath("/dashboard");
