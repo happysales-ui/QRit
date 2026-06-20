@@ -40,6 +40,15 @@ export function getSupabaseAnonKey(): string {
   return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key";
 }
 
+/** Server-only: bypasses RLS for invite code consumption after signup. */
+export function getSupabaseServiceRoleKey(): string {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+}
+
+export function isSupabaseServiceRoleConfigured(): boolean {
+  return getSupabaseServiceRoleKey().trim().length > 0;
+}
+
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

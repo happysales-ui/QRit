@@ -34,12 +34,20 @@ export function AdminPanel() {
             고객 조회, 서비스 만료일 연장, QR 제작 도구
           </p>
         </div>
-        <Link
-          href="/admin/maker"
-          className={`shrink-0 ${qritBrand.primaryButton}`}
-        >
-          QR 제작 →
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/admin/invite-codes"
+            className={qritBrand.secondaryButton + " !w-auto px-4 py-2.5 text-sm"}
+          >
+            인증코드 →
+          </Link>
+          <Link
+            href="/admin/maker"
+            className={`shrink-0 ${qritBrand.primaryButton}`}
+          >
+            QR 제작 →
+          </Link>
+        </div>
       </div>
 
       <form action={lookupFormAction} className="flex flex-wrap gap-3">

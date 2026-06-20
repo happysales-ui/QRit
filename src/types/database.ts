@@ -107,6 +107,35 @@ export interface Database {
         Insert: never;
         Update: never;
       };
+      invite_codes: {
+        Row: {
+          id: string;
+          code: string;
+          status: "unused" | "used";
+          created_at: string;
+          used_at: string | null;
+          used_by_user_id: string | null;
+          note: string | null;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          status?: "unused" | "used";
+          created_at?: string;
+          used_at?: string | null;
+          used_by_user_id?: string | null;
+          note?: string | null;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          status?: "unused" | "used";
+          created_at?: string;
+          used_at?: string | null;
+          used_by_user_id?: string | null;
+          note?: string | null;
+        };
+      };
     };
     Views: {
       public_profiles: {
@@ -132,6 +161,10 @@ export interface Database {
       };
       is_phone_taken: {
         Args: { p_phone: string };
+        Returns: boolean;
+      };
+      verify_invite_code: {
+        Args: { p_code: string };
         Returns: boolean;
       };
     };

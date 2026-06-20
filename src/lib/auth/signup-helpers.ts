@@ -1,4 +1,7 @@
 import type { AuthError, AuthResponse } from "@supabase/supabase-js";
+import { normalizeInviteCode } from "@/lib/auth/invite-codes";
+import { createServiceClient } from "@/lib/supabase/service";
+import { isSupabaseServiceRoleConfigured } from "@/lib/supabase/env";
 
 export type SignupActionResult = {
   error?: string;
@@ -102,4 +105,36 @@ export function resolveSignUpResult(
   return {
     error: "회원가입에 실패했습니다. 입력 정보를 확인하고 다시 시도해 주세요.",
   };
+}
+
+export async function consumeInviteCode(
+  code: string,
+  userId: string,
+): Promise<boolean> {
+  if (!isSupabaseServiceRoleConfigured()) {
+    devSignupLog("SUPABASE_SERVICE_ROLE_KEY missing; invite code not consumed");
+    return false;
+  }
+
+  const normalized = normalizeInviteCode(code);
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from("invite_codes")
+    .update({
+      status: "used",
+      used_at: new Date().toISOString(),
+      used_by_user_id: userId,
+    })
+    .eq("code", normalized)
+    .eq("status", "unused")
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    devSignupLog("consume invite code error", error);
+    return false;
+  }
+
+  return data !== null;
 }

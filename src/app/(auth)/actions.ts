@@ -12,7 +12,13 @@ import {
   mapProfileQueryError,
   mapSignUpError,
   resolveSignUpResult,
+  consumeInviteCode,
 } from "@/lib/auth/signup-helpers";
+import {
+  INVITE_CODE_INVALID_MESSAGE,
+  isValidInviteCodeFormat,
+  normalizeInviteCode,
+} from "@/lib/auth/invite-codes";
 import {
   normalizePhone,
   normalizeUsername,
@@ -60,13 +66,18 @@ export async function signupAction(
   formData: FormData,
 ): Promise<AuthActionState> {
   try {
+    const inviteCode = normalizeInviteCode(String(formData.get("inviteCode") ?? ""));
     const phone = normalizePhone(String(formData.get("phone") ?? ""));
     const password = String(formData.get("password") ?? "");
     const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
     const username = normalizeUsername(String(formData.get("username") ?? ""));
 
-    if (!phone || !password || !passwordConfirm || !username) {
+    if (!inviteCode || !phone || !password || !passwordConfirm || !username) {
       return { error: "모든 필드를 입력해 주세요." };
+    }
+
+    if (!isValidInviteCodeFormat(inviteCode)) {
+      return { error: INVITE_CODE_INVALID_MESSAGE };
     }
 
     const phoneError = validatePhone(phone);
@@ -92,6 +103,20 @@ export async function signupAction(
     }
 
     const supabase = await createClient();
+
+    const { data: inviteValid, error: inviteVerifyError } = await supabase.rpc(
+      "verify_invite_code",
+      { p_code: inviteCode },
+    );
+
+    if (inviteVerifyError) {
+      devSignupLog("verify_invite_code error", inviteVerifyError);
+      return { error: INVITE_CODE_INVALID_MESSAGE };
+    }
+
+    if (!inviteValid) {
+      return { error: INVITE_CODE_INVALID_MESSAGE };
+    }
 
     const { data: usernameTaken, error: usernameQueryError } = await supabase.rpc(
       "is_username_taken",
@@ -131,7 +156,13 @@ export async function signupAction(
       return { error: mapSignUpError(error) };
     }
 
-    return resolveSignUpResult(data);
+    const result = resolveSignUpResult(data);
+
+    if (data.user?.id && !result.error) {
+      await consumeInviteCode(inviteCode, data.user.id);
+    }
+
+    return result;
   } catch (error) {
     devSignupLog("unexpected error", error);
     return {

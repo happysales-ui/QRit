@@ -77,6 +77,27 @@ export function SignupForm() {
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
+          <label htmlFor="inviteCode" className="block text-sm font-medium text-zinc-700">
+            인증코드
+          </label>
+          <input
+            id="inviteCode"
+            name="inviteCode"
+            type="text"
+            required
+            maxLength={6}
+            autoComplete="off"
+            spellCheck={false}
+            className={cn(qritBrand.input, "font-mono uppercase tracking-widest")}
+            placeholder="A3X9K2"
+            onChange={(event) => {
+              event.target.value = event.target.value.toUpperCase();
+            }}
+          />
+          <p className="mt-1 text-xs text-zinc-400">구매 시 안내받은 6자리 코드를 입력하세요.</p>
+        </div>
+
+        <div>
           <label htmlFor="username" className="block text-sm font-medium text-zinc-700">
             사용자명
           </label>
