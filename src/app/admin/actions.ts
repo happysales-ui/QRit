@@ -22,7 +22,7 @@ export async function unlockAdminGateAction(
   const cookieValue = createAdminGateCookieValue();
 
   if (!cookieValue) {
-    return { error: "ADMIN_PAGE_PASSWORD 환경 변수가 설정되지 않았습니다." };
+    return { error: "ADMIN_PAGE_PASSWORD 환경변수가 설정되지 않았습니다." };
   }
 
   if (!verifyAdminPagePassword(password)) {

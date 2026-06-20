@@ -1,5 +1,7 @@
-import { requireAdminAccess } from "@/lib/auth/admin";
 import { InviteCodesPanel } from "@/app/admin/invite-codes/invite-codes-panel";
+import { requireAdminAccess } from "@/lib/auth/admin";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminInviteCodesPage() {
   const { supabase } = await requireAdminAccess();

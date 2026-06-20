@@ -87,16 +87,13 @@ export async function requireAdminProfile() {
 }
 
 export function getAdminAccessErrorMessage(error: unknown): string {
+  if (!isAdminPasswordConfigured()) {
+    return "ADMIN_PAGE_PASSWORD 환경변수가 설정되지 않았습니다.";
+  }
+
   if (error instanceof Error && error.message === "FORBIDDEN") {
-    if (isAdminPasswordConfigured()) {
-      return "관리자 인증이 필요합니다. /admin 페이지에서 비밀번호를 입력하거나, is_admin 계정으로 로그인해 주세요.";
-    }
-    return "관리자 권한이 필요합니다.";
+    return "관리자 인증이 필요합니다. 비밀번호를 입력하거나 is_admin 계정으로 로그인해 주세요.";
   }
 
-  if (isAdminPasswordConfigured()) {
-    return "관리자 인증이 필요합니다. /admin 페이지에서 비밀번호를 입력하거나 로그인해 주세요.";
-  }
-
-  return "로그인이 필요합니다.";
+  return "관리자 인증이 필요합니다. 페이지를 새로고침한 뒤 비밀번호를 입력해 주세요.";
 }

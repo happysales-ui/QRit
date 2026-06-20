@@ -63,5 +63,5 @@ export const adminGateCookieOptions = {
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
   path: "/",
-  maxAge: 60 * 60 * 24 * 7,
+  maxAge: 60 * 60 * 8,
 };

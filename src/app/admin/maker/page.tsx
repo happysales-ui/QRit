@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { QrGenerator } from "@/components/qr/qr-generator";
+import { requireAdminAccess } from "@/lib/auth/admin";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 
-export default function AdminMakerPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminMakerPage() {
+  await requireAdminAccess();
   return (
     <>
       <section className="mt-12">

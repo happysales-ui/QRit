@@ -1,5 +1,7 @@
-import { requireAdminAccess } from "@/lib/auth/admin";
 import { UsersPanel, type UserSubscriptionRow } from "@/app/admin/users/users-panel";
+import { requireAdminAccess } from "@/lib/auth/admin";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
   const { supabase } = await requireAdminAccess();
