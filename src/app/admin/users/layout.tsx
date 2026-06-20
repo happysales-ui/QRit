@@ -1,31 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-import { redirect } from "next/navigation";
-import { isAdmin } from "@/lib/auth/admin";
-import { getProfileForUser } from "@/lib/profile";
-import { createClient } from "@/lib/supabase/server";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 
-export default async function AdminUsersLayout({
+export default function AdminUsersLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login?next=/admin/users");
-  }
-
-  const profile = await getProfileForUser(user.id);
-
-  if (!isAdmin(profile)) {
-    redirect("/dashboard");
-  }
-
   return (
     <main className={qritBrand.pageBg + " min-h-screen px-4 py-16"}>
       <header className="mx-auto flex max-w-5xl items-center justify-between gap-4">

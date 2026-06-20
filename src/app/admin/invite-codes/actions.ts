@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminProfile } from "@/lib/auth/admin";
+import {
+  getAdminAccessErrorMessage,
+  requireAdminAccess,
+} from "@/lib/auth/admin";
 import { generateInviteCode } from "@/lib/auth/invite-codes";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -53,7 +56,7 @@ export async function createInviteCodesAction(
   formData: FormData,
 ): Promise<InviteCodesActionState> {
   try {
-    await requireAdminProfile();
+    await requireAdminAccess();
 
     const count = Number(formData.get("count") ?? 1);
     const noteRaw = String(formData.get("note") ?? "").trim();
@@ -78,9 +81,6 @@ export async function createInviteCodesAction(
           : `인증코드 ${created}개를 생성했습니다.`,
     };
   } catch (error) {
-    if (error instanceof Error && error.message === "FORBIDDEN") {
-      return { error: "관리자 권한이 필요합니다." };
-    }
-    return { error: "로그인이 필요합니다." };
+    return { error: getAdminAccessErrorMessage(error) };
   }
 }

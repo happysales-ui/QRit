@@ -1,8 +1,8 @@
-import { requireAdminProfile } from "@/lib/auth/admin";
+import { requireAdminAccess } from "@/lib/auth/admin";
 import { InviteCodesPanel } from "@/app/admin/invite-codes/invite-codes-panel";
 
 export default async function AdminInviteCodesPage() {
-  const { supabase } = await requireAdminProfile();
+  const { supabase } = await requireAdminAccess();
 
   const { data: codes, error } = await supabase
     .from("invite_codes")

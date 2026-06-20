@@ -1,8 +1,8 @@
-import { requireAdminProfile } from "@/lib/auth/admin";
+import { requireAdminAccess } from "@/lib/auth/admin";
 import { UsersPanel, type UserSubscriptionRow } from "@/app/admin/users/users-panel";
 
 export default async function AdminUsersPage() {
-  const { supabase } = await requireAdminProfile();
+  const { supabase } = await requireAdminAccess();
 
   const { data: users, error } = await supabase
     .from("profiles")
