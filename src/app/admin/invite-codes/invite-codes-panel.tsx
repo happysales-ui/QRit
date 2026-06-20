@@ -33,7 +33,13 @@ function formatDateTime(iso: string | null): string {
   });
 }
 
-export function InviteCodesPanel({ codes }: { codes: InviteCodeRow[] }) {
+export function InviteCodesPanel({
+  codes,
+  authenticated = true,
+}: {
+  codes: InviteCodeRow[];
+  authenticated?: boolean;
+}) {
   const [state, formAction, isPending] = useActionState(
     createInviteCodesAction,
     initialState,
@@ -54,6 +60,10 @@ export function InviteCodesPanel({ codes }: { codes: InviteCodeRow[] }) {
     } catch {
       setCopiedCode(null);
     }
+  }
+
+  if (!authenticated) {
+    return null;
   }
 
   return (

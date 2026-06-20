@@ -110,5 +110,5 @@ export function InviteCodesPageClient({
     return <InviteCodesPasswordGate onAuthenticated={handleAuthenticated} />;
   }
 
-  return <InviteCodesPanel codes={initialCodes} />;
+  return <InviteCodesPanel codes={initialCodes} authenticated={authenticated} />;
 }

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import {
   getAdminAccessErrorMessage,
-  requireAdminAccess,
+  requireInviteCodesAccess,
 } from "@/lib/auth/admin";
 import {
   ADMIN_GATE_COOKIE,
@@ -91,7 +91,7 @@ export async function createInviteCodesAction(
   formData: FormData,
 ): Promise<InviteCodesActionState> {
   try {
-    await requireAdminAccess();
+    await requireInviteCodesAccess();
 
     const count = Number(formData.get("count") ?? 1);
     const noteRaw = String(formData.get("note") ?? "").trim();

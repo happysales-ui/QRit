@@ -33,6 +33,25 @@ export async function getAdminAuthStatus(): Promise<{
   };
 }
 
+/** Invite-codes page: gate cookie only (matches server actions; avoids is_admin/session mismatch). */
+export async function getInviteCodesAuthStatus(): Promise<{
+  isAuthenticated: boolean;
+  passwordConfigured: boolean;
+}> {
+  return {
+    isAuthenticated: await hasValidAdminGateCookie(),
+    passwordConfigured: isAdminPasswordConfigured(),
+  };
+}
+
+export async function requireInviteCodesAccess(): Promise<SupabaseClient> {
+  if (!(await hasValidAdminGateCookie())) {
+    throw new Error("FORBIDDEN");
+  }
+
+  return createServiceClient();
+}
+
 export async function hasAdminAccess(): Promise<boolean> {
   if (await hasValidAdminGateCookie()) {
     return true;
@@ -102,7 +121,7 @@ export function getAdminAccessErrorMessage(error: unknown): string {
   }
 
   if (error instanceof Error && error.message === "FORBIDDEN") {
-    return "관리자 인증이 필요합니다. 비밀번호를 입력하거나 is_admin 계정으로 로그인해 주세요.";
+    return "관리자 인증이 필요합니다. 비밀번호를 입력해 주세요.";
   }
 
   return "관리자 인증이 필요합니다. 페이지를 새로고침한 뒤 비밀번호를 입력해 주세요.";

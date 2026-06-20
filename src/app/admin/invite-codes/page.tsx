@@ -2,17 +2,20 @@ import {
   InviteCodesPageClient,
 } from "@/app/admin/invite-codes/invite-codes-page-client";
 import type { InviteCodeRow } from "@/app/admin/invite-codes/invite-codes-panel";
-import { getAdminAuthStatus, requireAdminAccess } from "@/lib/auth/admin";
+import {
+  getInviteCodesAuthStatus,
+  requireInviteCodesAccess,
+} from "@/lib/auth/admin";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminInviteCodesPage() {
-  const { isAuthenticated, passwordConfigured } = await getAdminAuthStatus();
+  const { isAuthenticated, passwordConfigured } = await getInviteCodesAuthStatus();
 
   let codes: InviteCodeRow[] = [];
 
   if (isAuthenticated) {
-    const { supabase } = await requireAdminAccess();
+    const supabase = await requireInviteCodesAccess();
 
     const { data, error } = await supabase
       .from("invite_codes")
