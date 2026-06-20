@@ -20,6 +20,7 @@ type InviteCodesPageClientProps = {
   initialAuthenticated: boolean;
   passwordConfigured: boolean;
   initialCodes: InviteCodeRow[];
+  serviceRoleConfigured: boolean;
 };
 
 function InviteCodesPasswordGate({
@@ -88,6 +89,7 @@ export function InviteCodesPageClient({
   initialAuthenticated,
   passwordConfigured,
   initialCodes,
+  serviceRoleConfigured,
 }: InviteCodesPageClientProps) {
   const router = useRouter();
   const [authenticatedOverride, setAuthenticatedOverride] = useState(false);
@@ -108,6 +110,10 @@ export function InviteCodesPageClient({
 
   if (!authenticated) {
     return <InviteCodesPasswordGate onAuthenticated={handleAuthenticated} />;
+  }
+
+  if (!serviceRoleConfigured) {
+    return null;
   }
 
   return <InviteCodesPanel codes={initialCodes} authenticated={authenticated} />;

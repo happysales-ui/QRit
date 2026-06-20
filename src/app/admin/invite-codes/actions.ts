@@ -13,6 +13,10 @@ import {
   verifyAdminPagePassword,
 } from "@/lib/auth/admin-gate";
 import { generateInviteCode } from "@/lib/auth/invite-codes";
+import {
+  getSupabaseServiceRoleConfigErrorMessage,
+  isSupabaseServiceRoleConfigured,
+} from "@/lib/supabase/env";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type AdminPasswordActionState = {
@@ -54,6 +58,10 @@ async function insertUniqueCodes(
   count: number,
   note: string | null,
 ): Promise<{ created: number; error?: string }> {
+  if (!isSupabaseServiceRoleConfigured()) {
+    return { created: 0, error: getSupabaseServiceRoleConfigErrorMessage() };
+  }
+
   const supabase = createServiceClient();
   let created = 0;
 

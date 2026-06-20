@@ -1,10 +1,15 @@
-import { type NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  const response = await updateSession(request);
-  response.headers.set("x-pathname", request.nextUrl.pathname);
-  return response;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
+  return updateSession(
+    new NextRequest(request, {
+      headers: requestHeaders,
+    }),
+  );
 }
 
 export const config = {

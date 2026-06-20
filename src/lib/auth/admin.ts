@@ -4,6 +4,11 @@ import {
 } from "@/lib/auth/admin-gate";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  getSupabaseServiceRoleConfigErrorMessage,
+  isSupabaseServiceRoleConfigured,
+  SUPABASE_SERVICE_ROLE_NOT_CONFIGURED,
+} from "@/lib/supabase/env";
 import { getProfileForUser } from "@/lib/profile";
 import type { Profile } from "@/types";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
@@ -49,6 +54,10 @@ export async function requireInviteCodesAccess(): Promise<SupabaseClient> {
     throw new Error("FORBIDDEN");
   }
 
+  if (!isSupabaseServiceRoleConfigured()) {
+    throw new Error(SUPABASE_SERVICE_ROLE_NOT_CONFIGURED);
+  }
+
   return createServiceClient();
 }
 
@@ -72,6 +81,10 @@ export async function hasAdminAccess(): Promise<boolean> {
 
 export async function requireAdminAccess(): Promise<AdminAccess> {
   if (await hasValidAdminGateCookie()) {
+    if (!isSupabaseServiceRoleConfigured()) {
+      throw new Error(SUPABASE_SERVICE_ROLE_NOT_CONFIGURED);
+    }
+
     return { via: "gate", supabase: createServiceClient() };
   }
 
@@ -118,6 +131,13 @@ export async function requireAdminProfile() {
 export function getAdminAccessErrorMessage(error: unknown): string {
   if (!isAdminPasswordConfigured()) {
     return "ADMIN_PAGE_PASSWORD 환경변수가 설정되지 않았습니다.";
+  }
+
+  if (
+    error instanceof Error &&
+    error.message === SUPABASE_SERVICE_ROLE_NOT_CONFIGURED
+  ) {
+    return getSupabaseServiceRoleConfigErrorMessage();
   }
 
   if (error instanceof Error && error.message === "FORBIDDEN") {

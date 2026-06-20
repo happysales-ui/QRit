@@ -49,6 +49,25 @@ export function isSupabaseServiceRoleConfigured(): boolean {
   return getSupabaseServiceRoleKey().trim().length > 0;
 }
 
+export const SUPABASE_SERVICE_ROLE_NOT_CONFIGURED =
+  "SUPABASE_SERVICE_ROLE_NOT_CONFIGURED";
+
+/** Server-side: Vercel vs local hint for missing service role key. */
+export function getSupabaseServiceRoleConfigErrorMessage(): string {
+  if (process.env.VERCEL === "1") {
+    return (
+      "SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되지 않았습니다. " +
+      "Vercel → Settings → Environment Variables에 Supabase Dashboard → Project Settings → API의 " +
+      "service_role 키를 추가한 뒤 재배포해 주세요."
+    );
+  }
+
+  return (
+    "SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되지 않았습니다. " +
+    "프로젝트 루트 .env.local에 Supabase service_role 키를 추가한 뒤 서버를 재시작해 주세요."
+  );
+}
+
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
