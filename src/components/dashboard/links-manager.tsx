@@ -16,6 +16,8 @@ import {
   KOREAN_BANKS,
   parseTransferUrl,
 } from "@/lib/bank-transfer";
+import { formatContactLinkSummary } from "@/lib/contact-link";
+import { buildMecardUrl, parseContactFieldsFromUrl } from "@/lib/contact-vcf";
 import { linkDashboardTheme as theme } from "@/lib/link-dashboard-theme";
 import {
   BANK_TRANSFER_LINK_TITLE,
@@ -82,11 +84,17 @@ function LinkFormFields({
           ? parseTransferUrl(initialUrl)
           : null
       : null;
+  const parsedContact =
+    initialPreset === CONTACT_LINK_TITLE && initialUrl
+      ? parseContactFieldsFromUrl(initialUrl)
+      : { name: "", tel: "" };
   const [titlePreset, setTitlePreset] = useState<LinkTitlePreset>(initialPreset);
   const [customTitle, setCustomTitle] = useState(inferred.customTitle);
   const [url, setUrl] = useState(() =>
     getInitialLinkUrl(initialPreset, initialUrl),
   );
+  const [contactName, setContactName] = useState(parsedContact.name);
+  const [contactTel, setContactTel] = useState(parsedContact.tel);
   const [bankCode, setBankCode] = useState(parsedTransfer?.bankCode ?? "");
   const [accountNo, setAccountNo] = useState(parsedTransfer?.accountNo ?? "");
 
@@ -94,12 +102,19 @@ function LinkFormFields({
   const isCustom = titlePreset === CUSTOM_LINK_TITLE;
   const isContact = titlePreset === CONTACT_LINK_TITLE;
   const isBankTransfer = titlePreset === BANK_TRANSFER_LINK_TITLE;
-  const inputClassName = isContact ? theme.mecardInput : theme.input;
+  const inputClassName = theme.input;
 
   function handlePresetChange(nextPreset: LinkTitlePreset) {
     setUrl((currentUrl) =>
       resolveUrlOnPresetChange(titlePreset, nextPreset, currentUrl),
     );
+    if (nextPreset === CONTACT_LINK_TITLE) {
+      setContactName("");
+      setContactTel("");
+    } else if (titlePreset === CONTACT_LINK_TITLE) {
+      setContactName("");
+      setContactTel("");
+    }
     if (nextPreset === BANK_TRANSFER_LINK_TITLE) {
       setBankCode("");
       setAccountNo("");
@@ -191,29 +206,66 @@ function LinkFormFields({
             </span>
           </p>
         </>
+      ) : isContact ? (
+        <>
+          <FieldCard label="이름" htmlFor={`link-contact-name-${variant}`}>
+            <input
+              id={`link-contact-name-${variant}`}
+              name="contact_name"
+              type="text"
+              required
+              value={contactName}
+              onChange={(event) => setContactName(event.target.value)}
+              placeholder="표시할 이름을 입력하세요"
+              className={theme.input}
+            />
+          </FieldCard>
+
+          <FieldCard label="연락처" htmlFor={`link-contact-tel-${variant}`}>
+            <input
+              id={`link-contact-tel-${variant}`}
+              name="contact_tel"
+              type="tel"
+              inputMode="tel"
+              required
+              value={contactTel}
+              onChange={(event) => setContactTel(event.target.value)}
+              placeholder="01012345678"
+              className={theme.input}
+            />
+          </FieldCard>
+
+          <input
+            type="hidden"
+            name="url"
+            value={buildMecardUrl(contactName, contactTel)}
+          />
+
+          <p className={theme.hint}>
+            <span className={theme.hintIcon} aria-hidden>
+              💡
+            </span>
+            <span>
+              이름과 휴대폰 번호를 입력하면 스캔 시 전화 걸기·번호 저장 화면으로
+              연결됩니다.
+            </span>
+          </p>
+        </>
       ) : (
         <FieldCard
-          label={isContact ? "연락처 (MECARD)" : "링크 URL"}
+          label="링크 URL"
           htmlFor={`link-url-${variant}`}
         >
           <input
             id={`link-url-${variant}`}
             name="url"
-            type={isContact ? "text" : "url"}
+            type="url"
             required
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             placeholder={getLinkUrlPlaceholder(titlePreset)}
             className={inputClassName}
           />
-          {isContact ? (
-            <p className={theme.hint}>
-              <span className={theme.hintIcon} aria-hidden>
-                💡
-              </span>
-              <span>위 입력창에서 이름과 연락처만 수정해서 등록하세요.</span>
-            </p>
-          ) : null}
         </FieldCard>
       )}
     </div>
@@ -279,7 +331,8 @@ function LinkItem({ link, index, total }: { link: LinkBlock; index: number; tota
                 link.is_hidden && "text-[#b0c4c8]",
               )}
             >
-              {formatTransferLinkSummary(link)}
+              {formatContactLinkSummary(link) ??
+                formatTransferLinkSummary(link)}
             </p>
             {deleteState.error ? (
               <p className="mt-2 text-sm text-red-600">{deleteState.error}</p>

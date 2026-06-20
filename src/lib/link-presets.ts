@@ -1,5 +1,11 @@
 import { normalizeUrl, validateUrl } from "@/lib/auth/validation";
 import {
+  buildContactLinkPayload,
+  sanitizeContactUrl,
+  validateContactFields,
+  validateMecardContactUrl,
+} from "@/lib/contact-vcf";
+import {
   BANK_TRANSFER_LINK_TITLE,
   isTransferUrl,
   parseTransferUrl,
@@ -92,7 +98,7 @@ export function isBankTransferLinkTitle(title: string): boolean {
 }
 
 export function isMecardUrl(url: string): boolean {
-  return MECARD_PREFIX_REGEX.test(url.trim());
+  return MECARD_PREFIX_REGEX.test(sanitizeContactUrl(url));
 }
 
 export function isContactMecardTemplate(url: string): boolean {
@@ -158,12 +164,21 @@ export function validateLinkUrl(
 
   const trimmed = url.trim();
 
+  if (isContactLinkTitle(title)) {
+    const contactName = String(formData?.get("contact_name") ?? "").trim();
+    const contactTel = String(formData?.get("contact_tel") ?? "").trim();
+
+    if (contactName || contactTel) {
+      return validateContactFields(contactName, contactTel);
+    }
+  }
+
   if (!trimmed) {
     return "URL을 입력해 주세요.";
   }
 
-  if (isContactLinkTitle(title) && isMecardUrl(trimmed)) {
-    return null;
+  if (isMecardUrl(trimmed)) {
+    return validateMecardContactUrl(sanitizeContactUrl(trimmed));
   }
 
   return validateUrl(url);
@@ -193,8 +208,20 @@ export function normalizeLinkUrl(
 
   const trimmed = url.trim();
 
-  if (isContactLinkTitle(title) && isMecardUrl(trimmed)) {
-    return trimmed;
+  if (isContactLinkTitle(title)) {
+    if (formData) {
+      const contactName = String(formData.get("contact_name") ?? "").trim();
+      const contactTel = String(formData.get("contact_tel") ?? "").trim();
+
+      if (contactName || contactTel) {
+        return buildContactLinkPayload(formData).url;
+      }
+    }
+
+    const sanitized = sanitizeContactUrl(trimmed);
+    if (isMecardUrl(sanitized)) {
+      return sanitized;
+    }
   }
 
   return normalizeUrl(url);
