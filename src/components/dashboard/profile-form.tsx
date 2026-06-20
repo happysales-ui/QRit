@@ -6,6 +6,7 @@ import {
   type ActionState,
 } from "@/app/dashboard/actions";
 import type { Profile } from "@/types";
+import { AvatarUpload } from "@/components/dashboard/avatar-upload";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
@@ -67,19 +68,11 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         />
       </div>
 
-      <div>
-        <label htmlFor="avatar_url" className="block text-sm font-medium text-zinc-700">
-          프로필 이미지 URL
-        </label>
-        <input
-          id="avatar_url"
-          name="avatar_url"
-          type="url"
-          defaultValue={profile.avatar_url ?? ""}
-          className={qritBrand.inputDashboard}
-          placeholder="https://example.com/avatar.jpg"
-        />
-      </div>
+      <AvatarUpload
+        currentAvatarUrl={profile.avatar_url}
+        displayName={profile.display_name ?? profile.username}
+        updatedAt={profile.updated_at}
+      />
 
       {state.error ? (
         <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">

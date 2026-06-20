@@ -25,7 +25,7 @@ export function ProfileHeader({ profile, className }: ProfileHeaderProps) {
         {profile.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={profile.avatar_url}
+            src={`${profile.avatar_url}?v=${encodeURIComponent(profile.updated_at)}`}
             alt={`${displayName} 프로필 사진`}
             className={qritBrand.avatarImage}
           />

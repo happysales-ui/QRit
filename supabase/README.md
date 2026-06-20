@@ -194,3 +194,55 @@ SQL Editor에서 `supabase/migrations/011_profiles_is_admin.sql`을 실행합니
 | 대시보드 관리자 뱃지 | `is_admin = true`일 때 표시 |
 
 앱 API로는 `is_admin`을 스스로 올릴 수 없습니다. SQL Editor(postgres)에서만 부여할 수 있습니다.
+
+---
+
+## 8. Profile avatar storage / 프로필 이미지 Storage
+
+**English**
+
+Profile photos are stored in Supabase Storage bucket `avatars` (not pasted URLs).
+
+1. Open **SQL Editor** in the Supabase Dashboard.
+2. Copy the contents of `supabase/migrations/012_avatars_storage.sql`.
+3. Paste into a new query and click **Run**.
+
+This creates:
+
+- Public bucket `avatars` (JPEG, PNG, WebP, max 2MB per file)
+- RLS: authenticated users can upload/update/delete only under `{user_id}/avatar.{ext}`
+- Public read for profile pages
+
+**If the migration was not applied**, create the bucket manually:
+
+1. Go to **Storage** in the Supabase Dashboard.
+2. Click **New bucket**.
+3. Name: `avatars`, enable **Public bucket**.
+4. Set file size limit to **2 MB** and allowed MIME types to `image/jpeg`, `image/png`, `image/webp` (if available in bucket settings).
+5. Still run `012_avatars_storage.sql` in **SQL Editor** for RLS policies (required for uploads).
+
+After setup, users upload a photo from **Dashboard → 프로필 설정**; the public URL is saved in `profiles.avatar_url`.
+
+**한국어**
+
+프로필 사진은 URL 입력이 아니라 Supabase Storage `avatars` 버킷에 저장됩니다.
+
+1. Supabase 대시보드 **SQL Editor**를 엽니다.
+2. `supabase/migrations/012_avatars_storage.sql` 내용을 복사합니다.
+3. 새 쿼리에 붙여넣고 **Run**을 클릭합니다.
+
+생성/설정 항목:
+
+- 공개 버킷 `avatars` (JPEG, PNG, WebP, 파일당 최대 2MB)
+- RLS: 로그인 사용자는 `{user_id}/avatar.{ext}` 경로에만 업로드·수정·삭제 가능
+- 프로필 페이지 공개 읽기
+
+**마이그레이션을 적용하지 않은 경우** 버킷을 수동으로 만듭니다:
+
+1. Supabase 대시보드 **Storage**로 이동합니다.
+2. **New bucket**을 클릭합니다.
+3. 이름: `avatars`, **Public bucket** 활성화.
+4. 파일 크기 제한 **2 MB**, 허용 MIME `image/jpeg`, `image/png`, `image/webp` (버킷 설정에서 가능한 경우).
+5. 업로드 RLS를 위해 **SQL Editor**에서 `012_avatars_storage.sql`은 반드시 실행합니다.
+
+설정 후 **대시보드 → 프로필 설정**에서 사진을 업로드하면 공개 URL이 `profiles.avatar_url`에 저장됩니다.

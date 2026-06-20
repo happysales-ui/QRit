@@ -11,7 +11,29 @@ import { buildLinkDbPayload, validateLinkUrl } from "@/lib/link-presets";
 export type ActionState = {
   error?: string;
   success?: string;
+  avatarUrl?: string;
+  updatedAt?: string;
 };
+
+const AVATAR_MAX_SIZE = 2 * 1024 * 1024;
+const AVATAR_ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+function getAvatarExtension(mimeType: string): string | null {
+  switch (mimeType) {
+    case "image/jpeg":
+      return "jpg";
+    case "image/png":
+      return "png";
+    case "image/webp":
+      return "webp";
+    default:
+      return null;
+  }
+}
 
 type SupabaseLikeError = {
   message?: string;
@@ -129,13 +151,11 @@ export async function updateProfileAction(
 
     const displayName = String(formData.get("display_name") ?? "").trim();
     const bio = String(formData.get("bio") ?? "").trim();
-    const avatarUrl = String(formData.get("avatar_url") ?? "").trim();
     const usernameInput = String(formData.get("username") ?? "").trim();
 
     const updates: Record<string, string | null> = {
       display_name: displayName || null,
       bio: bio || null,
-      avatar_url: avatarUrl || null,
     };
 
     if (usernameInput) {
@@ -169,6 +189,77 @@ export async function updateProfileAction(
     }
 
     return { success: "프로필이 저장되었습니다." };
+  } catch {
+    return { error: "로그인이 필요합니다." };
+  }
+}
+
+export async function uploadAvatarAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const { supabase, user } = await requireUser();
+
+    const file = formData.get("avatar");
+    if (!(file instanceof File) || file.size === 0) {
+      return { error: "업로드할 이미지를 선택해 주세요." };
+    }
+
+    if (!AVATAR_ALLOWED_TYPES.has(file.type)) {
+      return { error: "JPEG, PNG, WebP 이미지만 업로드할 수 있습니다." };
+    }
+
+    if (file.size > AVATAR_MAX_SIZE) {
+      return { error: "파일 크기는 2MB 이하여야 합니다." };
+    }
+
+    const ext = getAvatarExtension(file.type);
+    if (!ext) {
+      return { error: "지원하지 않는 이미지 형식입니다." };
+    }
+
+    const path = `${user.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, {
+        upsert: true,
+        contentType: file.type,
+      });
+
+    if (uploadError) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("[uploadAvatarAction]", uploadError);
+      }
+      return {
+        error:
+          "이미지 업로드에 실패했습니다. Supabase Storage(avatars 버킷) 설정을 확인해 주세요.",
+      };
+    }
+
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const avatarUrl = urlData.publicUrl;
+
+    const { data: profile, error: updateError } = await supabase
+      .from("profiles")
+      .update({ avatar_url: avatarUrl })
+      .eq("id", user.id)
+      .select("username, updated_at")
+      .maybeSingle();
+
+    if (updateError || !profile) {
+      return { error: "프로필 이미지 저장에 실패했습니다." };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/${profile.username}`);
+
+    return {
+      success: "프로필 이미지가 업로드되었습니다.",
+      avatarUrl,
+      updatedAt: profile.updated_at as string,
+    };
   } catch {
     return { error: "로그인이 필요합니다." };
   }
