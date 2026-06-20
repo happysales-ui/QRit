@@ -1,5 +1,9 @@
 export const USERNAME_REGEX = /^[a-z0-9]{3,30}$/;
 
+/** Signup / profile form helper copy — keep in sync with USERNAME_REGEX. */
+export const USERNAME_HELPER_TEXT =
+  "영문 소문자와 숫자만 (3~30자, _ · - 불가)";
+
 export const RESERVED_USERNAMES = new Set([
   "admin",
   "signup",
@@ -17,7 +21,7 @@ export function validateUsername(username: string): string | null {
   const normalized = normalizeUsername(username);
 
   if (!USERNAME_REGEX.test(normalized)) {
-    return "사용자명은 소문자, 숫자만 사용할 수 있으며 3~30자여야 합니다.";
+    return "사용자명은 영문 소문자와 숫자만 사용할 수 있으며 3~30자여야 합니다. (_ · - 불가)";
   }
 
   if (RESERVED_USERNAMES.has(normalized)) {

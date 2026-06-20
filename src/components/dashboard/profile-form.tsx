@@ -7,6 +7,7 @@ import {
 } from "@/app/dashboard/actions";
 import type { Profile } from "@/types";
 import { AvatarUpload } from "@/components/dashboard/avatar-upload";
+import { USERNAME_HELPER_TEXT } from "@/lib/auth/validation";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           pattern="[a-z0-9]{3,30}"
           className={qritBrand.inputDashboard}
         />
-        <p className="mt-1 text-xs text-zinc-400">소문자, 숫자 · 3~30자</p>
+        <p className="mt-1 text-xs text-zinc-400">{USERNAME_HELPER_TEXT}</p>
         <p className="mt-0.5 text-xs text-zinc-400">프로필 URL: /{profile.username}</p>
       </div>
 

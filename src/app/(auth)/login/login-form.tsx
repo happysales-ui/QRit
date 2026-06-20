@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type AuthActionState } from "@/app/(auth)/actions";
-import { QRIT_ADMIN_KAKAO_CHAT_URL } from "@/lib/qrit-config";
+import { PhoneInput } from "@/components/auth/phone-input";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
@@ -26,17 +26,7 @@ export function LoginForm({ authError }: LoginFormProps) {
           <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
             휴대폰 번호
           </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            required
-            autoComplete="tel"
-            inputMode="numeric"
-            pattern="[0-9\-+\s]{10,13}"
-            className={qritBrand.input}
-            placeholder="01012345678"
-          />
+          <PhoneInput id="phone" name="phone" required className={qritBrand.input} />
         </div>
 
         <div>
@@ -77,14 +67,9 @@ export function LoginForm({ authError }: LoginFormProps) {
 
       <p className="mt-4 text-center text-sm text-zinc-500">
         비밀번호를 잊으셨나요?{" "}
-        <a
-          href={QRIT_ADMIN_KAKAO_CHAT_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={qritBrand.kakaoLink}
-        >
-          관리자 카카오톡 1:1 채팅으로 문의해 주세요.
-        </a>
+        <Link href="/forgot-password" className={qritBrand.linkLg}>
+          비밀번호 찾기
+        </Link>
       </p>
 
       <p className="mt-6 text-center text-sm text-zinc-500">

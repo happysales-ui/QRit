@@ -93,31 +93,29 @@ export async function signupAction(
 
     const supabase = await createClient();
 
-    const { data: existingUsername, error: usernameQueryError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("username", username)
-      .maybeSingle();
+    const { data: usernameTaken, error: usernameQueryError } = await supabase.rpc(
+      "is_username_taken",
+      { p_username: username },
+    );
 
     if (usernameQueryError) {
       return { error: mapProfileQueryError(usernameQueryError) };
     }
 
-    if (existingUsername) {
+    if (usernameTaken) {
       return { error: "이미 사용 중인 사용자명입니다." };
     }
 
-    const { data: existingPhone, error: phoneQueryError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("phone", phone)
-      .maybeSingle();
+    const { data: phoneTaken, error: phoneQueryError } = await supabase.rpc(
+      "is_phone_taken",
+      { p_phone: phone },
+    );
 
     if (phoneQueryError) {
       return { error: mapProfileQueryError(phoneQueryError) };
     }
 
-    if (existingPhone) {
+    if (phoneTaken) {
       return { error: "이미 가입된 휴대폰 번호입니다." };
     }
 

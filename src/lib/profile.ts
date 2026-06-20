@@ -39,7 +39,7 @@ export async function getProfileByUsername(
   const normalized = username.toLowerCase();
 
   const { data: profile, error: profileError } = await supabase
-    .from("profiles")
+    .from("public_profiles")
     .select("*")
     .eq("username", normalized)
     .maybeSingle();
@@ -61,7 +61,7 @@ export async function getProfileByUsername(
   }
 
   return {
-    profile: normalizeProfileRow(profile),
+    profile: normalizeProfileRow({ ...profile, phone: null, is_admin: false }),
     links: (links ?? []).map((link) => normalizeLinkRow(link)),
   };
 }

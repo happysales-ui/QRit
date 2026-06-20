@@ -82,7 +82,7 @@ export function mapSignUpError(error: AuthError): string {
   }
 
   devSignupLog("signUp error", error);
-  return `회원가입에 실패했습니다: ${error.message}`;
+  return "회원가입에 실패했습니다. 입력 정보를 확인하고 다시 시도해 주세요.";
 }
 
 export function resolveSignUpResult(

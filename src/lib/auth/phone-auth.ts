@@ -8,6 +8,12 @@
  * Display phone lives in `profiles.phone`. Disable "Confirm email" in the
  * Supabase Dashboard (Auth → Providers → Email) so synthetic addresses
  * do not require verification.
+ *
+ * Password reset roadmap (SMS OTP):
+ * - Enable Supabase Auth → Phone provider + SMS vendor (Twilio / MessageBird).
+ * - Implement verify-OTP server action, then admin/service-role password update.
+ * - Until then, /forgot-password documents the manual Kakao admin flow.
+ * - Never expose synthetic emails or raw phone on public profile pages.
  */
 export const PHONE_AUTH_EMAIL_DOMAIN = "phone.qrit.app";
 

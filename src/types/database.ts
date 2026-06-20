@@ -91,6 +91,49 @@ export interface Database {
           created_at?: string;
         };
       };
+      public_profiles: {
+        Row: {
+          id: string;
+          username: string;
+          display_name: string | null;
+          bio: string | null;
+          avatar_url: string | null;
+          theme: string;
+          default_link_id: string | null;
+          expired_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+      };
+    };
+    Views: {
+      public_profiles: {
+        Row: {
+          id: string;
+          username: string;
+          display_name: string | null;
+          bio: string | null;
+          avatar_url: string | null;
+          theme: string;
+          default_link_id: string | null;
+          expired_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Relationships: [];
+      };
+    };
+    Functions: {
+      is_username_taken: {
+        Args: { p_username: string };
+        Returns: boolean;
+      };
+      is_phone_taken: {
+        Args: { p_phone: string };
+        Returns: boolean;
+      };
     };
   };
 }

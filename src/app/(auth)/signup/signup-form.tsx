@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, type FormEvent } from "react";
 import { signupAction, type AuthActionState } from "@/app/(auth)/actions";
+import { PhoneInput } from "@/components/auth/phone-input";
 import {
   getSupabaseConfigErrorMessageForClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/env";
+import { USERNAME_HELPER_TEXT } from "@/lib/auth/validation";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,7 @@ export function SignupForm() {
   const [state, formAction, isPending] = useActionState(signupAction, initialState);
   const [clientError, setClientError] = useState<string | null>(null);
   const [timedOut, setTimedOut] = useState(false);
+  const [usernamePreview, setUsernamePreview] = useState("");
 
   useEffect(() => {
     if (state.redirectTo) {
@@ -86,30 +89,21 @@ export function SignupForm() {
             pattern="[a-z0-9]{3,30}"
             className={qritBrand.input}
             placeholder="myprofile"
+            onChange={(event) => setUsernamePreview(event.target.value.trim().toLowerCase())}
           />
-          <p className="mt-1 text-xs text-zinc-400">
-            소문자, 숫자 · 3~30자
-          </p>
+          <p className="mt-1 text-xs text-zinc-400">{USERNAME_HELPER_TEXT}</p>
+          {usernamePreview.length >= 3 ? (
+            <p className="mt-0.5 text-xs text-zinc-500">
+              프로필 URL: /{usernamePreview}
+            </p>
+          ) : null}
         </div>
 
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
             휴대폰 번호
           </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            required
-            autoComplete="tel"
-            inputMode="numeric"
-            pattern="[0-9\-+\s]{10,13}"
-            className={qritBrand.input}
-            placeholder="01012345678"
-          />
-          <p className="mt-1 text-xs text-zinc-400">
-            숫자만 입력 (하이픈 없이 10~11자리)
-          </p>
+          <PhoneInput id="phone" name="phone" required className={qritBrand.input} />
         </div>
 
         <div>
