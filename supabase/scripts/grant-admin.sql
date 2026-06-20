@@ -1,5 +1,6 @@
 -- Grant admin privileges to a user by username.
 -- Run in Supabase SQL Editor (postgres role). Safe to re-run.
+-- Requires migration 018_fix_admin_grant_trigger.sql (011's trigger blocked grants).
 --
 -- Admin capabilities:
 --   - Access /admin/maker (QR generator for jewelry production)
@@ -13,5 +14,5 @@ UPDATE public.profiles
 SET is_admin = true
 WHERE username = 'hyun1016';
 
--- Verify:
--- SELECT username, is_admin, expired_at FROM public.profiles WHERE username = 'hyun1016';
+-- Verify (is_admin must be true):
+SELECT username, is_admin FROM public.profiles WHERE username = 'hyun1016';
