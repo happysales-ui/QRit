@@ -1,17 +1,52 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import {
   getAdminAccessErrorMessage,
   requireAdminAccess,
 } from "@/lib/auth/admin";
+import {
+  ADMIN_GATE_COOKIE,
+  adminGateCookieOptions,
+  createAdminGateCookieValue,
+  verifyAdminPagePassword,
+} from "@/lib/auth/admin-gate";
 import { generateInviteCode } from "@/lib/auth/invite-codes";
 import { createServiceClient } from "@/lib/supabase/service";
+
+export type AdminPasswordActionState = {
+  error?: string;
+  success?: boolean;
+};
 
 export type InviteCodesActionState = {
   error?: string;
   success?: string;
 };
+
+export async function verifyAdminPasswordAction(
+  _prevState: AdminPasswordActionState,
+  formData: FormData,
+): Promise<AdminPasswordActionState> {
+  const password = String(formData.get("password") ?? "");
+  const cookieValue = createAdminGateCookieValue();
+
+  if (!cookieValue) {
+    return { error: "ADMIN_PAGE_PASSWORD 환경변수가 설정되지 않았습니다." };
+  }
+
+  if (!verifyAdminPagePassword(password)) {
+    return { error: "관리자 비밀번호가 올바르지 않습니다." };
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(ADMIN_GATE_COOKIE, cookieValue, adminGateCookieOptions);
+
+  revalidatePath("/admin/invite-codes");
+
+  return { success: true };
+}
 
 const BATCH_OPTIONS = new Set([1, 5, 10]);
 

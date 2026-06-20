@@ -23,6 +23,16 @@ export type AdminAccess =
       profile: Profile;
     };
 
+export async function getAdminAuthStatus(): Promise<{
+  isAuthenticated: boolean;
+  passwordConfigured: boolean;
+}> {
+  return {
+    isAuthenticated: await hasAdminAccess(),
+    passwordConfigured: isAdminPasswordConfigured(),
+  };
+}
+
 export async function hasAdminAccess(): Promise<boolean> {
   if (await hasValidAdminGateCookie()) {
     return true;
