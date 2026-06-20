@@ -3,11 +3,35 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --qrit-teal: #0d5c63;
+  --qrit-teal-dark: #094347;
+  --qrit-teal-light: #147278;
+  --qrit-teal-muted: #3d7a80;
+  --qrit-teal-pale: #d4e8ea;
+  --qrit-teal-bg: #e8f4f5;
+  --qrit-yellow: #f5c518;
+  --qrit-yellow-dark: #d4a812;
+  --qrit-orange: #f7941d;
+  --qrit-red: #e53935;
+  --qrit-ivory: #faf8f3;
+  --qrit-ivory-card: #fffef9;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-qrit-teal: var(--qrit-teal);
+  --color-qrit-teal-dark: var(--qrit-teal-dark);
+  --color-qrit-teal-light: var(--qrit-teal-light);
+  --color-qrit-teal-muted: var(--qrit-teal-muted);
+  --color-qrit-teal-pale: var(--qrit-teal-pale);
+  --color-qrit-teal-bg: var(--qrit-teal-bg);
+  --color-qrit-yellow: var(--qrit-yellow);
+  --color-qrit-yellow-dark: var(--qrit-yellow-dark);
+  --color-qrit-orange: var(--qrit-orange);
+  --color-qrit-red: var(--qrit-red);
+  --color-qrit-ivory: var(--qrit-ivory);
+  --color-qrit-ivory-card: var(--qrit-ivory-card);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

@@ -8,6 +8,7 @@ import {
   getSupabaseConfigErrorMessageForClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/env";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
 const initialState: AuthActionState = {};
@@ -83,7 +84,7 @@ export function SignupForm() {
             required
             autoComplete="username"
             pattern="[a-z0-9]{3,30}"
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            className={qritBrand.input}
             placeholder="myprofile"
           />
           <p className="mt-1 text-xs text-zinc-400">
@@ -103,7 +104,7 @@ export function SignupForm() {
             autoComplete="tel"
             inputMode="numeric"
             pattern="[0-9\-+\s]{10,13}"
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            className={qritBrand.input}
             placeholder="01012345678"
           />
           <p className="mt-1 text-xs text-zinc-400">
@@ -122,7 +123,7 @@ export function SignupForm() {
             required
             minLength={6}
             autoComplete="new-password"
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            className={qritBrand.input}
             placeholder="6자 이상"
           />
         </div>
@@ -138,7 +139,7 @@ export function SignupForm() {
             required
             minLength={6}
             autoComplete="new-password"
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            className={qritBrand.input}
             placeholder="비밀번호 다시 입력"
           />
         </div>
@@ -164,10 +165,7 @@ export function SignupForm() {
         <button
           type="submit"
           disabled={isPending}
-          className={cn(
-            "w-full rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors",
-            "hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60",
-          )}
+          className={cn("w-full", qritBrand.primaryButton)}
         >
           {isPending ? "가입 중..." : "회원가입"}
         </button>
@@ -175,7 +173,7 @@ export function SignupForm() {
 
       <p className="mt-6 text-center text-sm text-zinc-500">
         이미 계정이 있으신가요?{" "}
-        <Link href="/login" className="font-medium text-violet-600 hover:text-violet-700">
+        <Link href="/login" className={qritBrand.linkLg}>
           로그인
         </Link>
       </p>

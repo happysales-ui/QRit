@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import type { Profile } from "@/types";
 
 interface ProfileHeaderProps {
@@ -29,10 +30,7 @@ export function ProfileHeader({ profile, className }: ProfileHeaderProps) {
             className="size-24 rounded-full object-cover shadow-lg ring-4 ring-white/80"
           />
         ) : (
-          <div
-            aria-hidden="true"
-            className="flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-2xl font-semibold text-white shadow-lg ring-4 ring-white/80"
-          >
+          <div aria-hidden="true" className={qritBrand.avatarFallback}>
             {initials}
           </div>
         )}
@@ -41,9 +39,7 @@ export function ProfileHeader({ profile, className }: ProfileHeaderProps) {
       <h1 className="mt-5 text-2xl font-bold tracking-tight text-zinc-900">
         {displayName}
       </h1>
-      <p className="mt-1 text-sm font-medium text-violet-600/80">
-        @{profile.username}
-      </p>
+      <p className={qritBrand.username}>@{profile.username}</p>
 
       {profile.bio ? (
         <p className="mt-4 max-w-xs text-[15px] leading-relaxed text-zinc-600">

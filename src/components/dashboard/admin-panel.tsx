@@ -7,6 +7,7 @@ import {
   lookupUserAction,
   type AdminActionState,
 } from "@/app/dashboard/admin-actions";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 
 const initialState: AdminActionState = {};
 
@@ -25,7 +26,7 @@ export function AdminPanel() {
   const success = extendState.success;
 
   return (
-    <section className="mb-8 rounded-xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm">
+    <section className="mb-8 rounded-xl border border-[#F5C518]/30 bg-[#F5C518]/10 p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900">관리자</h2>
@@ -35,7 +36,7 @@ export function AdminPanel() {
         </div>
         <Link
           href="/admin/maker"
-          className="shrink-0 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
+          className={`shrink-0 ${qritBrand.primaryButton}`}
         >
           QR 제작 →
         </Link>
@@ -47,7 +48,7 @@ export function AdminPanel() {
           name="username"
           placeholder="사용자명 (예: hyun1016)"
           defaultValue={user?.username ?? ""}
-          className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+          className={`min-w-0 flex-1 ${qritBrand.inputDashboard}`}
         />
         <button
           type="submit"
@@ -71,7 +72,7 @@ export function AdminPanel() {
       ) : null}
 
       {user ? (
-        <div className="mt-4 rounded-xl border border-amber-100 bg-white p-4">
+        <div className="mt-4 rounded-xl border border-[#F5C518]/20 bg-white p-4">
           <dl className="grid gap-2 text-sm">
             <div className="flex justify-between gap-4">
               <dt className="text-zinc-500">사용자명</dt>
@@ -99,13 +100,13 @@ export function AdminPanel() {
               min={1}
               max={3650}
               defaultValue={365}
-              className="w-28 rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              className={`w-28 ${qritBrand.inputDashboard}`}
             />
             <span className="self-center text-sm text-zinc-500">일 연장</span>
             <button
               type="submit"
               disabled={extendPending}
-              className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
+              className={`${qritBrand.yellowButton} disabled:opacity-50`}
             >
               {extendPending ? "처리 중…" : "만료일 연장"}
             </button>

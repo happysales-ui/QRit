@@ -14,6 +14,7 @@ import {
   saveContactFromMecard,
 } from "@/lib/contact-gateway";
 import type { MecardContact } from "@/lib/contact-vcf";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
 interface ContactGatewayProps {
@@ -89,10 +90,10 @@ export function ContactGateway({
   }
 
   return (
-    <div className="relative min-h-dvh bg-gradient-to-b from-violet-100/80 via-violet-50/40 to-slate-50">
+    <div className={qritBrand.pageBgProfile}>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 size-72 -translate-x-1/2 rounded-full bg-violet-300/20 blur-3xl" />
-        <div className="absolute bottom-0 right-0 size-56 translate-x-1/4 translate-y-1/4 rounded-full bg-fuchsia-200/25 blur-3xl" />
+        <div className={qritBrand.profileGlowTeal} />
+        <div className={qritBrand.profileGlowYellow} />
       </div>
 
       <div
@@ -101,20 +102,15 @@ export function ContactGateway({
           QRIT_SHOP_BANNER_OFFSET_CLASS,
         )}
       >
-        <Link
-          href={`/${username}`}
-          className="mb-6 inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700"
-        >
+        <Link href={`/${username}`} className={`mb-6 inline-flex items-center ${qritBrand.link}`}>
           ← {ownerName} 프로필
         </Link>
 
         <header className="text-center">
-          <p className="text-sm font-medium text-violet-600">연락처</p>
+          <p className={qritBrand.accentText}>연락처</p>
           <h1 className="mt-1 text-2xl font-bold text-zinc-900">{displayName}</h1>
           {telHref ? (
-            <p className="mt-3 font-mono text-xl tracking-wide text-violet-700">
-              {formattedTel}
-            </p>
+            <p className={`mt-3 ${qritBrand.accentTextLg}`}>{formattedTel}</p>
           ) : (
             <p className="mt-3 text-sm text-zinc-500">
               등록된 전화번호가 없습니다
@@ -122,16 +118,10 @@ export function ContactGateway({
           )}
         </header>
 
-        <section className="mt-8 w-full max-w-sm self-center rounded-2xl border border-violet-200/80 bg-white/95 p-6 text-center shadow-sm">
+        <section className={`mt-8 w-full max-w-sm self-center ${qritBrand.cardLg} text-center`}>
           {telHref ? (
             <>
-              <a
-                href={telHref}
-                className={cn(
-                  "inline-flex w-full items-center justify-center rounded-xl px-4 py-4 text-[16px] font-semibold transition-all duration-200",
-                  "bg-violet-600 text-white hover:bg-violet-700 active:scale-[0.99]",
-                )}
-              >
+              <a href={telHref} className={qritBrand.primaryButtonLg}>
                 전화 걸기
               </a>
               <p className="mt-3 text-xs leading-relaxed text-zinc-400">
@@ -145,11 +135,7 @@ export function ContactGateway({
           <button
             type="button"
             onClick={() => void handleSaveContact()}
-            className={cn(
-              "inline-flex w-full items-center justify-center rounded-xl border-2 border-violet-600 px-4 py-4 text-[16px] font-semibold transition-all duration-200",
-              "bg-white text-violet-700 hover:bg-violet-50 active:scale-[0.99]",
-              telHref ? "mt-4" : undefined,
-            )}
+            className={cn(qritBrand.secondaryButton, telHref ? "mt-4" : undefined)}
           >
             번호 저장
           </button>

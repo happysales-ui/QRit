@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type AuthActionState } from "@/app/(auth)/actions";
 import { QRIT_ADMIN_KAKAO_CHAT_URL } from "@/lib/qrit-config";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
 const initialState: AuthActionState = {};
@@ -33,7 +34,7 @@ export function LoginForm({ authError }: LoginFormProps) {
             autoComplete="tel"
             inputMode="numeric"
             pattern="[0-9\-+\s]{10,13}"
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            className={qritBrand.input}
             placeholder="01012345678"
           />
         </div>
@@ -48,7 +49,7 @@ export function LoginForm({ authError }: LoginFormProps) {
             type="password"
             required
             autoComplete="current-password"
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            className={qritBrand.input}
             placeholder="••••••••"
           />
         </div>
@@ -68,10 +69,7 @@ export function LoginForm({ authError }: LoginFormProps) {
         <button
           type="submit"
           disabled={isPending}
-          className={cn(
-            "w-full rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors",
-            "hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60",
-          )}
+          className={cn("w-full", qritBrand.primaryButton)}
         >
           {isPending ? "로그인 중..." : "로그인"}
         </button>
@@ -83,7 +81,7 @@ export function LoginForm({ authError }: LoginFormProps) {
           href={QRIT_ADMIN_KAKAO_CHAT_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-violet-600 hover:text-violet-700"
+          className={qritBrand.linkLg}
         >
           관리자 카카오톡 1:1 채팅으로 문의해 주세요.
         </a>
@@ -91,7 +89,7 @@ export function LoginForm({ authError }: LoginFormProps) {
 
       <p className="mt-6 text-center text-sm text-zinc-500">
         계정이 없으신가요?{" "}
-        <Link href="/signup" className="font-medium text-violet-600 hover:text-violet-700">
+        <Link href="/signup" className={qritBrand.linkLg}>
           회원가입
         </Link>
       </p>

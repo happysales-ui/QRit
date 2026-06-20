@@ -7,6 +7,7 @@ import {
 } from "@/components/profile/qrit-shop-banner";
 import { getContactLinkHref } from "@/lib/contact-link";
 import { getTransferLinkHref } from "@/lib/transfer-link";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import type { LinkBlock, Profile } from "@/types";
 
 interface ProfilePageProps {
@@ -20,10 +21,10 @@ export function ProfilePage({ profile, links }: ProfilePageProps) {
     .sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <div className="relative min-h-dvh bg-gradient-to-b from-violet-100/80 via-violet-50/40 to-slate-50">
+    <div className={qritBrand.pageBgProfile}>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 size-72 -translate-x-1/2 rounded-full bg-violet-300/20 blur-3xl" />
-        <div className="absolute bottom-0 right-0 size-56 translate-x-1/4 translate-y-1/4 rounded-full bg-fuchsia-200/25 blur-3xl" />
+        <div className={qritBrand.profileGlowTeal} />
+        <div className={qritBrand.profileGlowYellow} />
       </div>
 
       <div

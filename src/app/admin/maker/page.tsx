@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { QrGenerator } from "@/components/qr/qr-generator";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 
 export default function AdminMakerPage() {
   return (
@@ -10,7 +11,7 @@ export default function AdminMakerPage() {
       <footer className="mt-16 text-center">
         <Link
           href="/demo"
-          className="text-sm font-medium text-violet-600 transition-colors hover:text-violet-700"
+          className={qritBrand.link}
         >
           데모 프로필 보기 → /demo
         </Link>

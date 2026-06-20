@@ -370,7 +370,7 @@ export function LinksManager({ links }: LinksManagerProps) {
   return (
     <div>
       <form action={addAction} className="space-y-4">
-        <h3 className="text-base font-semibold text-[#1b4332]">새 링크 추가</h3>
+        <h3 className="text-base font-semibold text-[#0d5c63]">새 링크 추가</h3>
         <LinkFormFields key={addFormKey} variant="add" />
 
         {addState.error ? (
@@ -378,7 +378,7 @@ export function LinksManager({ links }: LinksManagerProps) {
         ) : null}
 
         {addState.success ? (
-          <p className="text-sm text-[#2d6a4f]">{addState.success}</p>
+          <p className="text-sm text-[#3d7a80]">{addState.success}</p>
         ) : null}
 
         <button type="submit" disabled={isAdding} className={theme.primaryButton}>

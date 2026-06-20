@@ -109,14 +109,14 @@ export function LinkTypeIcon({ link, className }: LinkTypeIconProps) {
   switch (preset) {
     case CONTACT_LINK_TITLE:
       return (
-        <IconShell bgClassName="bg-[#d8f3dc] text-[#1b4332]" className={className}>
+        <IconShell bgClassName="bg-[#e8f4f5] text-[#0d5c63]" className={className}>
           <PhoneIcon />
         </IconShell>
       );
 
     case BANK_TRANSFER_LINK_TITLE:
       return (
-        <IconShell bgClassName="bg-[#e8f5e9] text-[#2d6a4f]" className={className}>
+        <IconShell bgClassName="bg-[#e8f4f5] text-[#094347]" className={className}>
           {bank ? (
             <span className="text-[11px] font-bold leading-none">{bank.shortName}</span>
           ) : (
@@ -127,7 +127,7 @@ export function LinkTypeIcon({ link, className }: LinkTypeIconProps) {
 
     case "1:1 상담":
       return (
-        <IconShell bgClassName="bg-[#fef9c3] text-[#854d0e]" className={className}>
+        <IconShell bgClassName="bg-[#F5C518]/20 text-[#094347]" className={className}>
           <span className="text-lg leading-none" aria-hidden>
             💬
           </span>
@@ -164,7 +164,7 @@ export function LinkTypeIcon({ link, className }: LinkTypeIconProps) {
 
     default:
       return (
-        <IconShell bgClassName="bg-[#f0f7f2] text-[#2d6a4f]" className={className}>
+        <IconShell bgClassName="bg-[#e8f4f5] text-[#3d7a80]" className={className}>
           <LinkIcon className="size-5" />
         </IconShell>
       );

@@ -1,13 +1,16 @@
 import { ManageProfileLink } from "@/components/profile/manage-profile-link";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 
 export function ExpiredBracelet() {
   return (
-    <div className="relative flex min-h-dvh items-center justify-center bg-gradient-to-b from-violet-100/80 via-violet-50/40 to-slate-50 px-4 py-12">
+    <div
+      className={`relative flex min-h-dvh items-center justify-center px-4 py-12 ${qritBrand.pageBgProfile}`}
+    >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 size-72 -translate-x-1/2 rounded-full bg-violet-300/20 blur-3xl" />
+        <div className={qritBrand.profileGlowTeal} />
       </div>
 
-      <div className="relative mx-auto w-full max-w-md rounded-2xl border border-violet-100 bg-white p-8 text-center shadow-sm">
+      <div className={`relative mx-auto w-full max-w-md ${qritBrand.card} text-center`}>
         <p className="text-4xl" aria-hidden="true">
           ⏳
         </p>

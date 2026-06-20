@@ -18,6 +18,7 @@ import {
   QritShopBanner,
   QRIT_SHOP_BANNER_OFFSET_CLASS,
 } from "@/components/profile/qrit-shop-banner";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
 interface TransferGatewayProps {
@@ -127,10 +128,10 @@ export function TransferGateway({
   }
 
   return (
-    <div className="relative min-h-dvh bg-gradient-to-b from-violet-100/80 via-violet-50/40 to-slate-50">
+    <div className={qritBrand.pageBgProfile}>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 size-72 -translate-x-1/2 rounded-full bg-violet-300/20 blur-3xl" />
-        <div className="absolute bottom-0 right-0 size-56 translate-x-1/4 translate-y-1/4 rounded-full bg-fuchsia-200/25 blur-3xl" />
+        <div className={qritBrand.profileGlowTeal} />
+        <div className={qritBrand.profileGlowYellow} />
       </div>
 
       <div
@@ -141,25 +142,25 @@ export function TransferGateway({
       >
         <Link
           href={`/${username}`}
-          className="mb-6 inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-700"
+          className={`mb-6 inline-flex items-center ${qritBrand.link}`}
         >
           ← {ownerName} 프로필
         </Link>
 
         <header className="text-center">
-          <p className="text-sm font-medium text-violet-600">계좌 송금</p>
+          <p className={qritBrand.accentText}>계좌 송금</p>
           <h1 className="mt-1 text-2xl font-bold text-zinc-900">{ownerName}</h1>
           <p className="mt-2 text-sm text-zinc-500">
             아래 계좌로 송금하거나 원하는 앱을 선택하세요
           </p>
         </header>
 
-        <section className="mt-8 rounded-2xl border border-violet-200/80 bg-white/95 p-5 shadow-sm">
+        <section className={`mt-8 ${qritBrand.transferCard}`}>
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
             받는 계좌
           </p>
           <p className="mt-2 text-lg font-bold text-zinc-900">{account.bank.name}</p>
-          <p className="mt-1 font-mono text-xl tracking-wide text-violet-700">
+          <p className={`mt-1 ${qritBrand.accentTextLg}`}>
             {formatAccountNo(account.accountNo)}
           </p>
 
@@ -170,7 +171,7 @@ export function TransferGateway({
               "mt-4 w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors",
               copied
                 ? "bg-emerald-600 text-white"
-                : "bg-violet-600 text-white hover:bg-violet-700",
+                : "bg-gradient-to-r from-[#0d5c63] to-[#147278] text-white hover:from-[#094347] hover:to-[#0d5c63]",
             )}
           >
             {copied ? "복사 완료!" : "복사하기"}
@@ -210,14 +211,10 @@ export function TransferGateway({
           <button
             type="button"
             onClick={() => void handleOtherBankTransfer()}
-            className={cn(
-              "group flex w-full items-center gap-4 rounded-xl border px-4 py-3.5 text-left shadow-sm transition-all duration-200",
-              "border-violet-200/80 bg-gradient-to-r from-white to-violet-50/90",
-              "hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md hover:shadow-violet-100/70 active:scale-[0.99]",
-            )}
+            className={qritBrand.transferButton}
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
-              <span className="text-sm font-bold text-violet-700" aria-hidden>
+              <span className="text-sm font-bold text-[#0d5c63]" aria-hidden>
                 ₩
               </span>
             </span>
@@ -235,8 +232,8 @@ export function TransferGateway({
           </button>
 
           {showBankPicker ? (
-            <div className="rounded-xl border border-violet-200/70 bg-white/90 p-4 shadow-sm">
-              <p className="text-xs font-semibold text-violet-700">
+            <div className={qritBrand.bankPicker}>
+              <p className={qritBrand.bankPickerTitle}>
                 다른 은행 앱 열기
               </p>
               <p className="mt-1 text-xs leading-relaxed text-zinc-500">
@@ -249,10 +246,8 @@ export function TransferGateway({
                     type="button"
                     onClick={() => handleOpenBankApp(bankApp.bankCode)}
                     className={cn(
-                      "rounded-lg border border-violet-100 bg-violet-50/60 px-2 py-2 text-xs font-semibold text-violet-800 transition-colors",
-                      bankApp.bankCode === account.bankCode &&
-                        "border-violet-300 bg-violet-100 ring-1 ring-violet-200",
-                      "hover:border-violet-300 hover:bg-violet-100",
+                      qritBrand.bankChip,
+                      bankApp.bankCode === account.bankCode && qritBrand.bankChipActive,
                     )}
                   >
                     {bankApp.label}

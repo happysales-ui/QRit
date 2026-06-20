@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import {
   InstagramIcon,
   LinkIcon,
@@ -53,15 +54,13 @@ const variantStyles: Record<
     Icon: YouTubeIcon,
   },
   transfer: {
-    button:
-      "border-violet-200/90 bg-gradient-to-r from-white to-violet-50/90 hover:border-violet-300 hover:shadow-violet-100/70",
-    icon: "text-violet-600",
+    button: qritBrand.profileLinkTransfer,
+    icon: qritBrand.profileLinkIcon,
     Icon: LinkIcon,
   },
   link: {
-    button:
-      "border-zinc-200/90 bg-white/95 hover:border-violet-200 hover:shadow-violet-100/60",
-    icon: "text-violet-600",
+    button: qritBrand.profileLinkDefault,
+    icon: qritBrand.profileLinkIcon,
     Icon: LinkIcon,
   },
 };

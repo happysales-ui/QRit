@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 
 const DEFAULT_VALUE = "https://example.com";
 
@@ -41,7 +42,7 @@ export function QrGenerator() {
   };
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <div className={`mx-auto max-w-md ${qritBrand.card}`}>
       <label htmlFor="qr-input" className="block text-sm font-medium text-zinc-700">
         링크 또는 텍스트
       </label>
@@ -51,7 +52,7 @@ export function QrGenerator() {
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="https://example.com"
-        className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+        className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none focus:border-[#147278] focus:ring-2 focus:ring-[#147278]/20"
       />
 
       <div className="mt-6 flex justify-center rounded-lg bg-zinc-50 p-6">
@@ -77,14 +78,14 @@ export function QrGenerator() {
           step={8}
           value={size}
           onChange={(e) => setSize(Number(e.target.value))}
-          className="mt-2 w-full accent-violet-600"
+          className="mt-2 w-full accent-[#0d5c63]"
         />
       </div>
 
       <button
         type="button"
         onClick={handleDownload}
-        className="mt-6 w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-700"
+        className={`mt-6 w-full ${qritBrand.primaryButton}`}
       >
         SVG 다운로드
       </button>

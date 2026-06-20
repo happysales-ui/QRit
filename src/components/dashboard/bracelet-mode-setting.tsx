@@ -5,7 +5,7 @@ import {
   updateDefaultLinkAction,
   type ActionState,
 } from "@/app/dashboard/actions";
-import { cn } from "@/lib/utils";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import type { LinkBlock, Profile } from "@/types";
 
 const initialState: ActionState = {};
@@ -34,7 +34,7 @@ export function BraceletModeSetting({ profile, links }: BraceletModeSettingProps
       : INTEGRATED_OPTION_VALUE;
 
   return (
-    <section className="mb-8 rounded-xl border border-violet-100 bg-white p-6 shadow-sm">
+    <section className={`mb-8 ${qritBrand.card}`}>
       <h2 className="text-lg font-semibold text-zinc-900">
         QRit 팔찌 작동 모드 설정
       </h2>
@@ -55,7 +55,7 @@ export function BraceletModeSetting({ profile, links }: BraceletModeSettingProps
             id="default_link_id"
             name="default_link_id"
             defaultValue={selectedValue}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            className={qritBrand.select}
           >
             <option value={INTEGRATED_OPTION_VALUE}>
               🌐 통합 프로필 화면 (등록한 모든 링크 모음)
@@ -68,7 +68,7 @@ export function BraceletModeSetting({ profile, links }: BraceletModeSettingProps
           </select>
         </div>
 
-        <p className="text-sm text-sky-600">
+        <p className="text-sm text-[#0d5c63]">
           💡 팔찌를 스캔했을 때 처음으로 보여줄 화면을 선택하세요. 개별 메뉴를
           선택하시면 스캔 시 해당 기능으로 1초 만에 바로 직행합니다.
         </p>
@@ -88,10 +88,7 @@ export function BraceletModeSetting({ profile, links }: BraceletModeSettingProps
         <button
           type="submit"
           disabled={isPending}
-          className={cn(
-            "rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors",
-            "hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60",
-          )}
+          className={qritBrand.primaryButton}
         >
           {isPending ? "저장 중..." : "작동 모드 저장"}
         </button>

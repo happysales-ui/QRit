@@ -6,6 +6,7 @@ import {
   type ActionState,
 } from "@/app/dashboard/actions";
 import type { Profile } from "@/types";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
 const initialState: ActionState = {};
@@ -32,7 +33,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           type="text"
           defaultValue={profile.username}
           pattern="[a-z0-9]{3,30}"
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+          className={qritBrand.inputDashboard}
         />
         <p className="mt-1 text-xs text-zinc-400">소문자, 숫자 · 3~30자</p>
         <p className="mt-0.5 text-xs text-zinc-400">프로필 URL: /{profile.username}</p>
@@ -47,7 +48,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           name="display_name"
           type="text"
           defaultValue={profile.display_name ?? ""}
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+          className={qritBrand.inputDashboard}
           placeholder="홍길동"
         />
       </div>
@@ -61,7 +62,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           name="bio"
           rows={3}
           defaultValue={profile.bio ?? ""}
-          className="mt-1 w-full resize-none rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+          className={cn(qritBrand.inputDashboard, "resize-none")}
           placeholder="간단한 자기소개를 입력하세요"
         />
       </div>
@@ -75,7 +76,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           name="avatar_url"
           type="url"
           defaultValue={profile.avatar_url ?? ""}
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+          className={qritBrand.inputDashboard}
           placeholder="https://example.com/avatar.jpg"
         />
       </div>
@@ -95,10 +96,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       <button
         type="submit"
         disabled={isPending}
-        className={cn(
-          "rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors",
-          "hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60",
-        )}
+        className={qritBrand.primaryButton}
       >
         {isPending ? "저장 중..." : "프로필 저장"}
       </button>

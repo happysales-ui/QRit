@@ -1,4 +1,5 @@
 import { QRIT_SHOP_URL } from "@/lib/qrit-config";
+import { qritBrand } from "@/lib/qrit-brand-theme";
 
 /** Reserve space so fixed banner does not cover page content. */
 export const QRIT_SHOP_BANNER_OFFSET_CLASS =
@@ -8,7 +9,7 @@ export function QritShopBanner() {
   return (
     <aside
       aria-label="QRit 주얼리 구매"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-violet-400/30 bg-gradient-to-r from-violet-700 via-violet-600 to-fuchsia-600 shadow-[0_-8px_24px_rgba(91,33,182,0.18)]"
+      className={qritBrand.shopBanner}
     >
       <a
         href={QRIT_SHOP_URL}
@@ -23,7 +24,7 @@ export function QritShopBanner() {
           🛒
         </span>
         <span>나만의 스마트한 QR 주얼리, QRit에서 구매하기</span>
-        <span aria-hidden className="text-violet-200">
+        <span aria-hidden className="text-[#F5C518]">
           ➔
         </span>
       </a>
