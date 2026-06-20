@@ -22,5 +22,6 @@ export interface LinkBlock {
   account_no: string | null;
   sort_order: number;
   is_active: boolean;
+  is_hidden: boolean;
   created_at: string;
 }

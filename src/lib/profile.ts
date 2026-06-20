@@ -9,6 +9,7 @@ function normalizeLinkRow(link: Record<string, unknown>): LinkBlock {
     ...row,
     bank_code: row.bank_code ?? null,
     account_no: row.account_no ?? null,
+    is_hidden: row.is_hidden === true,
   };
 }
 
@@ -52,6 +53,7 @@ export async function getProfileByUsername(
     .select("*")
     .eq("profile_id", profile.id)
     .eq("is_active", true)
+    .eq("is_hidden", false)
     .order("sort_order", { ascending: true });
 
   if (linksError) {

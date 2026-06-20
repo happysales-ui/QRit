@@ -54,7 +54,7 @@ function formatDevSupabaseDetail(error: SupabaseLikeError): string {
 }
 
 function formatLinkActionError(
-  action: "add" | "update" | "delete" | "move",
+  action: "add" | "update" | "delete" | "move" | "hide" | "unhide",
   error: SupabaseLikeError,
 ): string {
   const fallback =
@@ -64,7 +64,11 @@ function formatLinkActionError(
         ? "링크 수정에 실패했습니다."
         : action === "delete"
           ? "링크 삭제에 실패했습니다."
-          : "링크 순서 변경에 실패했습니다.";
+          : action === "move"
+            ? "링크 순서 변경에 실패했습니다."
+            : action === "hide"
+              ? "링크 숨기기에 실패했습니다."
+              : "링크 표시에 실패했습니다.";
 
   if (process.env.NODE_ENV === "development") {
     console.error(`[${action}LinkAction]`, error);
@@ -80,10 +84,13 @@ function formatLinkActionError(
   if (
     message.includes("bank_code") ||
     message.includes("account_no") ||
+    message.includes("is_hidden") ||
     message.includes("schema cache")
   ) {
     const hint =
-      "데이터베이스 마이그레이션 010_links_complete.sql 적용이 필요할 수 있습니다.";
+      action === "hide" || action === "unhide"
+        ? "데이터베이스 마이그레이션 013_links_is_hidden.sql 적용이 필요할 수 있습니다."
+        : "데이터베이스 마이그레이션 010_links_complete.sql 적용이 필요할 수 있습니다.";
     return devDetail ? `${fallback} (${hint} — ${devDetail})` : `${fallback} (${hint})`;
   }
 
@@ -337,6 +344,7 @@ export async function updateDefaultLinkAction(
         .eq("id", value)
         .eq("profile_id", user.id)
         .eq("is_active", true)
+        .eq("is_hidden", false)
         .maybeSingle();
 
       if (!link) {
@@ -502,6 +510,54 @@ export async function deleteLinkAction(linkId: string): Promise<ActionState> {
   } catch {
     return { error: "로그인이 필요합니다." };
   }
+}
+
+async function setLinkHiddenAction(
+  linkId: string,
+  isHidden: boolean,
+): Promise<ActionState> {
+  try {
+    const { supabase, user } = await requireUser();
+
+    const { error } = await supabase
+      .from("links")
+      .update({ is_hidden: isHidden })
+      .eq("id", linkId)
+      .eq("profile_id", user.id);
+
+    if (error) {
+      return {
+        error: formatLinkActionError(isHidden ? "hide" : "unhide", error),
+      };
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    revalidatePath("/dashboard");
+    if (profile?.username) {
+      revalidatePath(`/${profile.username}`);
+    }
+
+    return {
+      success: isHidden
+        ? "링크가 공개 프로필에서 숨겨졌습니다."
+        : "링크가 다시 공개되었습니다.",
+    };
+  } catch {
+    return { error: "로그인이 필요합니다." };
+  }
+}
+
+export async function hideLinkAction(linkId: string): Promise<ActionState> {
+  return setLinkHiddenAction(linkId, true);
+}
+
+export async function unhideLinkAction(linkId: string): Promise<ActionState> {
+  return setLinkHiddenAction(linkId, false);
 }
 
 export async function moveLinkAction(

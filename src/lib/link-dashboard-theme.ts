@@ -22,6 +22,12 @@ export const linkDashboardTheme = {
     "rounded-lg border border-[#d4e8ea] bg-white px-2 py-1 text-xs text-[#3d7a80] transition-colors hover:bg-[#e8f4f5] disabled:opacity-40",
   linkCard:
     "rounded-2xl border border-[#e8f0f1] bg-[#fffef9] p-4 shadow-[0_2px_12px_rgba(13,92,99,0.06)]",
+  linkCardHidden:
+    "rounded-2xl border border-dashed border-[#d4e8ea] bg-[#f5f8f8] p-4 opacity-75 shadow-none",
+  hiddenBadge:
+    "inline-flex shrink-0 rounded-full bg-[#e8f0f1] px-2 py-0.5 text-xs font-medium text-[#94a89e]",
+  hideButton:
+    "rounded-xl border border-[#c5dde0] bg-[#f0f7f8] px-3 py-1.5 text-xs font-medium text-[#3d7a80] transition-colors hover:bg-[#e8f4f5]",
   linkTitle: "truncate text-xl font-semibold text-[#0d5c63] sm:text-base",
   linkSubtitle: "mt-0.5 truncate text-sm text-[#3d7a80]",
   emptyState: "text-center text-sm text-[#3d7a80]",

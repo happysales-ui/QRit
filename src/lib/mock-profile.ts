@@ -33,6 +33,7 @@ const demoLinks: LinkBlock[] = [
     account_no: null,
     sort_order: 0,
     is_active: true,
+    is_hidden: false,
     created_at: DEMO_TIMESTAMP,
   },
   {
@@ -44,6 +45,7 @@ const demoLinks: LinkBlock[] = [
     account_no: null,
     sort_order: 1,
     is_active: true,
+    is_hidden: false,
     created_at: DEMO_TIMESTAMP,
   },
   {
@@ -55,6 +57,7 @@ const demoLinks: LinkBlock[] = [
     account_no: null,
     sort_order: 2,
     is_active: true,
+    is_hidden: false,
     created_at: DEMO_TIMESTAMP,
   },
   {
@@ -66,6 +69,7 @@ const demoLinks: LinkBlock[] = [
     account_no: null,
     sort_order: 3,
     is_active: true,
+    is_hidden: false,
     created_at: DEMO_TIMESTAMP,
   },
   {
@@ -77,6 +81,7 @@ const demoLinks: LinkBlock[] = [
     account_no: null,
     sort_order: 4,
     is_active: true,
+    is_hidden: false,
     created_at: DEMO_TIMESTAMP,
   },
 ];

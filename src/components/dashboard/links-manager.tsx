@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import {
   addLinkAction,
   deleteLinkAction,
+  hideLinkAction,
   moveLinkAction,
+  unhideLinkAction,
   updateLinkAction,
   type ActionState,
 } from "@/app/dashboard/actions";
@@ -221,14 +223,32 @@ function LinkFormFields({
 function LinkItem({ link, index, total }: { link: LinkBlock; index: number; total: number }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [visibilityError, setVisibilityError] = useState<string>();
   const [deleteState, deleteAction, isDeleting] = useActionState(
     async () => deleteLinkAction(link.id),
     initialState,
   );
   const [movePending, startMove] = useTransition();
+  const [visibilityPending, startVisibilityToggle] = useTransition();
+
+  function handleVisibilityToggle() {
+    setVisibilityError(undefined);
+    startVisibilityToggle(async () => {
+      const result = link.is_hidden
+        ? await unhideLinkAction(link.id)
+        : await hideLinkAction(link.id);
+
+      if (result.error) {
+        setVisibilityError(result.error);
+        return;
+      }
+
+      router.refresh();
+    });
+  }
 
   return (
-    <li className={theme.linkCard}>
+    <li className={cn(link.is_hidden ? theme.linkCardHidden : theme.linkCard)}>
       {isEditing ? (
         <EditLinkForm
           link={link}
@@ -240,10 +260,32 @@ function LinkItem({ link, index, total }: { link: LinkBlock; index: number; tota
           <LinkTypeIcon link={link} />
 
           <div className="min-w-0 flex-1">
-            <p className={theme.linkTitle}>{link.title}</p>
-            <p className={theme.linkSubtitle}>{formatTransferLinkSummary(link)}</p>
+            <div className="flex min-w-0 items-center gap-2">
+              <p
+                className={cn(
+                  theme.linkTitle,
+                  link.is_hidden && "text-[#94a89e]",
+                )}
+              >
+                {link.title}
+              </p>
+              {link.is_hidden ? (
+                <span className={theme.hiddenBadge}>숨김</span>
+              ) : null}
+            </div>
+            <p
+              className={cn(
+                theme.linkSubtitle,
+                link.is_hidden && "text-[#b0c4c8]",
+              )}
+            >
+              {formatTransferLinkSummary(link)}
+            </p>
             {deleteState.error ? (
               <p className="mt-2 text-sm text-red-600">{deleteState.error}</p>
+            ) : null}
+            {visibilityError ? (
+              <p className="mt-2 text-sm text-red-600">{visibilityError}</p>
             ) : null}
           </div>
 
@@ -279,6 +321,15 @@ function LinkItem({ link, index, total }: { link: LinkBlock; index: number; tota
 
             <button
               type="button"
+              disabled={visibilityPending}
+              onClick={handleVisibilityToggle}
+              className={cn(theme.hideButton, "disabled:opacity-60")}
+            >
+              {link.is_hidden ? "보이기" : "감추기"}
+            </button>
+
+            <button
+              type="button"
               onClick={() => setIsEditing(true)}
               className={theme.secondaryButton}
             >
@@ -309,6 +360,9 @@ function EditLinkForm({
   onCancel: () => void;
   onSuccess: () => void;
 }) {
+  const router = useRouter();
+  const [visibilityError, setVisibilityError] = useState<string>();
+  const [visibilityPending, startVisibilityToggle] = useTransition();
   const [state, formAction, isPending] = useActionState(
     async (_prev: ActionState, formData: FormData) => {
       const result = await updateLinkAction(link.id, formData);
@@ -319,6 +373,23 @@ function EditLinkForm({
     },
     initialState,
   );
+
+  function handleVisibilityToggle() {
+    setVisibilityError(undefined);
+    startVisibilityToggle(async () => {
+      const result = link.is_hidden
+        ? await unhideLinkAction(link.id)
+        : await hideLinkAction(link.id);
+
+      if (result.error) {
+        setVisibilityError(result.error);
+        return;
+      }
+
+      router.refresh();
+      onSuccess();
+    });
+  }
 
   return (
     <form action={formAction} className="space-y-3">
@@ -333,8 +404,11 @@ function EditLinkForm({
       {state.error ? (
         <p className="text-sm text-red-600">{state.error}</p>
       ) : null}
+      {visibilityError ? (
+        <p className="text-sm text-red-600">{visibilityError}</p>
+      ) : null}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="submit"
           disabled={isPending}
@@ -348,6 +422,14 @@ function EditLinkForm({
           className={theme.secondaryButton}
         >
           취소
+        </button>
+        <button
+          type="button"
+          disabled={visibilityPending}
+          onClick={handleVisibilityToggle}
+          className={cn(theme.hideButton, "disabled:opacity-60")}
+        >
+          {link.is_hidden ? "보이기" : "감추기"}
         </button>
       </div>
     </form>

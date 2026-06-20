@@ -17,7 +17,7 @@ interface ProfilePageProps {
 
 export function ProfilePage({ profile, links }: ProfilePageProps) {
   const activeLinks = links
-    .filter((link) => link.is_active)
+    .filter((link) => link.is_active && !link.is_hidden)
     .sort((a, b) => a.sort_order - b.sort_order);
 
   return (
