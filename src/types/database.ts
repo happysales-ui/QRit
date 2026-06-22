@@ -175,6 +175,10 @@ export interface Database {
         Args: { p_code: string };
         Returns: boolean;
       };
+      consume_invite_code: {
+        Args: { p_code: string; p_user_id: string };
+        Returns: boolean;
+      };
     };
   };
 }

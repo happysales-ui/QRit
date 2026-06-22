@@ -1,5 +1,4 @@
 import type { AuthError, AuthResponse } from "@supabase/supabase-js";
-import { normalizeInviteCode } from "@/lib/auth/invite-codes";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   getSupabaseServiceRoleConfigErrorMessage,
@@ -140,6 +139,22 @@ export function getInviteSignupServiceRoleErrorMessage(): string {
   return base;
 }
 
+/** Maps `consume_invite_code` RPC response (atomic UPDATE … RETURN FOUND). */
+export function mapConsumeInviteCodeRpcResponse(
+  data: boolean | null | undefined,
+  hasError: boolean,
+): ConsumeInviteCodeResult {
+  if (hasError) {
+    return { ok: false, reason: "update_failed" };
+  }
+
+  if (data === true) {
+    return { ok: true };
+  }
+
+  return { ok: false, reason: "code_not_consumed" };
+}
+
 export async function consumeInviteCode(
   code: string,
   userId: string,
@@ -149,31 +164,18 @@ export async function consumeInviteCode(
     return { ok: false, reason: "service_role_not_configured" };
   }
 
-  const normalized = normalizeInviteCode(code);
   const supabase = createServiceClient();
 
-  const { data, error } = await supabase
-    .from("invite_codes")
-    .update({
-      status: "used",
-      used_at: new Date().toISOString(),
-      used_by_user_id: userId,
-    })
-    .eq("code", normalized)
-    .eq("status", "unused")
-    .select("id")
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("consume_invite_code", {
+    p_code: code,
+    p_user_id: userId,
+  });
 
   if (error) {
-    devSignupLog("consume invite code error", error);
-    return { ok: false, reason: "update_failed" };
+    devSignupLog("consume_invite_code RPC error", error);
   }
 
-  if (data === null) {
-    return { ok: false, reason: "code_not_consumed" };
-  }
-
-  return { ok: true };
+  return mapConsumeInviteCodeRpcResponse(data, error !== null);
 }
 
 /** Best-effort cleanup when invite consumption fails after auth user creation. */

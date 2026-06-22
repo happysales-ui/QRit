@@ -6,6 +6,7 @@ import {
   isMissingExpiredAtColumnError,
   isMissingPhoneColumnError,
   mapConsumeInviteCodeError,
+  mapConsumeInviteCodeRpcResponse,
   mapProfileQueryError,
   mapSignUpError,
   resolveSignUpResult,
@@ -73,6 +74,33 @@ describe("mapSignUpError", () => {
       status: 500,
     } as AuthError);
     assert.match(message, /009_signup_trigger_fix/);
+  });
+});
+
+describe("mapConsumeInviteCodeRpcResponse", () => {
+  it("succeeds when atomic RPC returns true", () => {
+    assert.deepEqual(mapConsumeInviteCodeRpcResponse(true, false), { ok: true });
+  });
+
+  it("fails when RPC returns false (already used or missing)", () => {
+    assert.deepEqual(mapConsumeInviteCodeRpcResponse(false, false), {
+      ok: false,
+      reason: "code_not_consumed",
+    });
+  });
+
+  it("fails when RPC returns null", () => {
+    assert.deepEqual(mapConsumeInviteCodeRpcResponse(null, false), {
+      ok: false,
+      reason: "code_not_consumed",
+    });
+  });
+
+  it("fails on RPC error", () => {
+    assert.deepEqual(mapConsumeInviteCodeRpcResponse(null, true), {
+      ok: false,
+      reason: "update_failed",
+    });
   });
 });
 
