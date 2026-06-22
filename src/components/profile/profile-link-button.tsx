@@ -1,6 +1,7 @@
 import { LinkTypeIcon } from "@/components/dashboard/link-type-icon";
-import { cn } from "@/lib/utils";
 import { qritBrand } from "@/lib/qrit-brand-theme";
+import { safeExternalHref } from "@/lib/safe-url";
+import { cn } from "@/lib/utils";
 import type { LinkBlock } from "@/types";
 
 interface ProfileLinkButtonProps {
@@ -14,11 +15,13 @@ export function ProfileLinkButton({
   href,
   className,
 }: ProfileLinkButtonProps) {
-  const isExternal = !href;
+  const externalHref = safeExternalHref(link.url);
+  const resolvedHref = href ?? externalHref ?? "#";
+  const isExternal = !href && externalHref !== null;
 
   return (
     <a
-      href={href ?? link.url}
+      href={resolvedHref}
       {...(isExternal
         ? { target: "_blank", rel: "noopener noreferrer" }
         : {})}

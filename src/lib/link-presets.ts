@@ -1,4 +1,5 @@
 import { normalizeUrl, validateUrl } from "@/lib/auth/validation";
+import { validateSafeUrlScheme } from "@/lib/safe-url";
 import {
   buildContactLinkPayload,
   sanitizeContactUrl,
@@ -175,6 +176,11 @@ export function validateLinkUrl(
 
   if (!trimmed) {
     return "URL을 입력해 주세요.";
+  }
+
+  const schemeError = validateSafeUrlScheme(trimmed);
+  if (schemeError) {
+    return schemeError;
   }
 
   if (isMecardUrl(trimmed)) {

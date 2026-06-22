@@ -1,4 +1,5 @@
 import { getContactLinkHref } from "@/lib/contact-link";
+import { safeExternalHref } from "@/lib/safe-url";
 import { getTransferLinkHref } from "@/lib/transfer-link";
 import type { LinkBlock } from "@/types";
 
@@ -20,7 +21,7 @@ export function resolveLinkRedirect(
     return { type: "internal", path: contactPath };
   }
 
-  const url = link.url.trim();
+  const url = safeExternalHref(link.url);
   if (!url) {
     return null;
   }

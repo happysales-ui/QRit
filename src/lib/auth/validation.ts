@@ -1,3 +1,5 @@
+import { validateSafeUrlScheme } from "@/lib/safe-url";
+
 export const USERNAME_REGEX = /^[a-z0-9]{3,30}$/;
 
 /** Signup / profile form helper copy — keep in sync with USERNAME_REGEX. */
@@ -36,6 +38,11 @@ export function validateUrl(url: string): string | null {
 
   if (!trimmed) {
     return "URL을 입력해 주세요.";
+  }
+
+  const schemeError = validateSafeUrlScheme(trimmed);
+  if (schemeError) {
+    return schemeError;
   }
 
   try {
