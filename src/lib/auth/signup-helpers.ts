@@ -1,7 +1,10 @@
 import type { AuthError, AuthResponse } from "@supabase/supabase-js";
 import { normalizeInviteCode } from "@/lib/auth/invite-codes";
 import { createServiceClient } from "@/lib/supabase/service";
-import { isSupabaseServiceRoleConfigured } from "@/lib/supabase/env";
+import {
+  getSupabaseServiceRoleConfigErrorMessage,
+  isSupabaseServiceRoleConfigured,
+} from "@/lib/supabase/env";
 
 export type SignupActionResult = {
   error?: string;
@@ -107,13 +110,43 @@ export function resolveSignUpResult(
   };
 }
 
+export type ConsumeInviteCodeFailureReason =
+  | "service_role_not_configured"
+  | "update_failed"
+  | "code_not_consumed";
+
+export type ConsumeInviteCodeResult =
+  | { ok: true }
+  | { ok: false; reason: ConsumeInviteCodeFailureReason };
+
+export function mapConsumeInviteCodeError(
+  reason: ConsumeInviteCodeFailureReason,
+): string {
+  switch (reason) {
+    case "service_role_not_configured":
+      return getSupabaseServiceRoleConfigErrorMessage();
+    case "update_failed":
+      return "초대 코드 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+    case "code_not_consumed":
+      return "초대 코드를 사용 처리할 수 없습니다. 코드가 이미 사용되었거나 만료되었을 수 있습니다.";
+  }
+}
+
+export function getInviteSignupServiceRoleErrorMessage(): string {
+  const base = getSupabaseServiceRoleConfigErrorMessage();
+  if (process.env.NODE_ENV === "development") {
+    return `${base} (개발 환경: 초대 코드 기반 회원가입에는 service_role 키가 필수입니다.)`;
+  }
+  return base;
+}
+
 export async function consumeInviteCode(
   code: string,
   userId: string,
-): Promise<boolean> {
+): Promise<ConsumeInviteCodeResult> {
   if (!isSupabaseServiceRoleConfigured()) {
     devSignupLog("SUPABASE_SERVICE_ROLE_KEY missing; invite code not consumed");
-    return false;
+    return { ok: false, reason: "service_role_not_configured" };
   }
 
   const normalized = normalizeInviteCode(code);
@@ -133,8 +166,30 @@ export async function consumeInviteCode(
 
   if (error) {
     devSignupLog("consume invite code error", error);
-    return false;
+    return { ok: false, reason: "update_failed" };
   }
 
-  return data !== null;
+  if (data === null) {
+    return { ok: false, reason: "code_not_consumed" };
+  }
+
+  return { ok: true };
+}
+
+/** Best-effort cleanup when invite consumption fails after auth user creation. */
+export async function rollbackSignUpUser(userId: string): Promise<void> {
+  if (!isSupabaseServiceRoleConfigured()) {
+    devSignupLog("rollback skipped: SUPABASE_SERVICE_ROLE_KEY missing");
+    return;
+  }
+
+  try {
+    const supabase = createServiceClient();
+    const { error } = await supabase.auth.admin.deleteUser(userId);
+    if (error) {
+      devSignupLog("rollback deleteUser error", error);
+    }
+  } catch (error) {
+    devSignupLog("rollback deleteUser unexpected error", error);
+  }
 }

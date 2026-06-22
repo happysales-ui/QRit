@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AuthError } from "@supabase/supabase-js";
 import {
+  getInviteSignupServiceRoleErrorMessage,
   isMissingExpiredAtColumnError,
   isMissingPhoneColumnError,
+  mapConsumeInviteCodeError,
   mapProfileQueryError,
   mapSignUpError,
   resolveSignUpResult,
@@ -71,6 +73,30 @@ describe("mapSignUpError", () => {
       status: 500,
     } as AuthError);
     assert.match(message, /009_signup_trigger_fix/);
+  });
+});
+
+describe("mapConsumeInviteCodeError", () => {
+  it("returns service role config message", () => {
+    const message = mapConsumeInviteCodeError("service_role_not_configured");
+    assert.match(message, /SUPABASE_SERVICE_ROLE_KEY/);
+  });
+
+  it("returns Korean message for update failure", () => {
+    const message = mapConsumeInviteCodeError("update_failed");
+    assert.match(message, /초대 코드 처리/);
+  });
+
+  it("returns Korean message when code was not consumed", () => {
+    const message = mapConsumeInviteCodeError("code_not_consumed");
+    assert.match(message, /이미 사용/);
+  });
+});
+
+describe("getInviteSignupServiceRoleErrorMessage", () => {
+  it("includes service role key hint", () => {
+    const message = getInviteSignupServiceRoleErrorMessage();
+    assert.match(message, /SUPABASE_SERVICE_ROLE_KEY/);
   });
 });
 

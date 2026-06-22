@@ -5,14 +5,18 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getSupabaseConfigErrorMessage,
   isSupabaseConfigured,
+  isSupabaseServiceRoleConfigured,
 } from "@/lib/supabase/env";
 import { phoneToAuthEmail } from "@/lib/auth/phone-auth";
 import {
+  consumeInviteCode,
   devSignupLog,
+  getInviteSignupServiceRoleErrorMessage,
+  mapConsumeInviteCodeError,
   mapProfileQueryError,
   mapSignUpError,
   resolveSignUpResult,
-  consumeInviteCode,
+  rollbackSignUpUser,
 } from "@/lib/auth/signup-helpers";
 import {
   INVITE_CODE_INVALID_MESSAGE,
@@ -118,6 +122,10 @@ export async function signupAction(
       return { error: INVITE_CODE_INVALID_MESSAGE };
     }
 
+    if (!isSupabaseServiceRoleConfigured()) {
+      return { error: getInviteSignupServiceRoleErrorMessage() };
+    }
+
     const { data: usernameTaken, error: usernameQueryError } = await supabase.rpc(
       "is_username_taken",
       { p_username: username },
@@ -159,7 +167,11 @@ export async function signupAction(
     const result = resolveSignUpResult(data);
 
     if (data.user?.id && !result.error) {
-      await consumeInviteCode(inviteCode, data.user.id);
+      const consumed = await consumeInviteCode(inviteCode, data.user.id);
+      if (!consumed.ok) {
+        await rollbackSignUpUser(data.user.id);
+        return { error: mapConsumeInviteCodeError(consumed.reason) };
+      }
     }
 
     return result;
