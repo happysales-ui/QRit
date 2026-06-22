@@ -123,20 +123,23 @@ export async function isUsernameAvailable(
   const supabase = await createClient();
   const normalized = username.toLowerCase();
 
-  let query = supabase
-    .from("profiles")
+  const { data, error } = await supabase
+    .from("public_profiles")
     .select("id")
-    .eq("username", normalized);
-
-  if (excludeUserId) {
-    query = query.neq("id", excludeUserId);
-  }
-
-  const { data, error } = await query.maybeSingle();
+    .eq("username", normalized)
+    .maybeSingle();
 
   if (error) {
     return false;
   }
 
-  return !data;
+  if (!data) {
+    return true;
+  }
+
+  if (excludeUserId && data.id === excludeUserId) {
+    return true;
+  }
+
+  return false;
 }
