@@ -12,12 +12,22 @@ export type TransferDeepLink = {
   id: TransferAppId;
   label: string;
   description: string;
-  /** Primary href (universal link or custom scheme). */
+  /** Primary href (universal link, intent URL, or custom scheme). */
   href: string;
   /** Optional fallback when the app is not installed. */
   fallbackHref?: string;
+  /** When true, open via script instead of default anchor navigation. */
+  openViaScript?: boolean;
   accentClass: string;
 };
+
+export const KAKAO_PAY_ANDROID_PACKAGE = "com.kakaopay.app";
+export const NAVER_PAY_ANDROID_PACKAGE = "com.nhn.android.search";
+export const NAVER_PAY_MOBILE_WEB_BASE =
+  "https://new-m.pay.naver.com/send/sendMoney/account";
+export const NAVER_PAY_MOBILE_FALLBACK =
+  "https://new-m.pay.naver.com/send/sendMoney";
+export const KAKAO_PAY_WEB_FALLBACK = "https://www.kakaopay.com";
 
 export type TransferAccount = {
   bankCode: string;
@@ -34,7 +44,11 @@ function buildTossDeepLink(bankCode: string, accountNo: string): string {
   return `https://ul.toss.im?scheme=${encodeURIComponent(scheme)}`;
 }
 
-function buildKakaoPayDeepLink(bankCode: string, accountNo: string): string {
+/** Official Kakao Pay account remittance scheme (see Kakao Pay app-link guide). */
+export function buildKakaoPaySchemeUrl(
+  bankCode: string,
+  accountNo: string,
+): string {
   const params = new URLSearchParams({
     bank_code: bankCode,
     bank_account_number: accountNo,
@@ -42,31 +56,152 @@ function buildKakaoPayDeepLink(bankCode: string, accountNo: string): string {
   return `kakaopay://money/to/bank?${params.toString()}`;
 }
 
-/**
- * Naver Pay does not publish a documented pre-fill deep link for account remittance.
- * Mobile web URL opens the send-money flow; the Npay app may intercept on device.
- */
-function buildNaverPayDeepLink(bankCode: string, accountNo: string): string {
+/** Naver Pay in-app scheme for account remittance (falls back to mobile web). */
+export function buildNaverPaySchemeUrl(
+  bankCode: string,
+  accountNo: string,
+): string {
   const params = new URLSearchParams({
     bankCorpCode: bankCode,
     accountNo,
   });
-  return `https://new-m.pay.naver.com/send/sendMoney/account?${params.toString()}`;
+  return `naverpay://send/sendMoney/account?${params.toString()}`;
+}
+
+/**
+ * Naver Pay mobile web URL with pre-filled bank and account.
+ * The Npay app may intercept this on device when installed.
+ */
+export function buildNaverPayWebUrl(bankCode: string, accountNo: string): string {
+  const params = new URLSearchParams({
+    bankCorpCode: bankCode,
+    accountNo,
+  });
+  return `${NAVER_PAY_MOBILE_WEB_BASE}?${params.toString()}`;
+}
+
+export function buildAndroidCustomSchemeIntent(
+  schemeUrl: string,
+  options: {
+    androidPackage?: string;
+    fallbackUrl?: string;
+  } = {},
+): string {
+  const schemeMatch = /^([a-z][a-z0-9+.-]*):\/\/(.*)$/i.exec(schemeUrl);
+  if (!schemeMatch) {
+    return schemeUrl;
+  }
+
+  const [, schemeName, pathAndQuery] = schemeMatch;
+  const parts = [
+    `intent://${pathAndQuery}`,
+    "#Intent",
+    `scheme=${schemeName}`,
+  ];
+
+  if (options.androidPackage) {
+    parts.push(`package=${options.androidPackage}`);
+  }
+
+  if (options.fallbackUrl) {
+    parts.push(
+      `S.browser_fallback_url=${encodeURIComponent(options.fallbackUrl)}`,
+    );
+  }
+
+  parts.push("end");
+  return parts.join(";");
+}
+
+export function resolveTransferLaunchUrl(
+  appId: TransferAppId,
+  bankCode: string,
+  accountNo: string,
+  userAgent = "",
+): Pick<TransferDeepLink, "href" | "fallbackHref" | "openViaScript"> {
+  const normalizedCode = bankCode.trim();
+  const normalizedAccount = normalizeAccountNo(accountNo);
+
+  if (appId === "toss") {
+    return {
+      href: buildTossDeepLink(normalizedCode, normalizedAccount),
+      openViaScript: false,
+    };
+  }
+
+  if (appId === "kakaopay") {
+    const schemeUrl = buildKakaoPaySchemeUrl(normalizedCode, normalizedAccount);
+
+    if (isAndroidUserAgent(userAgent)) {
+      return {
+        href: buildAndroidCustomSchemeIntent(schemeUrl, {
+          androidPackage: KAKAO_PAY_ANDROID_PACKAGE,
+          fallbackUrl: KAKAO_PAY_WEB_FALLBACK,
+        }),
+        fallbackHref: KAKAO_PAY_WEB_FALLBACK,
+        openViaScript: true,
+      };
+    }
+
+    if (isMobileUserAgent(userAgent)) {
+      return {
+        href: schemeUrl,
+        fallbackHref: KAKAO_PAY_WEB_FALLBACK,
+        openViaScript: true,
+      };
+    }
+
+    return {
+      href: KAKAO_PAY_WEB_FALLBACK,
+      fallbackHref: schemeUrl,
+      openViaScript: false,
+    };
+  }
+
+  const webUrl = buildNaverPayWebUrl(normalizedCode, normalizedAccount);
+  const schemeUrl = buildNaverPaySchemeUrl(normalizedCode, normalizedAccount);
+
+  if (isAndroidUserAgent(userAgent)) {
+    return {
+      href: buildAndroidCustomSchemeIntent(schemeUrl, {
+        androidPackage: NAVER_PAY_ANDROID_PACKAGE,
+        fallbackUrl: webUrl,
+      }),
+      fallbackHref: webUrl,
+      openViaScript: true,
+    };
+  }
+
+  if (isIOSUserAgent(userAgent)) {
+    return {
+      href: schemeUrl,
+      fallbackHref: webUrl,
+      openViaScript: true,
+    };
+  }
+
+  return {
+    href: webUrl,
+    fallbackHref: NAVER_PAY_MOBILE_FALLBACK,
+    openViaScript: false,
+  };
 }
 
 export function buildDeepLinks(
   bankCode: string,
   accountNo: string,
+  userAgent = "",
 ): TransferDeepLink[] {
   const normalizedCode = bankCode.trim();
   const normalizedAccount = normalizeAccountNo(accountNo);
 
-  return [
+  const appMeta: Array<
+    Pick<TransferDeepLink, "id" | "label" | "description" | "accentClass">
+  > = [
     {
       id: "toss",
       label: "토스 앱으로 송금",
       description: "토스 앱에서 계좌 정보가 자동 입력됩니다",
-      href: buildTossDeepLink(normalizedCode, normalizedAccount),
       accentClass:
         "border-blue-200/80 bg-gradient-to-r from-white to-blue-50/90 hover:border-blue-300 hover:shadow-blue-100/70",
     },
@@ -74,7 +209,6 @@ export function buildDeepLinks(
       id: "kakaopay",
       label: "카카오페이로 송금",
       description: "카카오페이 앱에서 계좌 정보가 자동 입력됩니다",
-      href: buildKakaoPayDeepLink(normalizedCode, normalizedAccount),
       accentClass:
         "border-yellow-200/80 bg-gradient-to-r from-white to-yellow-50/90 hover:border-yellow-300 hover:shadow-yellow-100/70",
     },
@@ -82,12 +216,20 @@ export function buildDeepLinks(
       id: "naverpay",
       label: "네이버페이로 송금",
       description: "네이버페이 송금 화면으로 이동합니다",
-      href: buildNaverPayDeepLink(normalizedCode, normalizedAccount),
-      fallbackHref: "https://new-m.pay.naver.com/send/sendMoney",
       accentClass:
         "border-emerald-200/80 bg-gradient-to-r from-white to-emerald-50/90 hover:border-emerald-300 hover:shadow-emerald-100/70",
     },
   ];
+
+  return appMeta.map((meta) => ({
+    ...meta,
+    ...resolveTransferLaunchUrl(
+      meta.id,
+      normalizedCode,
+      normalizedAccount,
+      userAgent,
+    ),
+  }));
 }
 
 export function formatAccountNo(accountNo: string): string {
@@ -292,6 +434,36 @@ export function tryOpenCustomScheme(url: string): void {
   document.body.appendChild(anchor);
   anchor.click();
   document.body.removeChild(anchor);
+}
+
+/** Open a deep link and fall back to web when the native app does not launch. */
+export function tryOpenWithFallback(primaryUrl: string, fallbackUrl?: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!fallbackUrl) {
+    tryOpenCustomScheme(primaryUrl);
+    return;
+  }
+
+  let didHide = false;
+
+  const onVisibilityChange = () => {
+    if (document.hidden) {
+      didHide = true;
+    }
+  };
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  tryOpenCustomScheme(primaryUrl);
+
+  window.setTimeout(() => {
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    if (!didHide) {
+      window.location.assign(fallbackUrl);
+    }
+  }, 1200);
 }
 
 export type OtherBankTransferOptions = {

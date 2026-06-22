@@ -11,7 +11,9 @@ import {
   isAndroidUserAgent,
   launchOtherBankTransfer,
   tryOpenCustomScheme,
+  tryOpenWithFallback,
   buildAndroidBankAppIntent,
+  type TransferDeepLink,
   type TransferAccount,
 } from "@/lib/transfer-gateway";
 import {
@@ -62,8 +64,11 @@ export function TransferGateway({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const [showBankPicker, setShowBankPicker] = useState(false);
+  const [userAgent] = useState(
+    () => (typeof navigator !== "undefined" ? navigator.userAgent : ""),
+  );
   const toastTimerRef = useRef<number | null>(null);
-  const deepLinks = buildDeepLinks(account.bankCode, account.accountNo);
+  const deepLinks = buildDeepLinks(account.bankCode, account.accountNo, userAgent);
   const copyText = getFormattedTransferCopyText(account);
   const majorBankApps = getMajorBankAppSchemes();
 
@@ -118,13 +123,24 @@ export function TransferGateway({
       return;
     }
 
-    const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
     const url = isAndroidUserAgent(userAgent)
       ? buildAndroidBankAppIntent(scheme)
       : scheme.scheme;
 
     tryOpenCustomScheme(url);
     showToast(`${scheme.label} 앱을 여는 중입니다`);
+  }
+
+  function handleOpenPaymentApp(
+    event: React.MouseEvent<HTMLAnchorElement>,
+    app: TransferDeepLink,
+  ) {
+    if (!app.openViaScript) {
+      return;
+    }
+
+    event.preventDefault();
+    tryOpenWithFallback(app.href, app.fallbackHref);
   }
 
   return (
@@ -185,6 +201,7 @@ export function TransferGateway({
             <a
               key={app.id}
               href={app.href}
+              onClick={(event) => handleOpenPaymentApp(event, app)}
               className={cn(
                 "group flex items-center gap-4 rounded-xl border px-4 py-3.5 shadow-sm transition-all duration-200",
                 "hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]",
