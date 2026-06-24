@@ -19,6 +19,7 @@ import {
 import { formatContactLinkSummary } from "@/lib/contact-link";
 import { buildMecardUrl, parseContactFieldsFromUrl } from "@/lib/contact-vcf";
 import { linkDashboardTheme as theme } from "@/lib/link-dashboard-theme";
+import { LegalFooterLinks } from "@/components/legal/legal-footer-links";
 import {
   BANK_TRANSFER_LINK_TITLE,
   CONTACT_LINK_TITLE,
@@ -549,6 +550,7 @@ export function LinksManager({ links }: LinksManagerProps) {
         <p className={theme.footerPrimary}>
           QRit 구매고객 전용 서비스입니다.
         </p>
+        <LegalFooterLinks className="mt-3" />
         <p className={theme.footerSecondary}>
           © QRit Jewelry. 무단 복제 및 배포를 금합니다.
         </p>

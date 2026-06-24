@@ -20,6 +20,7 @@ import {
   QritShopBanner,
   QRIT_SHOP_BANNER_OFFSET_CLASS,
 } from "@/components/profile/qrit-shop-banner";
+import { LegalFooterLinks } from "@/components/legal/legal-footer-links";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
@@ -179,7 +180,7 @@ export function TransferGateway({
           <p className={qritBrand.accentText}>계좌 송금</p>
           <h1 className="mt-1 text-2xl font-bold text-zinc-900">{ownerName}</h1>
           <p className="mt-2 text-sm text-zinc-500">
-            아래 순서대로 진행하면 AQR처럼 빠르게 송금할 수 있습니다
+            아래 순서대로 진행하면 빠르게 송금할 수 있습니다
           </p>
         </header>
 
@@ -283,7 +284,13 @@ export function TransferGateway({
           </p>
         </section>
 
-        <footer className="mt-10 pb-2 text-center">
+        <footer className="mt-10 space-y-3 pb-2 text-center">
+          <p className="text-xs leading-relaxed text-zinc-400">
+            QRit Jewelry는 금융기관이 아니며, 토스·카카오페이·네이버페이·
+            각 은행과 제휴·연계 관계에 있지 않습니다. 실제 송금은 해당
+            금융·결제 서비스에서 이루어집니다.
+          </p>
+          <LegalFooterLinks />
           <p className="text-xs font-medium tracking-wide text-zinc-400">
             Powered by QRit Jewelry
           </p>

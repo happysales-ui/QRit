@@ -177,6 +177,25 @@ export function SignupForm() {
           </p>
         ) : null}
 
+        <label className="flex cursor-pointer items-start gap-2.5 text-sm text-zinc-600">
+          <input
+            type="checkbox"
+            name="termsAgreed"
+            required
+            className="mt-0.5 size-4 shrink-0 rounded border-zinc-300 text-[#0d5c63] focus:ring-[#147278]/30"
+          />
+          <span>
+            <Link href="/terms" className={qritBrand.linkLg} target="_blank">
+              이용약관
+            </Link>
+            {" 및 "}
+            <Link href="/privacy" className={qritBrand.linkLg} target="_blank">
+              개인정보처리방침
+            </Link>
+            에 동의합니다
+          </span>
+        </label>
+
         <button
           type="submit"
           disabled={isPending}

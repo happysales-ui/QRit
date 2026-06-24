@@ -1,4 +1,5 @@
 import { QritBrandLogo } from "@/components/qrit-brand-logo";
+import { LegalFooterLinks } from "@/components/legal/legal-footer-links";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 
 export default function AuthLayout({
@@ -13,6 +14,9 @@ export default function AuthLayout({
         <p className="mt-2 text-sm text-zinc-500">QRit 구매고객 전용 링크 프로필 서비스</p>
       </div>
       <div className={qritBrand.authCard}>{children}</div>
+      <footer className="mt-8 text-center">
+        <LegalFooterLinks />
+      </footer>
     </div>
   );
 }
