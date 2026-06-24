@@ -8,7 +8,7 @@ import {
   copyTextToClipboard,
   formatAccountNo,
   getFormattedTransferCopyText,
-  getMajorBankAppSchemes,
+  getBankAppSchemeGroups,
   openBankAppWithFallback,
   tryOpenWithFallback,
   type BankAppScheme,
@@ -79,7 +79,7 @@ export function TransferGateway({
   const toastTimerRef = useRef<number | null>(null);
   const deepLinks = buildDeepLinks(account.bankCode, account.accountNo, userAgent);
   const copyText = getFormattedTransferCopyText(account);
-  const majorBankApps = getMajorBankAppSchemes();
+  const bankAppGroups = getBankAppSchemeGroups();
 
   const showToast = useCallback((message: string) => {
     if (toastTimerRef.current !== null) {
@@ -253,21 +253,30 @@ export function TransferGateway({
             <p className={qritBrand.bankPickerTitle}>내 은행 앱 선택</p>
             <p className="mt-1 text-xs leading-relaxed text-zinc-500">
               은행을 선택하면 계좌번호가 복사되고, 확인 후 해당 은행 앱으로
-              이동합니다.
+              이동합니다. NH·신한·하나 등은 사용 중인 앱 버전을 선택하세요.
             </p>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {majorBankApps.map((bankApp) => (
-                <button
-                  key={bankApp.id}
-                  type="button"
-                  onClick={() => void handleSelectBank(bankApp)}
-                  className={cn(
-                    qritBrand.bankChip,
-                    pendingBank?.id === bankApp.id && qritBrand.bankChipActive,
-                  )}
-                >
-                  {bankApp.label}
-                </button>
+            <div className="mt-3 max-h-64 space-y-3 overflow-y-auto pr-0.5">
+              {bankAppGroups.map((group) => (
+                <div key={group.id}>
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                    {group.label}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {group.apps.map((bankApp) => (
+                      <button
+                        key={bankApp.id}
+                        type="button"
+                        onClick={() => void handleSelectBank(bankApp)}
+                        className={cn(
+                          qritBrand.bankChip,
+                          pendingBank?.id === bankApp.id && qritBrand.bankChipActive,
+                        )}
+                      >
+                        {bankApp.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

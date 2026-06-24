@@ -252,11 +252,15 @@ export function getFormattedTransferCopyText(account: TransferAccount): string {
   return `${account.bank.name} ${formatAccountNo(account.accountNo)}`;
 }
 
+export type BankAppSchemeGroupId = "major" | "internet" | "regional";
+
 export type BankAppScheme = {
   /** Unique key (multiple apps may share the same bankCode, e.g. NH 콕뱅크 vs 스마트). */
   id: string;
   bankCode: string;
   label: string;
+  /** UI section in the bank picker grid. */
+  group: BankAppSchemeGroupId;
   /** Custom URL scheme that launches the bank's mobile app. */
   scheme: string;
   /** Android package name for intent:// fallbacks. */
@@ -265,15 +269,25 @@ export type BankAppScheme = {
   appStoreSearchTerm?: string;
 };
 
+export type BankAppSchemeGroup = {
+  id: BankAppSchemeGroupId;
+  label: string;
+  apps: BankAppScheme[];
+};
+
 /**
- * Known custom schemes for major Korean bank apps.
+ * Known custom schemes for Korean bank mobile apps.
  * Most do not support public account pre-fill; schemes launch the app only.
+ * Android uses intent:// + package + Play Store fallback (see buildAndroidBankAppIntent).
  */
 export const BANK_APP_SCHEMES: BankAppScheme[] = [
+  // ── NH농협 (011) — two apps in active use ──────────────────────────────
   {
     id: "011-kok",
     bankCode: "011",
     label: "NH콕뱅크",
+    group: "major",
+    // Play Store nh.smart.nhcok; NH mutual-finance app (replaces legacy nhappbankansimclick)
     scheme: "nhcok://",
     androidPackage: "nh.smart.nhcok",
     appStoreSearchTerm: "NH콕뱅크",
@@ -282,100 +296,178 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     id: "011-smart",
     bankCode: "011",
     label: "NH스마트",
+    group: "major",
+    // Play Store nh.smart.banking; current NH smart banking (not nhappbankansimclick)
     scheme: "com.nonghyup.newsmartbanking://",
     androidPackage: "nh.smart.banking",
     appStoreSearchTerm: "NH스마트뱅킹",
   },
+  // ── KB국민 (004) ───────────────────────────────────────────────────────
   {
     id: "004",
     bankCode: "004",
-    label: "KB국민",
-    scheme: "kb-acp://",
+    label: "KB스타",
+    group: "major",
+    // KG이니시스/Smartro: kbbank:// + com.kbstar.kbbank (NOT kb-acp = KB Pay card)
+    scheme: "kbbank://",
     androidPackage: "com.kbstar.kbbank",
+    appStoreSearchTerm: "KB스타뱅킹",
   },
+  // ── 신한 (088) — SOL뱅크 + 슈퍼SOL ─────────────────────────────────────
   {
-    id: "088",
+    id: "088-sol",
     bankCode: "088",
-    label: "신한",
+    label: "신한SOL",
+    group: "major",
+    // KCP/NHN Smartro: com.shinhan.sbanking (신한 SOL뱅크)
     scheme: "sbank://",
     androidPackage: "com.shinhan.sbanking",
+    appStoreSearchTerm: "신한 SOL뱅크",
   },
   {
-    id: "081",
-    bankCode: "081",
-    label: "하나",
-    scheme: "hanaansim://",
-    androidPackage: "com.kebhana.hanaapush",
+    id: "088-supersol",
+    bankCode: "088",
+    label: "신한슈퍼SOL",
+    group: "major",
+    // spa.shinhan.com app_link: smailapp:// + com.shinhan.smartcaremgr
+    scheme: "smailapp://",
+    androidPackage: "com.shinhan.smartcaremgr",
+    appStoreSearchTerm: "신한 슈퍼SOL",
   },
+  // ── 하나 (081) — new + legacy app ──────────────────────────────────────
+  {
+    id: "081-new",
+    bankCode: "081",
+    label: "하나원큐",
+    group: "major",
+    // Play Store com.hanabank.oqf (2024+ redesigned app)
+    scheme: "hanaansim://",
+    androidPackage: "com.hanabank.oqf",
+    appStoreSearchTerm: "하나원큐",
+  },
+  {
+    id: "081-legacy",
+    bankCode: "081",
+    label: "하나(구)",
+    group: "major",
+    // Play Store com.kebhana.hanapush — sunset but still installed by some users
+    scheme: "hanaansim://",
+    androidPackage: "com.kebhana.hanapush",
+    appStoreSearchTerm: "하나원큐",
+  },
+  // ── 우리 (020) ─────────────────────────────────────────────────────────
   {
     id: "020",
     bankCode: "020",
-    label: "우리",
-    scheme: "wooribank://",
+    label: "우리WON",
+    group: "major",
+    // KG이니시스/KCP: newsmartpib:// + com.wooribank.smart.npib (NOT wooribank://)
+    scheme: "newsmartpib://",
     androidPackage: "com.wooribank.smart.npib",
+    appStoreSearchTerm: "우리WON뱅킹",
   },
+  // ── IBK기업 (003) ──────────────────────────────────────────────────────
   {
     id: "003",
     bankCode: "003",
     label: "IBK기업",
+    group: "major",
+    // Play Store com.ibk.android.ionebank (i-ONE Bank 개인)
     scheme: "ibkapp://",
     androidPackage: "com.ibk.android.ionebank",
+    appStoreSearchTerm: "i-ONE Bank",
   },
+  // ── Internet banks ─────────────────────────────────────────────────────
   {
     id: "090",
     bankCode: "090",
     label: "카카오뱅크",
+    group: "internet",
+    // Smartro/KCP: kakaobank:// + com.kakaobank.channel
     scheme: "kakaobank://",
     androidPackage: "com.kakaobank.channel",
+    appStoreSearchTerm: "카카오뱅크",
   },
   {
     id: "089",
     bankCode: "089",
     label: "케이뱅크",
+    group: "internet",
+    // KG이니시스 계좌이체: ukbanksmartbanknonloginpay:// + com.kbankwith.smartbank
     scheme: "ukbanksmartbanknonloginpay://",
     androidPackage: "com.kbankwith.smartbank",
+    appStoreSearchTerm: "케이뱅크",
   },
+  {
+    id: "092",
+    bankCode: "092",
+    label: "토스뱅크",
+    group: "internet",
+    // KCP/Smartro: supertoss:// + viva.republica.toss (same app as 토스; opens app for paste)
+    scheme: "supertoss://",
+    androidPackage: "viva.republica.toss",
+    appStoreSearchTerm: "토스",
+  },
+  // ── Regional / other commercial banks ──────────────────────────────────
   {
     id: "023",
     bankCode: "023",
     label: "SC제일",
+    group: "regional",
+    // Play Store com.scbank.ma30 (replaces deprecated com.scbank.maepay)
     scheme: "scbankapp://",
-    androidPackage: "com.scbank.maepay",
+    androidPackage: "com.scbank.ma30",
+    appStoreSearchTerm: "SC제일은행",
   },
   {
     id: "032",
     bankCode: "032",
     label: "부산",
+    group: "regional",
+    // Play Store kr.co.busanbank.mbp
     scheme: "busanbank://",
-    androidPackage: "com.busanbank.mbp",
+    androidPackage: "kr.co.busanbank.mbp",
+    appStoreSearchTerm: "BNK부산은행",
   },
   {
     id: "031",
     bankCode: "031",
     label: "iM뱅크",
-    scheme: "dgbbank://",
-    androidPackage: "com.dgb.android.smartbank",
+    group: "regional",
+    // Play Store kr.co.dgb.dgbm (DGB/iM뱅크; scheme imbank:// not dgbbank://)
+    scheme: "imbank://",
+    androidPackage: "kr.co.dgb.dgbm",
+    appStoreSearchTerm: "iM뱅크",
   },
   {
     id: "037",
     bankCode: "037",
     label: "전북",
+    group: "regional",
+    // Play Store kr.co.jbbank.privatebank (쏙뱅크; replaces com.jbbank.smartbank)
     scheme: "jbbank://",
-    androidPackage: "com.jbbank.smartbank",
+    androidPackage: "kr.co.jbbank.privatebank",
+    appStoreSearchTerm: "전북은행 쏙뱅크",
   },
   {
     id: "039",
     bankCode: "039",
     label: "경남",
+    group: "regional",
+    // Play Store com.knb.psb (BNK경남)
     scheme: "knbank://",
-    androidPackage: "com.knbank.smartbank",
+    androidPackage: "com.knb.psb",
+    appStoreSearchTerm: "BNK경남은행",
   },
   {
     id: "007",
     bankCode: "007",
     label: "수협",
-    scheme: "suhyupbank://",
-    androidPackage: "com.suhyupbank.mobile",
+    group: "regional",
+    // Play Store com.suhyup.psmb (파트너뱅크; Hey Bank merged Jun 2025)
+    scheme: "suhyup://",
+    androidPackage: "com.suhyup.psmb",
+    appStoreSearchTerm: "수협 파트너뱅크",
   },
 ];
 
@@ -397,6 +489,21 @@ export function getBankAppSchemesForCode(bankCode: string): BankAppScheme[] {
 
 export function getMajorBankAppSchemes(): BankAppScheme[] {
   return BANK_APP_SCHEMES;
+}
+
+const BANK_APP_SCHEME_GROUP_META: Array<
+  Pick<BankAppSchemeGroup, "id" | "label">
+> = [
+  { id: "major", label: "시중·농협" },
+  { id: "internet", label: "인터넷·토스뱅크" },
+  { id: "regional", label: "지역·특수" },
+];
+
+export function getBankAppSchemeGroups(): BankAppSchemeGroup[] {
+  return BANK_APP_SCHEME_GROUP_META.map((meta) => ({
+    ...meta,
+    apps: BANK_APP_SCHEMES.filter((entry) => entry.group === meta.id),
+  })).filter((group) => group.apps.length > 0);
 }
 
 export function isAndroidUserAgent(userAgent: string): boolean {
