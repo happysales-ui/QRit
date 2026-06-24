@@ -4,11 +4,13 @@ import { ProfilePage } from "@/components/profile/profile-page";
 import { RESERVED_USERNAMES } from "@/lib/auth/validation";
 import { getMockProfileByUsername } from "@/lib/mock-profile";
 import { getProfileByUsername } from "@/lib/profile";
+import { isProfileHubView } from "@/lib/profile-hub";
 import { resolveLinkRedirect } from "@/lib/resolve-link-redirect";
 import { isProfileExpired } from "@/lib/service-expiry";
 
 interface ProfileRouteProps {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ hub?: string }>;
 }
 
 async function resolveProfile(username: string) {
@@ -50,8 +52,13 @@ export async function generateMetadata({
   };
 }
 
-export default async function UserProfilePage({ params }: ProfileRouteProps) {
+export default async function UserProfilePage({
+  params,
+  searchParams,
+}: ProfileRouteProps) {
   const { username } = await params;
+  const query = await searchParams;
+  const showFullHub = isProfileHubView(query);
   const data = await resolveProfile(username);
 
   if (!data) {
@@ -64,7 +71,7 @@ export default async function UserProfilePage({ params }: ProfileRouteProps) {
     redirect(`/${profile.username}/expired`);
   }
 
-  if (profile.default_link_id) {
+  if (profile.default_link_id && !showFullHub) {
     const defaultLink = links.find(
       (link) => link.id === profile.default_link_id && link.is_active,
     );
@@ -80,5 +87,11 @@ export default async function UserProfilePage({ params }: ProfileRouteProps) {
     }
   }
 
-  return <ProfilePage profile={profile} links={links} />;
+  return (
+    <ProfilePage
+      profile={profile}
+      links={links}
+      showDefaultLinkNote={showFullHub && !!profile.default_link_id}
+    />
+  );
 }

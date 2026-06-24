@@ -17,6 +17,7 @@ import {
   type ProfileDraft,
 } from "@/components/dashboard/profile-form";
 import { linkDashboardTheme } from "@/lib/link-dashboard-theme";
+import { getProfileHubHref } from "@/lib/profile-hub";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import type { LinkBlock, Profile } from "@/types";
 import { cn } from "@/lib/utils";
@@ -178,7 +179,11 @@ export function DashboardClient({
           </button>
         </div>
         <Link
-          href={`/${profile.username}`}
+          href={
+            profile.default_link_id
+              ? getProfileHubHref(profile.username)
+              : `/${profile.username}`
+          }
           target="_blank"
           className={`mt-3 inline-block ${qritBrand.link}`}
         >

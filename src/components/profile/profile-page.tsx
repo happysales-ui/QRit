@@ -13,9 +13,14 @@ import type { LinkBlock, Profile } from "@/types";
 interface ProfilePageProps {
   profile: Profile;
   links: LinkBlock[];
+  showDefaultLinkNote?: boolean;
 }
 
-export function ProfilePage({ profile, links }: ProfilePageProps) {
+export function ProfilePage({
+  profile,
+  links,
+  showDefaultLinkNote = false,
+}: ProfilePageProps) {
   const activeLinks = links
     .filter((link) => link.is_active && !link.is_hidden)
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -31,6 +36,13 @@ export function ProfilePage({ profile, links }: ProfilePageProps) {
         className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-4 py-8 ${QRIT_SHOP_BANNER_OFFSET_CLASS}`}
       >
         <ProfileHeader profile={profile} />
+
+        {showDefaultLinkNote ? (
+          <p className="mt-4 rounded-xl border border-[#d4e8ea]/70 bg-[#e8f4f5]/50 px-4 py-3 text-center text-xs leading-relaxed text-[#0d5c63]">
+            QR 스캔 시에는 선택한 링크로 바로 이동합니다. 여기서는 등록한
+            모든 링크를 볼 수 있습니다.
+          </p>
+        ) : null}
 
         <nav
           aria-label="프로필 링크"

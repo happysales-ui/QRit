@@ -14,6 +14,7 @@ import {
   saveContactFromMecard,
 } from "@/lib/contact-gateway";
 import type { MecardContact } from "@/lib/contact-vcf";
+import { getProfileHubHref } from "@/lib/profile-hub";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +103,10 @@ export function ContactGateway({
           QRIT_SHOP_BANNER_OFFSET_CLASS,
         )}
       >
-        <Link href={`/${username}`} className={`mb-6 inline-flex items-center ${qritBrand.link}`}>
+        <Link
+          href={getProfileHubHref(username)}
+          className={`mb-6 inline-flex items-center ${qritBrand.link}`}
+        >
           ← {ownerName} 프로필
         </Link>
 

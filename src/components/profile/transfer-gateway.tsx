@@ -21,6 +21,7 @@ import {
 } from "@/components/profile/qrit-shop-banner";
 import { LegalFooterLinks } from "@/components/legal/legal-footer-links";
 import { qritBrand } from "@/lib/qrit-brand-theme";
+import { getProfileHubHref } from "@/lib/profile-hub";
 import { cn } from "@/lib/utils";
 
 interface TransferGatewayProps {
@@ -164,7 +165,7 @@ export function TransferGateway({
         )}
       >
         <Link
-          href={`/${username}`}
+          href={getProfileHubHref(username)}
           className={`mb-6 inline-flex items-center ${qritBrand.link}`}
         >
           ← {ownerName} 프로필
