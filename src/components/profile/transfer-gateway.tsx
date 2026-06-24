@@ -5,12 +5,14 @@ import Link from "next/link";
 import { Toast } from "@/components/ui/toast";
 import {
   buildDeepLinks,
+  copyTextToClipboard,
   formatAccountNo,
+  getBankAppScheme,
   getFormattedTransferCopyText,
   getMajorBankAppSchemes,
-  launchOtherBankTransfer,
   openBankAppWithFallback,
   tryOpenWithFallback,
+  type BankAppScheme,
   type TransferDeepLink,
   type TransferAccount,
 } from "@/lib/transfer-gateway";
@@ -26,6 +28,15 @@ interface TransferGatewayProps {
   username: string;
   account: TransferAccount;
 }
+
+const TRANSFER_STEPS = [
+  "송금할 앱 또는 은행을 선택하세요",
+  "계좌번호가 자동으로 복사됩니다",
+  "확인 후 송금하기를 누르면 해당 앱으로 이동합니다",
+  "은행·페이 앱에서 로그인하세요",
+  "붙여넣기 허용 후 계좌번호를 확인·입력하세요",
+  "금액을 입력하고 송금을 완료하세요",
+] as const;
 
 function TransferAppIcon({ appId }: { appId: "toss" | "kakaopay" | "naverpay" }) {
   const shared = "text-sm font-bold";
@@ -61,7 +72,7 @@ export function TransferGateway({
   const [copied, setCopied] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
-  const [showBankPicker, setShowBankPicker] = useState(false);
+  const [pendingBank, setPendingBank] = useState<BankAppScheme | null>(null);
   const [userAgent] = useState(
     () => (typeof navigator !== "undefined" ? navigator.userAgent : ""),
   );
@@ -103,25 +114,33 @@ export function TransferGateway({
     }
   }
 
-  async function handleOtherBankTransfer() {
-    const result = await launchOtherBankTransfer(account, { userAgent });
+  async function handleSelectBank(bankCode: string) {
+    const bankApp = getBankAppScheme(bankCode);
+    if (!bankApp) {
+      return;
+    }
 
-    if (result.copied) {
+    const didCopy = await copyTextToClipboard(copyText);
+    if (didCopy) {
       showToast("계좌번호가 복사되었습니다");
     } else {
       showToast("복사에 실패했습니다. 계좌 정보를 직접 확인해 주세요");
     }
 
-    setShowBankPicker(true);
+    setPendingBank(bankApp);
   }
 
-  function handleOpenBankApp(bankCode: string) {
-    const opened = openBankAppWithFallback(bankCode, userAgent);
-    if (!opened) {
+  function handleConfirmBankTransfer() {
+    if (!pendingBank) {
       return;
     }
 
-    showToast(`${opened.label} 앱을 여는 중입니다`);
+    const opened = openBankAppWithFallback(pendingBank.bankCode, userAgent);
+    if (opened) {
+      showToast(`${opened.label} 앱을 여는 중입니다`);
+    }
+
+    setPendingBank(null);
   }
 
   function handleOpenPaymentApp(
@@ -160,11 +179,11 @@ export function TransferGateway({
           <p className={qritBrand.accentText}>계좌 송금</p>
           <h1 className="mt-1 text-2xl font-bold text-zinc-900">{ownerName}</h1>
           <p className="mt-2 text-sm text-zinc-500">
-            아래 계좌로 송금하거나 원하는 앱을 선택하세요
+            아래 순서대로 진행하면 AQR처럼 빠르게 송금할 수 있습니다
           </p>
         </header>
 
-        <section className={`mt-8 ${qritBrand.transferCard}`}>
+        <section className={`mt-6 ${qritBrand.transferCard}`}>
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
             받는 계좌
           </p>
@@ -183,12 +202,29 @@ export function TransferGateway({
                 : "bg-gradient-to-r from-[#0d5c63] to-[#147278] text-white hover:from-[#094347] hover:to-[#0d5c63]",
             )}
           >
-            {copied ? "복사 완료!" : "복사하기"}
+            {copied ? "복사 완료!" : "계좌번호 복사하기"}
           </button>
         </section>
 
+        <section className="mt-5 rounded-xl border border-[#d4e8ea]/70 bg-white/80 p-4">
+          <p className="text-sm font-semibold text-[#0d5c63]">송금 방법</p>
+          <ol className="mt-3 space-y-2">
+            {TRANSFER_STEPS.map((step, index) => (
+              <li
+                key={step}
+                className="flex gap-2 text-xs leading-relaxed text-zinc-600"
+              >
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#e8f4f5] text-[11px] font-bold text-[#0d5c63]">
+                  {index + 1}
+                </span>
+                <span className="pt-0.5">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
         <section className="mt-6 flex flex-1 flex-col gap-3">
-          <p className="text-sm font-semibold text-zinc-700">앱으로 송금하기</p>
+          <p className="text-sm font-semibold text-zinc-700">빠른 송금 (페이 앱)</p>
 
           {deepLinks.map((app) => (
             <a
@@ -218,58 +254,32 @@ export function TransferGateway({
             </a>
           ))}
 
-          <button
-            type="button"
-            onClick={() => void handleOtherBankTransfer()}
-            className={qritBrand.transferButton}
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
-              <span className="text-sm font-bold text-[#0d5c63]" aria-hidden>
-                ₩
-              </span>
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-semibold text-zinc-800">
-                타은행 / 기타 은행 앱으로 송금
-              </span>
-              <span className="mt-0.5 block text-xs text-zinc-500">
-                계좌번호 복사 후 내 은행 앱으로 바로 이동합니다
-              </span>
-            </span>
-            <span className="text-zinc-400 transition-transform group-hover:translate-x-0.5">
-              →
-            </span>
-          </button>
-
-          {showBankPicker ? (
-            <div className={qritBrand.bankPicker}>
-              <p className={qritBrand.bankPickerTitle}>
-                다른 은행 앱 열기
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-                계좌 정보는 이미 복사되었습니다. 송금 화면에서 붙여넣기 하세요.
-              </p>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {majorBankApps.map((bankApp) => (
-                  <button
-                    key={bankApp.bankCode}
-                    type="button"
-                    onClick={() => handleOpenBankApp(bankApp.bankCode)}
-                    className={cn(
-                      qritBrand.bankChip,
-                      bankApp.bankCode === account.bankCode && qritBrand.bankChipActive,
-                    )}
-                  >
-                    {bankApp.label}
-                  </button>
-                ))}
-              </div>
+          <div className={qritBrand.bankPicker}>
+            <p className={qritBrand.bankPickerTitle}>내 은행 앱 선택</p>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+              은행을 선택하면 계좌번호가 복사되고, 확인 후 해당 은행 앱으로
+              이동합니다.
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {majorBankApps.map((bankApp) => (
+                <button
+                  key={bankApp.bankCode}
+                  type="button"
+                  onClick={() => void handleSelectBank(bankApp.bankCode)}
+                  className={cn(
+                    qritBrand.bankChip,
+                    bankApp.bankCode === account.bankCode && qritBrand.bankChipActive,
+                  )}
+                >
+                  {bankApp.label}
+                </button>
+              ))}
             </div>
-          ) : null}
+          </div>
 
           <p className="mt-2 text-center text-xs leading-relaxed text-zinc-400">
-            앱이 설치되어 있지 않으면 앱스토어 또는 웹 송금 화면으로 이동할 수
-            있습니다. 계좌 정보는 복사 버튼으로 직접 붙여넣을 수도 있습니다.
+            실제 송금은 토스·페이·은행 앱에서 완료됩니다. 브라우저 안에서
+            돈이 이동하지는 않습니다.
           </p>
         </section>
 
@@ -279,6 +289,62 @@ export function TransferGateway({
           </p>
         </footer>
       </div>
+
+      {pendingBank ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="transfer-confirm-title"
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <p
+              id="transfer-confirm-title"
+              className="text-lg font-bold text-zinc-900"
+            >
+              송금 확인
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              아래 계좌로 {pendingBank.label} 앱에서 송금하시겠습니까?
+            </p>
+
+            <div className="mt-4 rounded-xl border border-[#d4e8ea]/80 bg-[#e8f4f5]/40 p-4">
+              <p className="text-xs font-semibold text-zinc-400">받는 분</p>
+              <p className="mt-1 text-base font-bold text-zinc-900">
+                {ownerName}
+              </p>
+              <p className="mt-2 text-sm font-semibold text-[#0d5c63]">
+                {account.bank.name}
+              </p>
+              <p className="mt-0.5 text-lg font-bold tracking-wide text-zinc-800">
+                {formatAccountNo(account.accountNo)}
+              </p>
+            </div>
+
+            <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+              계좌번호가 클립보드에 복사되었습니다. {pendingBank.label} 앱
+              송금 화면에서 붙여넣기 하세요.
+            </p>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingBank(null)}
+                className="flex-1 rounded-xl border border-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBankTransfer}
+                className="flex-1 rounded-xl bg-gradient-to-r from-[#0d5c63] to-[#147278] px-4 py-3 text-sm font-semibold text-white transition-colors hover:from-[#094347] hover:to-[#0d5c63]"
+              >
+                송금하기
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {toastMessage ? (
         <Toast message={toastMessage} visible={toastVisible} />
