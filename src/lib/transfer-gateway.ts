@@ -411,11 +411,6 @@ export function isMobileUserAgent(userAgent: string): boolean {
   return isAndroidUserAgent(userAgent) || isIOSUserAgent(userAgent);
 }
 
-export function buildAndroidTextShareIntent(text: string): string {
-  const encoded = encodeURIComponent(text);
-  return `intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=${encoded};end`;
-}
-
 export function buildPlayStoreUrl(androidPackage: string): string {
   return `https://play.google.com/store/apps/details?id=${encodeURIComponent(androidPackage)}`;
 }
@@ -468,22 +463,6 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
   }
 }
 
-export async function tryWebShareTransfer(
-  text: string,
-  title: string,
-): Promise<boolean> {
-  if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
-    return false;
-  }
-
-  try {
-    await navigator.share({ title, text });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 /** Attempt to open a custom scheme via transient anchor click (mobile-friendly). */
 export function tryOpenCustomScheme(url: string): void {
   if (typeof document === "undefined") {
@@ -528,15 +507,6 @@ export function tryOpenWithFallback(primaryUrl: string, fallbackUrl?: string): v
   }, 1200);
 }
 
-export type OtherBankTransferOptions = {
-  userAgent?: string;
-};
-
-export type OtherBankTransferResult = {
-  copied: boolean;
-  openedAndroidChooser: boolean;
-};
-
 /**
  * Opens a major bank app with Play/App Store fallback when the app is missing.
  * Accepts a BankAppScheme or an app id / bank code string.
@@ -565,38 +535,6 @@ export function openBankAppWithFallback(
   }
 
   return scheme;
-}
-
-/**
- * Clipboard copy + immediate bank-app helper for traditional (non-Toss/Pay) transfers.
- * Android opens the system share sheet so the user can pick their banking app right away.
- */
-export async function launchOtherBankTransfer(
-  account: TransferAccount,
-  options: OtherBankTransferOptions = {},
-): Promise<OtherBankTransferResult> {
-  const userAgent =
-    options.userAgent ??
-    (typeof navigator !== "undefined" ? navigator.userAgent : "");
-  const copyText = getFormattedTransferCopyText(account);
-  const copied = await copyTextToClipboard(copyText);
-
-  const result: OtherBankTransferResult = {
-    copied,
-    openedAndroidChooser: false,
-  };
-
-  if (!isMobileUserAgent(userAgent)) {
-    return result;
-  }
-
-  if (isAndroidUserAgent(userAgent)) {
-    tryOpenCustomScheme(buildAndroidTextShareIntent(copyText));
-    result.openedAndroidChooser = true;
-    return result;
-  }
-
-  return result;
 }
 
 export function resolveTransferAccount(

@@ -263,7 +263,7 @@ export function TransferGateway({
                   onClick={() => void handleSelectBank(bankApp)}
                   className={cn(
                     qritBrand.bankChip,
-                    bankApp.bankCode === account.bankCode && qritBrand.bankChipActive,
+                    pendingBank?.id === bankApp.id && qritBrand.bankChipActive,
                   )}
                 >
                   {bankApp.label}
