@@ -8,16 +8,32 @@ import {
   TRANSFER_URL_MARKER,
   getTransferGatewayPath,
 } from "@/lib/transfer-gateway";
-import { isBankTransferLinkTitle } from "@/lib/link-presets";
+import {
+  isBankTransferLinkTitle,
+  inferPresetFromTitle,
+  type LinkTitlePreset,
+} from "@/lib/link-presets";
 import type { LinkBlock } from "@/types";
 
 export { TRANSFER_URL_MARKER };
 
-export function isTransferLink(link: Pick<LinkBlock, "title" | "url" | "bank_code" | "account_no">): boolean {
-  if (!isBankTransferLinkTitle(link.title)) {
-    return false;
+export function inferTransferLinkFormState(
+  link: Pick<LinkBlock, "title" | "url" | "bank_code" | "account_no">,
+): { preset: LinkTitlePreset; transferAlias: string } {
+  if (isTransferLink(link)) {
+    return {
+      preset: BANK_TRANSFER_LINK_TITLE,
+      transferAlias: isBankTransferLinkTitle(link.title) ? "" : link.title,
+    };
   }
 
+  const inferred = inferPresetFromTitle(link.title);
+  return { preset: inferred.preset, transferAlias: inferred.customTitle };
+}
+
+export function isTransferLink(
+  link: Pick<LinkBlock, "title" | "url" | "bank_code" | "account_no">,
+): boolean {
   if (resolveTransferAccount(link.bank_code, link.account_no)) {
     return true;
   }
@@ -26,7 +42,15 @@ export function isTransferLink(link: Pick<LinkBlock, "title" | "url" | "bank_cod
     return true;
   }
 
-  return parseTransferUrl(link.url) !== null;
+  if (parseTransferUrl(link.url) !== null) {
+    return true;
+  }
+
+  if (isBankTransferLinkTitle(link.title)) {
+    return true;
+  }
+
+  return false;
 }
 
 export function resolveLinkTransferAccount(
@@ -54,6 +78,15 @@ export function getTransferLinkHref(
   }
 
   return getTransferGatewayPath(username, link.id);
+}
+
+export function getTransferLinkFullUrl(
+  siteUrl: string,
+  username: string,
+  linkId: string,
+): string {
+  const base = siteUrl.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl;
+  return `${base}${getTransferGatewayPath(username, linkId)}`;
 }
 
 export function formatTransferLinkSummary(

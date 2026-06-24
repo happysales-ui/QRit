@@ -98,6 +98,27 @@ export function isBankTransferLinkTitle(title: string): boolean {
   return title === BANK_TRANSFER_LINK_TITLE;
 }
 
+export function isTransferLinkSubmission(
+  title: string,
+  url: string,
+  formData?: FormData,
+): boolean {
+  if (isTransferLinkSubmission(title, url, formData)) {
+    return true;
+  }
+
+  if (formData?.has("bank_code")) {
+    return true;
+  }
+
+  return url.trim() === TRANSFER_URL_MARKER;
+}
+
+export function resolveTransferDisplayTitle(alias: string): string {
+  const trimmed = alias.trim();
+  return trimmed || BANK_TRANSFER_LINK_TITLE;
+}
+
 export function isMecardUrl(url: string): boolean {
   return MECARD_PREFIX_REGEX.test(sanitizeContactUrl(url));
 }
@@ -143,7 +164,7 @@ export function validateLinkUrl(
   url: string,
   formData?: FormData,
 ): string | null {
-  if (isBankTransferLinkTitle(title)) {
+  if (isTransferLinkSubmission(title, url, formData)) {
     if (formData) {
       const bankCode = String(formData.get("bank_code") ?? "").trim();
       const accountNo = String(formData.get("account_no") ?? "").trim();
@@ -199,7 +220,7 @@ export function normalizeLinkUrl(
   url: string,
   formData?: FormData,
 ): string {
-  if (isBankTransferLinkTitle(title)) {
+  if (isTransferLinkSubmission(title, url, formData)) {
     if (formData) {
       return buildTransferLinkPayload(formData).url;
     }
@@ -239,9 +260,10 @@ export function normalizeLinkUrl(
 
 export function normalizeLinkTransferFields(
   title: string,
+  urlInput: string,
   formData?: FormData,
 ): { bank_code: string | null; account_no: string | null } {
-  if (!isBankTransferLinkTitle(title) || !formData) {
+  if (!isTransferLinkSubmission(title, urlInput, formData) || !formData) {
     return { bank_code: null, account_no: null };
   }
 
@@ -271,8 +293,8 @@ export function buildLinkDbPayload(
     url: normalizeLinkUrl(title, urlInput, formData),
   };
 
-  if (isBankTransferLinkTitle(title)) {
-    return { ...payload, ...normalizeLinkTransferFields(title, formData) };
+  if (isTransferLinkSubmission(title, urlInput, formData)) {
+    return { ...payload, ...normalizeLinkTransferFields(title, urlInput, formData) };
   }
 
   if (options.clearTransferWhenAbsent) {

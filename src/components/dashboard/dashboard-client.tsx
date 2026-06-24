@@ -64,12 +64,14 @@ interface DashboardClientProps {
   profile: Profile;
   links: LinkBlock[];
   publicUrl: string;
+  siteUrl: string;
 }
 
 export function DashboardClient({
   profile,
   links,
   publicUrl,
+  siteUrl,
 }: DashboardClientProps) {
   const router = useRouter();
   const serverDraft = useMemo(() => buildDraft(profile, links), [profile, links]);
@@ -154,7 +156,7 @@ export function DashboardClient({
 
       <section className={cn(linkDashboardTheme.section, "mb-8")}>
         <h2 className={`mb-5 ${linkDashboardTheme.sectionTitle}`}>링크 관리</h2>
-        <LinksManager links={links} />
+        <LinksManager links={links} username={profile.username} siteUrl={siteUrl} />
         <p className="mt-4 text-xs text-zinc-400">
           링크 수정·순서 변경·삭제는 각 항목에서 즉시 저장됩니다. 새 링크 추가도
           바로 반영됩니다.

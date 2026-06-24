@@ -5,16 +5,16 @@ import {
 } from "@/components/profile/social-icons";
 import { getBankByCode } from "@/lib/bank-transfer";
 import {
-  BANK_TRANSFER_LINK_TITLE,
   CONTACT_LINK_TITLE,
   inferPresetFromTitle,
 } from "@/lib/link-presets";
+import { isTransferLink } from "@/lib/transfer-link";
 import { cn } from "@/lib/utils";
 import type { LinkBlock } from "@/types";
 import type { ReactNode } from "react";
 
 type LinkTypeIconProps = {
-  link: Pick<LinkBlock, "title" | "url" | "bank_code">;
+  link: Pick<LinkBlock, "title" | "url" | "bank_code" | "account_no">;
   className?: string;
 };
 
@@ -136,21 +136,22 @@ export function getLinkTypeKey(title: string): string {
 }
 
 export function LinkTypeIcon({ link, className }: LinkTypeIconProps) {
+  if (isTransferLink(link)) {
+    const bank = link.bank_code ? getBankByCode(link.bank_code) : undefined;
+    return (
+      <IconShell bgClassName="bg-[#FEE500] text-[#191919]" className={className}>
+        {bank ? <BankShortLabel shortName={bank.shortName} /> : <BankIcon />}
+      </IconShell>
+    );
+  }
+
   const preset = getLinkTypeKey(link.title);
-  const bank = link.bank_code ? getBankByCode(link.bank_code) : undefined;
 
   switch (preset) {
     case CONTACT_LINK_TITLE:
       return (
         <IconShell bgClassName="bg-[#e8f4f5] text-[#0d5c63]" className={className}>
           <PhoneIcon />
-        </IconShell>
-      );
-
-    case BANK_TRANSFER_LINK_TITLE:
-      return (
-        <IconShell bgClassName="bg-[#FEE500] text-[#191919]" className={className}>
-          {bank ? <BankShortLabel shortName={bank.shortName} /> : <BankIcon />}
         </IconShell>
       );
 

@@ -23,20 +23,24 @@ import { formatContactLinkSummary } from "@/lib/contact-link";
 import { buildMecardUrl, parseContactFieldsFromUrl } from "@/lib/contact-vcf";
 import { linkDashboardTheme as theme } from "@/lib/link-dashboard-theme";
 import { LegalFooterLinks } from "@/components/legal/legal-footer-links";
+import { LinkQrCode } from "@/components/qr/link-qr-code";
 import {
   BANK_TRANSFER_LINK_TITLE,
   CONTACT_LINK_TITLE,
   CUSTOM_LINK_TITLE,
   getInitialLinkUrl,
   getLinkUrlPlaceholder,
-  inferPresetFromTitle,
   LINK_TITLE_PRESETS,
   resolveLinkTitle,
+  resolveTransferDisplayTitle,
   resolveUrlOnPresetChange,
   type LinkTitlePreset,
 } from "@/lib/link-presets";
 import {
   formatTransferLinkSummary,
+  getTransferLinkFullUrl,
+  inferTransferLinkFormState,
+  isTransferLink,
   TRANSFER_URL_MARKER,
 } from "@/lib/transfer-link";
 import type { LinkBlock } from "@/types";
@@ -78,7 +82,12 @@ function LinkFormFields({
   initialAccountNo?: string | null;
   variant?: "add" | "edit";
 }) {
-  const inferred = inferPresetFromTitle(initialTitle ?? "");
+  const inferred = inferTransferLinkFormState({
+    title: initialTitle ?? "",
+    url: initialUrl ?? "",
+    bank_code: initialBankCode ?? null,
+    account_no: initialAccountNo ?? null,
+  });
   const initialPreset = initialTitle ? inferred.preset : CONTACT_LINK_TITLE;
   const parsedTransfer =
     initialPreset === BANK_TRANSFER_LINK_TITLE
@@ -93,7 +102,12 @@ function LinkFormFields({
       ? parseContactFieldsFromUrl(initialUrl)
       : { name: "", tel: "" };
   const [titlePreset, setTitlePreset] = useState<LinkTitlePreset>(initialPreset);
-  const [customTitle, setCustomTitle] = useState(inferred.customTitle);
+  const [customTitle, setCustomTitle] = useState(
+    initialPreset === CUSTOM_LINK_TITLE ? inferred.transferAlias : "",
+  );
+  const [transferAlias, setTransferAlias] = useState(
+    initialPreset === BANK_TRANSFER_LINK_TITLE ? inferred.transferAlias : "",
+  );
   const [url, setUrl] = useState(() =>
     getInitialLinkUrl(initialPreset, initialUrl),
   );
@@ -102,10 +116,12 @@ function LinkFormFields({
   const [bankCode, setBankCode] = useState(parsedTransfer?.bankCode ?? "");
   const [accountNo, setAccountNo] = useState(parsedTransfer?.accountNo ?? "");
 
-  const resolvedTitle = resolveLinkTitle(titlePreset, customTitle);
   const isCustom = titlePreset === CUSTOM_LINK_TITLE;
   const isContact = titlePreset === CONTACT_LINK_TITLE;
   const isBankTransfer = titlePreset === BANK_TRANSFER_LINK_TITLE;
+  const resolvedTitle = isBankTransfer
+    ? resolveTransferDisplayTitle(transferAlias)
+    : resolveLinkTitle(titlePreset, customTitle);
   const inputClassName = theme.input;
 
   function handlePresetChange(nextPreset: LinkTitlePreset) {
@@ -122,9 +138,11 @@ function LinkFormFields({
     if (nextPreset === BANK_TRANSFER_LINK_TITLE) {
       setBankCode("");
       setAccountNo("");
+      setTransferAlias("");
     } else if (titlePreset === BANK_TRANSFER_LINK_TITLE) {
       setBankCode("");
       setAccountNo("");
+      setTransferAlias("");
     }
     setTitlePreset(nextPreset);
   }
@@ -166,6 +184,20 @@ function LinkFormFields({
 
       {isBankTransfer ? (
         <>
+          <FieldCard
+            label="표시 이름 (선택)"
+            htmlFor={`link-transfer-alias-${variant}`}
+          >
+            <input
+              id={`link-transfer-alias-${variant}`}
+              type="text"
+              value={transferAlias}
+              onChange={(event) => setTransferAlias(event.target.value)}
+              placeholder='예: 사업용, 개인 (비우면 "계좌 송금")'
+              className={theme.input}
+            />
+          </FieldCard>
+
           <FieldCard label="은행 선택" htmlFor={`link-bank-${variant}`}>
             <select
               id={`link-bank-${variant}`}
@@ -287,7 +319,73 @@ function LinkFormFields({
   );
 }
 
-function LinkItem({ link, index, total }: { link: LinkBlock; index: number; total: number }) {
+function TransferLinkSharePanel({
+  link,
+  username,
+  siteUrl,
+}: {
+  link: LinkBlock;
+  username: string;
+  siteUrl: string;
+}) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const transferUrl = getTransferLinkFullUrl(siteUrl, username, link.id);
+
+  async function handleCopyUrl() {
+    try {
+      await navigator.clipboard.writeText(transferUrl);
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 2000);
+    } catch {
+      setCopyState("error");
+      window.setTimeout(() => setCopyState("idle"), 2500);
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-[#d4e8ea] bg-[#f0f7f8] p-3">
+      <p className="text-xs font-medium text-[#3d7a80]">송금 링크 주소</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <p className="min-w-0 flex-1 break-all text-sm text-[#0d5c63]">
+          {transferUrl}
+        </p>
+        <button
+          type="button"
+          onClick={() => void handleCopyUrl()}
+          className={theme.secondaryButton}
+        >
+          {copyState === "copied"
+            ? "복사됨"
+            : copyState === "error"
+              ? "복사 실패"
+              : "주소 복사"}
+        </button>
+      </div>
+
+      <p className="mt-3 text-xs font-medium text-[#3d7a80]">QR 코드</p>
+      <LinkQrCode
+        className="mt-2"
+        value={transferUrl}
+        qrId={`transfer-qr-${link.id}`}
+        downloadFileName={`transfer-${username}-${link.id.slice(0, 8)}`}
+      />
+    </div>
+  );
+}
+
+function LinkItem({
+  link,
+  index,
+  total,
+  username,
+  siteUrl,
+}: {
+  link: LinkBlock;
+  index: number;
+  total: number;
+  username: string;
+  siteUrl: string;
+}) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [visibilityError, setVisibilityError] = useState<string>();
@@ -354,6 +452,13 @@ function LinkItem({ link, index, total }: { link: LinkBlock; index: number; tota
             ) : null}
             {visibilityError ? (
               <p className="mt-2 text-sm text-red-600">{visibilityError}</p>
+            ) : null}
+            {isTransferLink(link) ? (
+              <TransferLinkSharePanel
+                link={link}
+                username={username}
+                siteUrl={siteUrl}
+              />
             ) : null}
           </div>
 
@@ -504,7 +609,7 @@ function EditLinkForm({
   );
 }
 
-export function LinksManager({ links }: LinksManagerProps) {
+export function LinksManager({ links, username, siteUrl }: LinksManagerProps) {
   const [addFormKey, setAddFormKey] = useState(0);
   const [addState, addAction, isAdding] = useActionState(
     async (prev: ActionState, formData: FormData) => {
@@ -547,6 +652,8 @@ export function LinksManager({ links }: LinksManagerProps) {
                 link={link}
                 index={index}
                 total={links.length}
+                username={username}
+                siteUrl={siteUrl}
               />
             ))}
           </ul>
@@ -568,4 +675,6 @@ export function LinksManager({ links }: LinksManagerProps) {
 
 interface LinksManagerProps {
   links: LinkBlock[];
+  username: string;
+  siteUrl: string;
 }

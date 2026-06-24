@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { LinkBlock } from "@/types";
 
 interface ProfileLinkButtonProps {
-  link: Pick<LinkBlock, "title" | "url" | "bank_code">;
+  link: Pick<LinkBlock, "title" | "url" | "bank_code" | "account_no">;
   href?: string;
   className?: string;
 }

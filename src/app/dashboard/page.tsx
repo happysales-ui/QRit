@@ -82,7 +82,12 @@ export default async function DashboardPage() {
 
         {isAdmin(profile) ? <AdminPanel /> : null}
 
-        <DashboardClient profile={profile} links={links} publicUrl={publicUrl} />
+        <DashboardClient
+          profile={profile}
+          links={links}
+          publicUrl={publicUrl}
+          siteUrl={siteUrl}
+        />
       </div>
     </main>
   );
