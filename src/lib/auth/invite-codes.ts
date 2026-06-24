@@ -21,6 +21,9 @@ export const INVITE_CODE_ALREADY_USED_MESSAGE =
 export const INVITE_CODE_VERIFY_SETUP_MESSAGE =
   "인증코드 기능이 아직 설정되지 않았습니다. Supabase SQL 편집기에서 015_invite_codes.sql 마이그레이션을 실행해 주세요.";
 
+export const CONSUME_INVITE_CODE_SETUP_MESSAGE =
+  "초대 코드 사용 처리 기능이 아직 설정되지 않았습니다. Supabase SQL 편집기에서 022_consume_invite_code_atomic.sql(또는 024_consume_invite_code_setup.sql) 마이그레이션을 실행해 주세요.";
+
 const INVITE_CODE_REGEX = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
 
 export function normalizeInviteCode(code: string): string {

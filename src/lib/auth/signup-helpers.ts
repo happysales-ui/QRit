@@ -1,10 +1,11 @@
-import type { AuthError, AuthResponse } from "@supabase/supabase-js";
+import type { AuthError, AuthResponse, SupabaseClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   getSupabaseServiceRoleConfigErrorMessage,
   isSupabaseServiceRoleConfigured,
 } from "@/lib/supabase/env";
 import {
+  CONSUME_INVITE_CODE_SETUP_MESSAGE,
   INVITE_CODE_ALREADY_USED_MESSAGE,
   INVITE_CODE_INVALID_MESSAGE,
   INVITE_CODE_NOT_FOUND_MESSAGE,
@@ -118,6 +119,8 @@ export function resolveSignUpResult(
 
 export type ConsumeInviteCodeFailureReason =
   | "service_role_not_configured"
+  | "rpc_missing"
+  | "rpc_permission_denied"
   | "update_failed"
   | "code_not_consumed";
 
@@ -131,6 +134,13 @@ export function mapConsumeInviteCodeError(
   switch (reason) {
     case "service_role_not_configured":
       return getSupabaseServiceRoleConfigErrorMessage();
+    case "rpc_missing":
+      return CONSUME_INVITE_CODE_SETUP_MESSAGE;
+    case "rpc_permission_denied":
+      return (
+        "초대 코드 사용 권한이 없습니다. Supabase SQL 편집기에서 " +
+        "022_consume_invite_code_atomic.sql(또는 024_consume_invite_code_setup.sql)을 실행해 주세요."
+      );
     case "update_failed":
       return "초대 코드 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
     case "code_not_consumed":
@@ -157,6 +167,47 @@ export function isMissingVerifyInviteCodeFunction(error: {
     (message.includes("verify_invite_code") &&
       (message.includes("does not exist") || message.includes("could not find")))
   );
+}
+
+export function isMissingConsumeInviteCodeFunction(error: {
+  code: string;
+  message: string;
+}): boolean {
+  const message = error.message.toLowerCase();
+  return (
+    error.code === "PGRST202" ||
+    error.code === "42883" ||
+    (message.includes("consume_invite_code") &&
+      (message.includes("does not exist") || message.includes("could not find")))
+  );
+}
+
+export function isRpcPermissionDeniedError(error: {
+  code: string;
+  message: string;
+}): boolean {
+  const message = error.message.toLowerCase();
+  return (
+    error.code === "42501" ||
+    message.includes("permission denied") ||
+    message.includes("not authorized")
+  );
+}
+
+export function mapConsumeInviteCodeRpcError(error: {
+  code: string;
+  message: string;
+}): ConsumeInviteCodeFailureReason {
+  if (isMissingConsumeInviteCodeFunction(error)) {
+    return "rpc_missing";
+  }
+
+  if (isRpcPermissionDeniedError(error)) {
+    return "rpc_permission_denied";
+  }
+
+  devSignupLog("consume_invite_code unmapped error", error);
+  return "update_failed";
 }
 
 export function mapVerifyInviteCodeRpcError(error: {
@@ -188,15 +239,15 @@ export function mapVerifyInviteCodeStatus(
 
 export type InviteVerifyResult = { ok: true } | { ok: false; message: string };
 
-/** Resolves legacy boolean RPC (015) and status-text RPC (023). */
+/** Resolves legacy boolean RPC (015), status-text RPC (023), and JSON string coercions. */
 export function resolveInviteVerifyResult(
   data: string | boolean | null | undefined,
 ): InviteVerifyResult {
-  if (data === true || data === "valid") {
+  if (data === true || data === "true" || data === "valid") {
     return { ok: true };
   }
 
-  if (data === false) {
+  if (data === false || data === "false") {
     return { ok: false, message: INVITE_CODE_INVALID_MESSAGE };
   }
 
@@ -219,6 +270,39 @@ export function mapConsumeInviteCodeRpcResponse(
   return { ok: false, reason: "code_not_consumed" };
 }
 
+/** Atomic single-row UPDATE fallback when consume_invite_code RPC is not deployed. */
+export async function consumeInviteCodeDirectUpdate(
+  supabase: SupabaseClient,
+  code: string,
+  userId: string,
+): Promise<ConsumeInviteCodeResult> {
+  devSignupLog("consume_invite_code RPC missing; trying direct invite_codes update");
+
+  const normalized = code.trim().toUpperCase();
+  const { data, error } = await supabase
+    .from("invite_codes")
+    .update({
+      status: "used",
+      used_at: new Date().toISOString(),
+      used_by_user_id: userId,
+    })
+    .eq("code", normalized)
+    .eq("status", "unused")
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    devSignupLog("invite_codes direct update error", error);
+    return { ok: false, reason: "update_failed" };
+  }
+
+  if (!data) {
+    return { ok: false, reason: "code_not_consumed" };
+  }
+
+  return { ok: true };
+}
+
 export async function consumeInviteCode(
   code: string,
   userId: string,
@@ -237,9 +321,13 @@ export async function consumeInviteCode(
 
   if (error) {
     devSignupLog("consume_invite_code RPC error", error);
+    if (isMissingConsumeInviteCodeFunction(error)) {
+      return consumeInviteCodeDirectUpdate(supabase, code, userId);
+    }
+    return { ok: false, reason: mapConsumeInviteCodeRpcError(error) };
   }
 
-  return mapConsumeInviteCodeRpcResponse(data, error !== null);
+  return mapConsumeInviteCodeRpcResponse(data, false);
 }
 
 /** Best-effort cleanup when invite consumption fails after auth user creation. */

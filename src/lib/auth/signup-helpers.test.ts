@@ -3,10 +3,12 @@ import { describe, it } from "node:test";
 import type { AuthError } from "@supabase/supabase-js";
 import {
   getInviteSignupServiceRoleErrorMessage,
+  isMissingConsumeInviteCodeFunction,
   isMissingExpiredAtColumnError,
   isMissingPhoneColumnError,
   isMissingVerifyInviteCodeFunction,
   mapConsumeInviteCodeError,
+  mapConsumeInviteCodeRpcError,
   mapConsumeInviteCodeRpcResponse,
   mapProfileQueryError,
   mapSignUpError,
@@ -119,6 +121,17 @@ describe("mapConsumeInviteCodeError", () => {
     assert.match(message, /초대 코드 처리/);
   });
 
+  it("returns migration hint when consume RPC is missing", () => {
+    const message = mapConsumeInviteCodeError("rpc_missing");
+    assert.match(message, /022_consume_invite_code_atomic/);
+  });
+
+  it("returns permission hint when RPC grant is missing", () => {
+    const message = mapConsumeInviteCodeError("rpc_permission_denied");
+    assert.match(message, /권한/);
+    assert.match(message, /022_consume_invite_code_atomic/);
+  });
+
   it("returns Korean message when code was not consumed", () => {
     const message = mapConsumeInviteCodeError("code_not_consumed");
     assert.match(message, /이미 사용/);
@@ -134,8 +147,20 @@ describe("resolveInviteVerifyResult", () => {
     assert.deepEqual(resolveInviteVerifyResult("valid"), { ok: true });
   });
 
+  it("accepts JSON-coerced true string", () => {
+    assert.deepEqual(resolveInviteVerifyResult("true"), { ok: true });
+  });
+
   it("maps legacy boolean false to generic invalid message", () => {
     const result = resolveInviteVerifyResult(false);
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.message, /유효하지 않은 인증코드/);
+    }
+  });
+
+  it("maps JSON-coerced false string to generic invalid message", () => {
+    const result = resolveInviteVerifyResult("false");
     assert.equal(result.ok, false);
     if (!result.ok) {
       assert.match(result.message, /유효하지 않은 인증코드/);
@@ -156,6 +181,42 @@ describe("resolveInviteVerifyResult", () => {
     if (!result.ok) {
       assert.match(result.message, /이미 사용/);
     }
+  });
+});
+
+describe("isMissingConsumeInviteCodeFunction", () => {
+  it("detects undefined function", () => {
+    assert.equal(
+      isMissingConsumeInviteCodeFunction(
+        pgError("PGRST202", "Could not find the function public.consume_invite_code"),
+      ),
+      true,
+    );
+  });
+});
+
+describe("mapConsumeInviteCodeRpcError", () => {
+  it("maps missing RPC to rpc_missing", () => {
+    assert.equal(
+      mapConsumeInviteCodeRpcError(
+        pgError("PGRST202", "Could not find the function public.consume_invite_code"),
+      ),
+      "rpc_missing",
+    );
+  });
+
+  it("maps permission denied to rpc_permission_denied", () => {
+    assert.equal(
+      mapConsumeInviteCodeRpcError(pgError("42501", "permission denied for function consume_invite_code")),
+      "rpc_permission_denied",
+    );
+  });
+
+  it("maps unknown errors to update_failed", () => {
+    assert.equal(
+      mapConsumeInviteCodeRpcError(pgError("XX000", "unexpected database error")),
+      "update_failed",
+    );
   });
 });
 
