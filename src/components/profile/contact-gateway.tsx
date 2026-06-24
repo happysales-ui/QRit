@@ -148,8 +148,8 @@ export function ContactGateway({
           </p>
         </section>
 
-        <footer className="mt-10 pb-2 text-center">
-          <p className="text-xs font-medium tracking-wide text-zinc-400">
+        <footer className="mt-8 border-t border-[#d4e8ea]/40 pt-5 pb-2 text-center">
+          <p className="text-[10px] tracking-wide text-zinc-400/70">
             Powered by QRit Jewelry
           </p>
         </footer>

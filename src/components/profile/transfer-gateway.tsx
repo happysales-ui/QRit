@@ -281,23 +281,23 @@ export function TransferGateway({
               ))}
             </div>
           </div>
-
-          <p className="mt-2 text-center text-xs leading-relaxed text-zinc-400">
-            실제 송금은 토스·페이·은행 앱에서 완료됩니다. 브라우저 안에서
-            돈이 이동하지는 않습니다.
-          </p>
         </section>
 
-        <footer className="mt-10 space-y-3 pb-2 text-center">
-          <p className="text-xs leading-relaxed text-zinc-400">
-            QRit Jewelry는 금융기관이 아니며, 토스·카카오페이·네이버페이·
-            각 은행과 제휴·연계 관계에 있지 않습니다. 실제 송금은 해당
-            금융·결제 서비스에서 이루어집니다.
-          </p>
-          <LegalFooterLinks />
-          <p className="text-xs font-medium tracking-wide text-zinc-400">
-            Powered by QRit Jewelry
-          </p>
+        <footer className="mt-8 border-t border-[#d4e8ea]/40 pt-4 pb-2">
+          <div className="mx-auto max-w-[300px] space-y-2 text-center">
+            <p className="text-[11px] leading-[1.65] text-[#64748b]/70">
+              QRit Jewelry는 금융기관이 아니며, 토스·카카오페이·네이버페이 및
+              각 은행과 제휴·연계 관계가 없습니다. 송금은 해당 앱에서만
+              완료됩니다.
+            </p>
+            <LegalFooterLinks
+              className="text-[#64748b]/75"
+              linkClassName="text-[10px] font-normal text-[#64748b]/75 hover:text-[#0d5c63]"
+            />
+            <p className="text-[10px] tracking-wide text-zinc-400/55">
+              Powered by QRit Jewelry
+            </p>
+          </div>
         </footer>
       </div>
 
