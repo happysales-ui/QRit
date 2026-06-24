@@ -253,12 +253,16 @@ export function getFormattedTransferCopyText(account: TransferAccount): string {
 }
 
 export type BankAppScheme = {
+  /** Unique key (multiple apps may share the same bankCode, e.g. NH 콕뱅크 vs 스마트). */
+  id: string;
   bankCode: string;
   label: string;
   /** Custom URL scheme that launches the bank's mobile app. */
   scheme: string;
   /** Android package name for intent:// fallbacks. */
   androidPackage?: string;
+  /** App Store search term when the app is not installed (defaults to "{label} 스마트뱅킹"). */
+  appStoreSearchTerm?: string;
 };
 
 /**
@@ -267,84 +271,107 @@ export type BankAppScheme = {
  */
 export const BANK_APP_SCHEMES: BankAppScheme[] = [
   {
+    id: "011-kok",
     bankCode: "011",
-    label: "NH농협",
-    scheme: "com.nonghyup.newsmartbanking://",
-    androidPackage: "nh.smart.banking",
+    label: "NH콕뱅크",
+    scheme: "nhcok://",
+    androidPackage: "nh.smart.nhcok",
+    appStoreSearchTerm: "NH콕뱅크",
   },
   {
+    id: "011-smart",
+    bankCode: "011",
+    label: "NH스마트",
+    scheme: "com.nonghyup.newsmartbanking://",
+    androidPackage: "nh.smart.banking",
+    appStoreSearchTerm: "NH스마트뱅킹",
+  },
+  {
+    id: "004",
     bankCode: "004",
     label: "KB국민",
     scheme: "kb-acp://",
     androidPackage: "com.kbstar.kbbank",
   },
   {
+    id: "088",
     bankCode: "088",
     label: "신한",
     scheme: "sbank://",
     androidPackage: "com.shinhan.sbanking",
   },
   {
+    id: "081",
     bankCode: "081",
     label: "하나",
     scheme: "hanaansim://",
     androidPackage: "com.kebhana.hanaapush",
   },
   {
+    id: "020",
     bankCode: "020",
     label: "우리",
     scheme: "wooribank://",
     androidPackage: "com.wooribank.smart.npib",
   },
   {
+    id: "003",
     bankCode: "003",
     label: "IBK기업",
     scheme: "ibkapp://",
     androidPackage: "com.ibk.android.ionebank",
   },
   {
+    id: "090",
     bankCode: "090",
     label: "카카오뱅크",
     scheme: "kakaobank://",
     androidPackage: "com.kakaobank.channel",
   },
   {
+    id: "089",
     bankCode: "089",
     label: "케이뱅크",
     scheme: "ukbanksmartbanknonloginpay://",
     androidPackage: "com.kbankwith.smartbank",
   },
   {
+    id: "023",
     bankCode: "023",
     label: "SC제일",
     scheme: "scbankapp://",
     androidPackage: "com.scbank.maepay",
   },
   {
+    id: "032",
     bankCode: "032",
     label: "부산",
     scheme: "busanbank://",
     androidPackage: "com.busanbank.mbp",
   },
   {
+    id: "031",
     bankCode: "031",
     label: "iM뱅크",
     scheme: "dgbbank://",
     androidPackage: "com.dgb.android.smartbank",
   },
   {
+    id: "037",
     bankCode: "037",
     label: "전북",
     scheme: "jbbank://",
     androidPackage: "com.jbbank.smartbank",
   },
   {
+    id: "039",
     bankCode: "039",
     label: "경남",
     scheme: "knbank://",
     androidPackage: "com.knbank.smartbank",
   },
   {
+    id: "007",
     bankCode: "007",
     label: "수협",
     scheme: "suhyupbank://",
@@ -352,9 +379,20 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
   },
 ];
 
+export function getBankAppById(id: string): BankAppScheme | undefined {
+  const normalized = id.trim();
+  return BANK_APP_SCHEMES.find((entry) => entry.id === normalized);
+}
+
+/** Returns the first bank app for a code (NH has 콕뱅크 + 스마트 — use getBankAppById for a specific app). */
 export function getBankAppScheme(bankCode: string): BankAppScheme | undefined {
   const normalized = bankCode.trim();
   return BANK_APP_SCHEMES.find((entry) => entry.bankCode === normalized);
+}
+
+export function getBankAppSchemesForCode(bankCode: string): BankAppScheme[] {
+  const normalized = bankCode.trim();
+  return BANK_APP_SCHEMES.filter((entry) => entry.bankCode === normalized);
 }
 
 export function getMajorBankAppSchemes(): BankAppScheme[] {
@@ -382,8 +420,8 @@ export function buildPlayStoreUrl(androidPackage: string): string {
   return `https://play.google.com/store/apps/details?id=${encodeURIComponent(androidPackage)}`;
 }
 
-export function buildAppStoreSearchUrl(bankLabel: string): string {
-  return `https://apps.apple.com/kr/search?term=${encodeURIComponent(`${bankLabel} 스마트뱅킹`)}`;
+export function buildAppStoreSearchUrl(searchTerm: string): string {
+  return `https://apps.apple.com/kr/search?term=${encodeURIComponent(searchTerm)}`;
 }
 
 export function getBankAppFallbackUrl(
@@ -395,7 +433,9 @@ export function getBankAppFallbackUrl(
   }
 
   if (isIOSUserAgent(userAgent)) {
-    return buildAppStoreSearchUrl(scheme.label);
+    const searchTerm =
+      scheme.appStoreSearchTerm ?? `${scheme.label} 스마트뱅킹`;
+    return buildAppStoreSearchUrl(searchTerm);
   }
 
   return undefined;
@@ -499,12 +539,16 @@ export type OtherBankTransferResult = {
 
 /**
  * Opens a major bank app with Play/App Store fallback when the app is missing.
+ * Accepts a BankAppScheme or an app id / bank code string.
  */
 export function openBankAppWithFallback(
-  bankCode: string,
+  target: BankAppScheme | string,
   userAgent = "",
 ): BankAppScheme | undefined {
-  const scheme = getBankAppScheme(bankCode);
+  const scheme =
+    typeof target === "string"
+      ? getBankAppById(target) ?? getBankAppScheme(target)
+      : target;
   if (!scheme) {
     return undefined;
   }

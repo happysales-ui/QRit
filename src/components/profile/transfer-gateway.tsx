@@ -7,7 +7,6 @@ import {
   buildDeepLinks,
   copyTextToClipboard,
   formatAccountNo,
-  getBankAppScheme,
   getFormattedTransferCopyText,
   getMajorBankAppSchemes,
   openBankAppWithFallback,
@@ -115,12 +114,7 @@ export function TransferGateway({
     }
   }
 
-  async function handleSelectBank(bankCode: string) {
-    const bankApp = getBankAppScheme(bankCode);
-    if (!bankApp) {
-      return;
-    }
-
+  async function handleSelectBank(bankApp: BankAppScheme) {
     const didCopy = await copyTextToClipboard(copyText);
     if (didCopy) {
       showToast("계좌번호가 복사되었습니다");
@@ -136,7 +130,7 @@ export function TransferGateway({
       return;
     }
 
-    const opened = openBankAppWithFallback(pendingBank.bankCode, userAgent);
+    const opened = openBankAppWithFallback(pendingBank, userAgent);
     if (opened) {
       showToast(`${opened.label} 앱을 여는 중입니다`);
     }
@@ -264,9 +258,9 @@ export function TransferGateway({
             <div className="mt-3 grid grid-cols-3 gap-2">
               {majorBankApps.map((bankApp) => (
                 <button
-                  key={bankApp.bankCode}
+                  key={bankApp.id}
                   type="button"
-                  onClick={() => void handleSelectBank(bankApp.bankCode)}
+                  onClick={() => void handleSelectBank(bankApp)}
                   className={cn(
                     qritBrand.bankChip,
                     bankApp.bankCode === account.bankCode && qritBrand.bankChipActive,
