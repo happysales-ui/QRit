@@ -269,8 +269,8 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
   {
     bankCode: "011",
     label: "NH농협",
-    scheme: "nhappbankansimclick://",
-    androidPackage: "com.nh.cashbankapp",
+    scheme: "com.nonghyup.newsmartbanking://",
+    androidPackage: "nh.smart.banking",
   },
   {
     bankCode: "004",
