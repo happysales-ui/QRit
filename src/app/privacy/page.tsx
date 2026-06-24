@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPageShell } from "@/components/legal/legal-page-shell";
-import { QRIT_ADMIN_KAKAO_CHAT_URL } from "@/lib/qrit-config";
+import { getAdminKakaoChatUrl } from "@/lib/admin-kakao-url";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침 | QRit Jewelry",
@@ -9,7 +9,9 @@ export const metadata: Metadata = {
 
 const LAST_UPDATED = "2026년 6월 24일";
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const kakaoChatUrl = await getAdminKakaoChatUrl();
+
   return (
     <LegalPageShell title="개인정보처리방침" lastUpdated={LAST_UPDATED}>
       <section>
@@ -170,7 +172,7 @@ export default function PrivacyPage() {
           <li>
             문의:{" "}
             <a
-              href={QRIT_ADMIN_KAKAO_CHAT_URL}
+              href={kakaoChatUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-[#0d5c63] underline underline-offset-2 hover:text-[#094347]"

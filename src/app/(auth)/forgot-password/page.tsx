@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { QRIT_ADMIN_KAKAO_CHAT_URL } from "@/lib/qrit-config";
+import { getAdminKakaoChatUrl } from "@/lib/admin-kakao-url";
 import { qritBrand } from "@/lib/qrit-brand-theme";
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage() {
+  const kakaoChatUrl = await getAdminKakaoChatUrl();
+
   return (
     <div>
       <h1 className="text-xl font-bold text-zinc-900">비밀번호 찾기</h1>
@@ -21,7 +23,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <a
-          href={QRIT_ADMIN_KAKAO_CHAT_URL}
+          href={kakaoChatUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={qritBrand.kakaoLink}
