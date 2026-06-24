@@ -4,6 +4,8 @@ export type KoreanBank = {
   code: string;
   name: string;
   shortName: string;
+  /** Toss `supertoss://send?bank=` label when it differs from shortName. */
+  tossName?: string;
 };
 
 /** Standard Korean financial institution codes (금융결제원). */
@@ -14,7 +16,7 @@ export const KOREAN_BANKS: KoreanBank[] = [
   { code: "081", name: "하나은행", shortName: "하나" },
   { code: "020", name: "우리은행", shortName: "우리" },
   { code: "090", name: "카카오뱅크", shortName: "카카오" },
-  { code: "092", name: "토스뱅크", shortName: "토스" },
+  { code: "092", name: "토스뱅크", shortName: "토스", tossName: "토스뱅크" },
   { code: "089", name: "케이뱅크", shortName: "케이" },
   { code: "003", name: "IBK기업은행", shortName: "기업" },
   { code: "023", name: "SC제일은행", shortName: "SC" },
@@ -70,24 +72,41 @@ export function validateBankAccount(
   return null;
 }
 
+/** Bank label for Toss `supertoss://send?bank=` (human-readable, not 금융결제원 code). */
+export function getTossBankName(bankCode: string): string | undefined {
+  const bank = getBankByCode(bankCode.trim());
+  if (!bank) {
+    return undefined;
+  }
+
+  return bank.tossName ?? bank.shortName;
+}
+
 /**
  * Builds a Toss Universal Link wrapping a supertoss://send deep link.
  * Opens the recipient's Toss app with bank and account pre-filled on mobile.
+ *
+ * Toss expects `bank` (e.g. "국민", "신한") — not numeric `bankCode` ("004", "088").
  */
-export function buildTransferUrl(bankCode: string, accountNo: string): string {
+export function buildTossSendDeepLink(bankCode: string, accountNo: string): string {
   const bankError = validateBankAccount(bankCode, accountNo);
   if (bankError) {
     throw new Error(bankError);
   }
 
-  const normalizedAccount = normalizeAccountNo(accountNo);
+  const bank = getBankByCode(bankCode.trim())!;
   const params = new URLSearchParams({
-    bankCode: bankCode.trim(),
-    accountNo: normalizedAccount,
+    bank: bank.tossName ?? bank.shortName,
+    accountNo: normalizeAccountNo(accountNo),
   });
 
   const deepLink = `supertoss://send?${params.toString()}`;
   return `https://ul.toss.im?scheme=${encodeURIComponent(deepLink)}`;
+}
+
+/** Dashboard transfer URL field helper; wraps {@link buildTossSendDeepLink}. */
+export function buildTransferUrl(bankCode: string, accountNo: string): string {
+  return buildTossSendDeepLink(bankCode, accountNo);
 }
 
 export function isTransferUrl(url: string): boolean {
@@ -126,6 +145,7 @@ function resolveBankCodeFromShortName(shortName: string): string {
   const byShortName = KOREAN_BANKS.find(
     (bank) =>
       bank.shortName === trimmed ||
+      bank.tossName === trimmed ||
       bank.name.includes(trimmed) ||
       trimmed.includes(bank.shortName),
   );

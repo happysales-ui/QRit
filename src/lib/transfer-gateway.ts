@@ -1,4 +1,5 @@
 import {
+  buildTossSendDeepLink,
   getBankByCode,
   normalizeAccountNo,
   type KoreanBank,
@@ -36,12 +37,7 @@ export type TransferAccount = {
 };
 
 function buildTossDeepLink(bankCode: string, accountNo: string): string {
-  const params = new URLSearchParams({
-    bankCode,
-    accountNo,
-  });
-  const scheme = `supertoss://send?${params.toString()}`;
-  return `https://ul.toss.im?scheme=${encodeURIComponent(scheme)}`;
+  return buildTossSendDeepLink(bankCode, accountNo);
 }
 
 /** Official Kakao Pay account remittance scheme (see Kakao Pay app-link guide). */
