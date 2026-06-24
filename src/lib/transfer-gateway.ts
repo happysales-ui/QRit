@@ -378,19 +378,41 @@ export function buildAndroidTextShareIntent(text: string): string {
   return `intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=${encoded};end`;
 }
 
-export function buildAndroidBankAppIntent(scheme: BankAppScheme): string {
-  const schemeHost = scheme.scheme.replace(/:\/\/$/, "");
-  const parts = [
-    "intent:#Intent",
-    `scheme=${schemeHost}`,
-  ];
+export function buildPlayStoreUrl(androidPackage: string): string {
+  return `https://play.google.com/store/apps/details?id=${encodeURIComponent(androidPackage)}`;
+}
 
-  if (scheme.androidPackage) {
-    parts.push(`package=${scheme.androidPackage}`);
+export function buildAppStoreSearchUrl(bankLabel: string): string {
+  return `https://apps.apple.com/kr/search?term=${encodeURIComponent(`${bankLabel} 스마트뱅킹`)}`;
+}
+
+export function getBankAppFallbackUrl(
+  scheme: BankAppScheme,
+  userAgent = "",
+): string | undefined {
+  if (isAndroidUserAgent(userAgent) && scheme.androidPackage) {
+    return buildPlayStoreUrl(scheme.androidPackage);
   }
 
-  parts.push("end");
-  return parts.join(";");
+  if (isIOSUserAgent(userAgent)) {
+    return buildAppStoreSearchUrl(scheme.label);
+  }
+
+  return undefined;
+}
+
+export function buildAndroidBankAppIntent(
+  scheme: BankAppScheme,
+  options: { fallbackUrl?: string } = {},
+): string {
+  const fallbackUrl =
+    options.fallbackUrl ??
+    (scheme.androidPackage ? buildPlayStoreUrl(scheme.androidPackage) : undefined);
+
+  return buildAndroidCustomSchemeIntent(scheme.scheme, {
+    androidPackage: scheme.androidPackage,
+    fallbackUrl,
+  });
 }
 
 export async function copyTextToClipboard(text: string): Promise<boolean> {
@@ -468,62 +490,66 @@ export function tryOpenWithFallback(primaryUrl: string, fallbackUrl?: string): v
 
 export type OtherBankTransferOptions = {
   userAgent?: string;
-  preferWebShare?: boolean;
 };
 
 export type OtherBankTransferResult = {
   copied: boolean;
-  shared: boolean;
-  openedRegisteredBank: boolean;
   openedAndroidChooser: boolean;
-  registeredBankScheme?: BankAppScheme;
 };
 
 /**
- * Clipboard copy + optional mobile helpers for traditional bank apps.
- * Registered bank app is opened first; Android falls back to text-share chooser.
+ * Opens a major bank app with Play/App Store fallback when the app is missing.
+ */
+export function openBankAppWithFallback(
+  bankCode: string,
+  userAgent = "",
+): BankAppScheme | undefined {
+  const scheme = getBankAppScheme(bankCode);
+  if (!scheme) {
+    return undefined;
+  }
+
+  const fallbackUrl = getBankAppFallbackUrl(scheme, userAgent);
+  const launchUrl = isAndroidUserAgent(userAgent)
+    ? buildAndroidBankAppIntent(scheme, { fallbackUrl })
+    : scheme.scheme;
+
+  if (isMobileUserAgent(userAgent) && fallbackUrl && !isAndroidUserAgent(userAgent)) {
+    tryOpenWithFallback(launchUrl, fallbackUrl);
+  } else {
+    tryOpenCustomScheme(launchUrl);
+  }
+
+  return scheme;
+}
+
+/**
+ * Clipboard copy + immediate bank-app helper for traditional (non-Toss/Pay) transfers.
+ * Android opens the system share sheet so the user can pick their banking app right away.
  */
 export async function launchOtherBankTransfer(
   account: TransferAccount,
   options: OtherBankTransferOptions = {},
 ): Promise<OtherBankTransferResult> {
-  const userAgent = options.userAgent ?? (typeof navigator !== "undefined" ? navigator.userAgent : "");
+  const userAgent =
+    options.userAgent ??
+    (typeof navigator !== "undefined" ? navigator.userAgent : "");
   const copyText = getFormattedTransferCopyText(account);
   const copied = await copyTextToClipboard(copyText);
-  const registeredBankScheme = getBankAppScheme(account.bankCode);
 
   const result: OtherBankTransferResult = {
     copied,
-    shared: false,
-    openedRegisteredBank: false,
     openedAndroidChooser: false,
-    registeredBankScheme,
   };
 
   if (!isMobileUserAgent(userAgent)) {
     return result;
   }
 
-  if (options.preferWebShare !== false) {
-    result.shared = await tryWebShareTransfer(copyText, `${account.bank.name} 송금`);
-    if (result.shared) {
-      return result;
-    }
-  }
-
-  if (registeredBankScheme) {
-    const intentUrl = isAndroidUserAgent(userAgent)
-      ? buildAndroidBankAppIntent(registeredBankScheme)
-      : registeredBankScheme.scheme;
-
-    tryOpenCustomScheme(intentUrl);
-    result.openedRegisteredBank = true;
-    return result;
-  }
-
   if (isAndroidUserAgent(userAgent)) {
     tryOpenCustomScheme(buildAndroidTextShareIntent(copyText));
     result.openedAndroidChooser = true;
+    return result;
   }
 
   return result;

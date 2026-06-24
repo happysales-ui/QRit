@@ -8,11 +8,9 @@ import {
   formatAccountNo,
   getFormattedTransferCopyText,
   getMajorBankAppSchemes,
-  isAndroidUserAgent,
   launchOtherBankTransfer,
-  tryOpenCustomScheme,
+  openBankAppWithFallback,
   tryOpenWithFallback,
-  buildAndroidBankAppIntent,
   type TransferDeepLink,
   type TransferAccount,
 } from "@/lib/transfer-gateway";
@@ -106,10 +104,10 @@ export function TransferGateway({
   }
 
   async function handleOtherBankTransfer() {
-    const result = await launchOtherBankTransfer(account);
+    const result = await launchOtherBankTransfer(account, { userAgent });
 
     if (result.copied) {
-      showToast("계좌 정보가 복사되었습니다. 은행 앱에서 붙여넣기 하세요");
+      showToast("계좌번호가 복사되었습니다");
     } else {
       showToast("복사에 실패했습니다. 계좌 정보를 직접 확인해 주세요");
     }
@@ -118,17 +116,12 @@ export function TransferGateway({
   }
 
   function handleOpenBankApp(bankCode: string) {
-    const scheme = majorBankApps.find((entry) => entry.bankCode === bankCode);
-    if (!scheme) {
+    const opened = openBankAppWithFallback(bankCode, userAgent);
+    if (!opened) {
       return;
     }
 
-    const url = isAndroidUserAgent(userAgent)
-      ? buildAndroidBankAppIntent(scheme)
-      : scheme.scheme;
-
-    tryOpenCustomScheme(url);
-    showToast(`${scheme.label} 앱을 여는 중입니다`);
+    showToast(`${opened.label} 앱을 여는 중입니다`);
   }
 
   function handleOpenPaymentApp(
@@ -237,10 +230,10 @@ export function TransferGateway({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[15px] font-semibold text-zinc-800">
-                기타 은행 앱으로 송금
+                타은행 / 기타 은행 앱으로 송금
               </span>
               <span className="mt-0.5 block text-xs text-zinc-500">
-                내 스마트폰에 설치된 다른 은행 앱을 호출합니다
+                계좌번호 복사 후 내 은행 앱으로 바로 이동합니다
               </span>
             </span>
             <span className="text-zinc-400 transition-transform group-hover:translate-x-0.5">
