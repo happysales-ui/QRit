@@ -15,6 +15,8 @@ import {
   mapConsumeInviteCodeError,
   mapProfileQueryError,
   mapSignUpError,
+  mapVerifyInviteCodeRpcError,
+  resolveInviteVerifyResult,
   resolveSignUpResult,
   rollbackSignUpUser,
 } from "@/lib/auth/signup-helpers";
@@ -108,18 +110,18 @@ export async function signupAction(
 
     const supabase = await createClient();
 
-    const { data: inviteValid, error: inviteVerifyError } = await supabase.rpc(
+    const { data: inviteVerifyData, error: inviteVerifyError } = await supabase.rpc(
       "verify_invite_code",
       { p_code: inviteCode },
     );
 
     if (inviteVerifyError) {
-      devSignupLog("verify_invite_code error", inviteVerifyError);
-      return { error: INVITE_CODE_INVALID_MESSAGE };
+      return { error: mapVerifyInviteCodeRpcError(inviteVerifyError) };
     }
 
-    if (!inviteValid) {
-      return { error: INVITE_CODE_INVALID_MESSAGE };
+    const inviteVerifyResult = resolveInviteVerifyResult(inviteVerifyData);
+    if (!inviteVerifyResult.ok) {
+      return { error: inviteVerifyResult.message };
     }
 
     if (!isSupabaseServiceRoleConfigured()) {

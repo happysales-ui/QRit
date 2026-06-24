@@ -5,10 +5,14 @@ import {
   getInviteSignupServiceRoleErrorMessage,
   isMissingExpiredAtColumnError,
   isMissingPhoneColumnError,
+  isMissingVerifyInviteCodeFunction,
   mapConsumeInviteCodeError,
   mapConsumeInviteCodeRpcResponse,
   mapProfileQueryError,
   mapSignUpError,
+  mapVerifyInviteCodeRpcError,
+  mapVerifyInviteCodeStatus,
+  resolveInviteVerifyResult,
   resolveSignUpResult,
 } from "./signup-helpers";
 
@@ -118,6 +122,70 @@ describe("mapConsumeInviteCodeError", () => {
   it("returns Korean message when code was not consumed", () => {
     const message = mapConsumeInviteCodeError("code_not_consumed");
     assert.match(message, /이미 사용/);
+  });
+});
+
+describe("resolveInviteVerifyResult", () => {
+  it("accepts legacy boolean true", () => {
+    assert.deepEqual(resolveInviteVerifyResult(true), { ok: true });
+  });
+
+  it("accepts status text valid", () => {
+    assert.deepEqual(resolveInviteVerifyResult("valid"), { ok: true });
+  });
+
+  it("maps legacy boolean false to generic invalid message", () => {
+    const result = resolveInviteVerifyResult(false);
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.message, /유효하지 않은 인증코드/);
+    }
+  });
+
+  it("maps not_found status", () => {
+    const result = resolveInviteVerifyResult("not_found");
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.message, /찾을 수 없습니다/);
+    }
+  });
+
+  it("maps already_used status", () => {
+    const result = resolveInviteVerifyResult("already_used");
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.message, /이미 사용/);
+    }
+  });
+});
+
+describe("mapVerifyInviteCodeRpcError", () => {
+  it("returns migration hint when RPC is missing", () => {
+    const message = mapVerifyInviteCodeRpcError(
+      pgError("PGRST202", "Could not find the function public.verify_invite_code"),
+    );
+    assert.match(message, /015_invite_codes/);
+  });
+});
+
+describe("isMissingVerifyInviteCodeFunction", () => {
+  it("detects undefined function", () => {
+    assert.equal(
+      isMissingVerifyInviteCodeFunction(
+        pgError("42883", 'function verify_invite_code(text) does not exist'),
+      ),
+      true,
+    );
+  });
+});
+
+describe("mapVerifyInviteCodeStatus", () => {
+  it("maps already_used", () => {
+    assert.match(mapVerifyInviteCodeStatus("already_used"), /이미 사용/);
+  });
+
+  it("maps not_found", () => {
+    assert.match(mapVerifyInviteCodeStatus("not_found"), /찾을 수 없습니다/);
   });
 });
 

@@ -173,7 +173,7 @@ export interface Database {
       };
       verify_invite_code: {
         Args: { p_code: string };
-        Returns: boolean;
+        Returns: "valid" | "invalid_format" | "not_found" | "already_used";
       };
       consume_invite_code: {
         Args: { p_code: string; p_user_id: string };

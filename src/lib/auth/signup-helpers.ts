@@ -4,6 +4,13 @@ import {
   getSupabaseServiceRoleConfigErrorMessage,
   isSupabaseServiceRoleConfigured,
 } from "@/lib/supabase/env";
+import {
+  INVITE_CODE_ALREADY_USED_MESSAGE,
+  INVITE_CODE_INVALID_MESSAGE,
+  INVITE_CODE_NOT_FOUND_MESSAGE,
+  INVITE_CODE_VERIFY_SETUP_MESSAGE,
+  type InviteCodeVerifyStatus,
+} from "@/lib/auth/invite-codes";
 
 export type SignupActionResult = {
   error?: string;
@@ -137,6 +144,63 @@ export function getInviteSignupServiceRoleErrorMessage(): string {
     return `${base} (개발 환경: 초대 코드 기반 회원가입에는 service_role 키가 필수입니다.)`;
   }
   return base;
+}
+
+export function isMissingVerifyInviteCodeFunction(error: {
+  code: string;
+  message: string;
+}): boolean {
+  const message = error.message.toLowerCase();
+  return (
+    error.code === "PGRST202" ||
+    error.code === "42883" ||
+    (message.includes("verify_invite_code") &&
+      (message.includes("does not exist") || message.includes("could not find")))
+  );
+}
+
+export function mapVerifyInviteCodeRpcError(error: {
+  code: string;
+  message: string;
+}): string {
+  if (isMissingVerifyInviteCodeFunction(error)) {
+    return INVITE_CODE_VERIFY_SETUP_MESSAGE;
+  }
+
+  devSignupLog("verify_invite_code error", error);
+  return "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+}
+
+export function mapVerifyInviteCodeStatus(
+  status: string | null | undefined,
+): string {
+  switch (status) {
+    case "already_used":
+      return INVITE_CODE_ALREADY_USED_MESSAGE;
+    case "not_found":
+      return INVITE_CODE_NOT_FOUND_MESSAGE;
+    case "invalid_format":
+      return INVITE_CODE_INVALID_MESSAGE;
+    default:
+      return INVITE_CODE_INVALID_MESSAGE;
+  }
+}
+
+export type InviteVerifyResult = { ok: true } | { ok: false; message: string };
+
+/** Resolves legacy boolean RPC (015) and status-text RPC (023). */
+export function resolveInviteVerifyResult(
+  data: string | boolean | null | undefined,
+): InviteVerifyResult {
+  if (data === true || data === "valid") {
+    return { ok: true };
+  }
+
+  if (data === false) {
+    return { ok: false, message: INVITE_CODE_INVALID_MESSAGE };
+  }
+
+  return { ok: false, message: mapVerifyInviteCodeStatus(data as InviteCodeVerifyStatus) };
 }
 
 /** Maps `consume_invite_code` RPC response (atomic UPDATE … RETURN FOUND). */
