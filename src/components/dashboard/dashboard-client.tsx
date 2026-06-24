@@ -12,6 +12,7 @@ import {
   INTEGRATED_OPTION_VALUE,
 } from "@/components/dashboard/bracelet-mode-setting";
 import { LinksManager } from "@/components/dashboard/links-manager";
+import { PasswordChangeForm } from "@/components/dashboard/password-change-form";
 import {
   ProfileForm,
   type ProfileDraft,
@@ -159,6 +160,10 @@ export function DashboardClient({
           바로 반영됩니다.
         </p>
       </section>
+
+      <div className="mb-8">
+        <PasswordChangeForm />
+      </div>
 
       <section className={`mb-8 ${qritBrand.card}`}>
         <h2 className="text-lg font-semibold text-zinc-900">공개 프로필 주소</h2>

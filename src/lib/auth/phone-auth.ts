@@ -9,10 +9,11 @@
  * Supabase Dashboard (Auth → Providers → Email) so synthetic addresses
  * do not require verification.
  *
- * Password reset roadmap (SMS OTP):
- * - Enable Supabase Auth → Phone provider + SMS vendor (Twilio / MessageBird).
- * - Implement verify-OTP server action, then admin/service-role password update.
- * - Until then, /forgot-password documents the manual Kakao admin flow.
+ * Password reset (self-service):
+ * - /forgot-password: phone + username verification, rate-limited, service-role update.
+ * - /dashboard: logged-in change with current password verification.
+ * - SMS OTP (Supabase Phone + Twilio) is not used: accounts are email/password with
+ *   synthetic addresses, not Supabase phone auth. Kakao admin remains fallback.
  * - Never expose synthetic emails or raw phone on public profile pages.
  */
 export const PHONE_AUTH_EMAIL_DOMAIN = "phone.qrit.app";

@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
+  validateNewPasswordPair,
+} from "@/lib/auth/password-reset";
+import {
   isUsernameAvailable,
 } from "@/lib/profile";
 import { normalizeUsername, validateUsername } from "@/lib/auth/validation";
@@ -201,6 +204,59 @@ async function requireUser() {
   }
 
   return { supabase, user };
+}
+
+export async function changePasswordAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const { supabase, user } = await requireUser();
+
+    const currentPassword = String(formData.get("currentPassword") ?? "");
+    const newPassword = String(formData.get("newPassword") ?? "");
+    const newPasswordConfirm = String(formData.get("newPasswordConfirm") ?? "");
+
+    if (!currentPassword || !newPassword || !newPasswordConfirm) {
+      return { error: "모든 필드를 입력해 주세요." };
+    }
+
+    const passwordError = validateNewPasswordPair(newPassword, newPasswordConfirm);
+    if (passwordError) {
+      return { error: passwordError };
+    }
+
+    if (currentPassword === newPassword) {
+      return { error: "새 비밀번호는 현재 비밀번호와 달라야 합니다." };
+    }
+
+    const loginEmail = user.email;
+    if (!loginEmail) {
+      return { error: "계정 정보를 확인할 수 없습니다." };
+    }
+
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: currentPassword,
+    });
+
+    if (verifyError) {
+      return { error: "현재 비밀번호가 올바르지 않습니다." };
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (updateError) {
+      return { error: "비밀번호 변경에 실패했습니다. 잠시 후 다시 시도해 주세요." };
+    }
+
+    revalidatePath("/dashboard");
+    return { success: "비밀번호가 변경되었습니다." };
+  } catch {
+    return { error: "로그인이 필요합니다." };
+  }
 }
 
 export async function updateProfileAction(

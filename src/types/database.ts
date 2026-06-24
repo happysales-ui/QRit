@@ -179,6 +179,18 @@ export interface Database {
         Args: { p_code: string; p_user_id: string };
         Returns: boolean;
       };
+      check_password_reset_rate_limit: {
+        Args: {
+          p_bucket_key: string;
+          p_max_attempts?: number;
+          p_window_minutes?: number;
+        };
+        Returns: boolean;
+      };
+      verify_profile_for_password_reset: {
+        Args: { p_phone: string; p_username: string };
+        Returns: string | null;
+      };
     };
   };
 }
