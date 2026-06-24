@@ -13,7 +13,10 @@ import {
 } from "@/app/dashboard/actions";
 import { LinkTypeIcon } from "@/components/dashboard/link-type-icon";
 import {
+  INVALID_ACCOUNT_NO_MESSAGE,
   KOREAN_BANKS,
+  MAX_ACCOUNT_NO_LENGTH,
+  MIN_ACCOUNT_NO_LENGTH,
   parseTransferUrl,
 } from "@/lib/bank-transfer";
 import { formatContactLinkSummary } from "@/lib/contact-link";
@@ -190,7 +193,11 @@ function LinkFormFields({
               required
               value={accountNo}
               onChange={(event) => setAccountNo(event.target.value)}
-              placeholder="계좌번호를 입력하세요 (숫자만)"
+              placeholder={`계좌번호 (${MIN_ACCOUNT_NO_LENGTH}~${MAX_ACCOUNT_NO_LENGTH}자리 숫자)`}
+              pattern="[\d\s-]+"
+              minLength={MIN_ACCOUNT_NO_LENGTH}
+              maxLength={MAX_ACCOUNT_NO_LENGTH + 4}
+              title={INVALID_ACCOUNT_NO_MESSAGE}
               className={theme.input}
             />
           </FieldCard>

@@ -144,20 +144,24 @@ export function validateLinkUrl(
   formData?: FormData,
 ): string | null {
   if (isBankTransferLinkTitle(title)) {
-    const bankCode = String(formData?.get("bank_code") ?? "").trim();
-    const accountNo = String(formData?.get("account_no") ?? "").trim();
-
-    if (bankCode || accountNo) {
+    if (formData) {
+      const bankCode = String(formData.get("bank_code") ?? "").trim();
+      const accountNo = String(formData.get("account_no") ?? "").trim();
       return validateBankAccount(bankCode, accountNo);
     }
 
     const trimmed = url.trim();
-    if (!trimmed) {
+    if (!trimmed || trimmed === TRANSFER_URL_MARKER) {
       return "은행과 계좌번호를 입력해 주세요.";
     }
 
     if (isTransferUrl(trimmed)) {
-      return parseTransferUrl(trimmed) ? null : "올바른 송금 링크 형식이 아닙니다.";
+      const parsed = parseTransferUrl(trimmed);
+      if (!parsed) {
+        return "올바른 송금 링크 형식이 아닙니다.";
+      }
+
+      return validateBankAccount(parsed.bankCode, parsed.accountNo);
     }
 
     return "올바른 송금 링크 형식이 아닙니다.";

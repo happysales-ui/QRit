@@ -40,12 +40,84 @@ const TRANSFER_URL_PATTERNS = [
   /^https:\/\/ul\.toss\.im\?/i,
 ];
 
+export const MIN_ACCOUNT_NO_LENGTH = 10;
+export const MAX_ACCOUNT_NO_LENGTH = 16;
+
+export const INVALID_ACCOUNT_NO_MESSAGE =
+  "올바른 계좌번호를 입력해 주세요 (숫자 10~14자리)" as const;
+
+const PLACEHOLDER_ACCOUNT_NUMBERS = new Set([
+  "0000000000",
+  "00000000000",
+  "000000000000",
+  "0000000000000",
+  "00000000000000",
+  "1111111111",
+  "11111111111",
+  "1234567890",
+  "0123456789",
+  "12345678901",
+  "123456789012",
+  "9876543210",
+  "9999999999",
+]);
+
 export function normalizeAccountNo(accountNo: string): string {
   return accountNo.replace(/\D/g, "");
 }
 
 export function getBankByCode(code: string): KoreanBank | undefined {
   return KOREAN_BANKS.find((bank) => bank.code === code);
+}
+
+/** Allows digits, hyphens, and spaces; rejects letters and other symbols. */
+export function hasInvalidAccountNoChars(accountNo: string): boolean {
+  const trimmed = accountNo.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  return !/^[\d\s-]+$/.test(trimmed);
+}
+
+function isSequentialDigits(digits: string): boolean {
+  if (digits.length < 3) {
+    return false;
+  }
+
+  let ascending = true;
+  let descending = true;
+
+  for (let index = 1; index < digits.length; index += 1) {
+    const previous = Number(digits[index - 1]);
+    const current = Number(digits[index]);
+
+    if (current !== (previous + 1) % 10) {
+      ascending = false;
+    }
+
+    if (current !== (previous + 9) % 10) {
+      descending = false;
+    }
+  }
+
+  return ascending || descending;
+}
+
+export function isPlaceholderAccountNo(normalized: string): boolean {
+  if (!normalized) {
+    return false;
+  }
+
+  if (PLACEHOLDER_ACCOUNT_NUMBERS.has(normalized)) {
+    return true;
+  }
+
+  if (/^(\d)\1+$/.test(normalized)) {
+    return true;
+  }
+
+  return isSequentialDigits(normalized);
 }
 
 export function validateBankAccount(
@@ -60,13 +132,29 @@ export function validateBankAccount(
     return "지원하지 않는 은행입니다.";
   }
 
-  const normalized = normalizeAccountNo(accountNo);
+  const trimmedAccount = accountNo.trim();
+  if (!trimmedAccount) {
+    return "계좌번호를 입력해 주세요.";
+  }
+
+  if (hasInvalidAccountNoChars(trimmedAccount)) {
+    return INVALID_ACCOUNT_NO_MESSAGE;
+  }
+
+  const normalized = normalizeAccountNo(trimmedAccount);
   if (!normalized) {
     return "계좌번호를 입력해 주세요.";
   }
 
-  if (normalized.length < 10 || normalized.length > 16) {
-    return "올바른 계좌번호를 입력해 주세요.";
+  if (
+    normalized.length < MIN_ACCOUNT_NO_LENGTH ||
+    normalized.length > MAX_ACCOUNT_NO_LENGTH
+  ) {
+    return INVALID_ACCOUNT_NO_MESSAGE;
+  }
+
+  if (isPlaceholderAccountNo(normalized)) {
+    return INVALID_ACCOUNT_NO_MESSAGE;
   }
 
   return null;
@@ -125,6 +213,10 @@ function parseSupertossSendUrl(url: URL): { bankCode: string; accountNo: string 
   );
 
   if (!bankCode || !accountNo) {
+    return null;
+  }
+
+  if (validateBankAccount(bankCode, accountNo)) {
     return null;
   }
 
