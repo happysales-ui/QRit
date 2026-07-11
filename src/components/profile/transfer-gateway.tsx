@@ -143,6 +143,14 @@ export function TransferGateway({
     event: React.MouseEvent<HTMLAnchorElement>,
     app: TransferDeepLink,
   ) {
+    // Copy first: KakaoPay/NaverPay cannot pre-fill the account, so the user
+    // pastes it in the app's send screen.
+    void copyTextToClipboard(copyText).then((didCopy) => {
+      if (didCopy) {
+        showToast("계좌번호가 복사되었습니다");
+      }
+    });
+
     if (!app.openViaScript) {
       return;
     }

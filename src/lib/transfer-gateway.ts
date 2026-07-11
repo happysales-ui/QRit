@@ -23,11 +23,14 @@ export type TransferDeepLink = {
 };
 
 export const KAKAO_PAY_ANDROID_PACKAGE = "com.kakaopay.app";
-export const NAVER_PAY_ANDROID_PACKAGE = "com.nhn.android.search";
-export const NAVER_PAY_MOBILE_WEB_BASE =
-  "https://new-m.pay.naver.com/send/sendMoney/account";
-export const NAVER_PAY_MOBILE_FALLBACK =
-  "https://new-m.pay.naver.com/send/sendMoney";
+/** Naver app (네이버) — handles the documented naversearchapp:// scheme. */
+export const NAVER_APP_ANDROID_PACKAGE = "com.nhn.android.search";
+/**
+ * Naver Pay 송금 mobile-web entry point (verified live; login-gated).
+ * Naver Pay has no public deep link that pre-fills bank/account, so we open
+ * the real remit page and rely on the copied account number.
+ */
+export const NAVER_PAY_REMIT_URL = "https://new-m.pay.naver.com/remit";
 export const KAKAO_PAY_WEB_FALLBACK = "https://www.kakaopay.com";
 
 export type TransferAccount = {
@@ -52,28 +55,13 @@ export function buildKakaoPaySchemeUrl(
   return `kakaopay://money/to/bank?${params.toString()}`;
 }
 
-/** Naver Pay in-app scheme for account remittance (falls back to mobile web). */
-export function buildNaverPaySchemeUrl(
-  bankCode: string,
-  accountNo: string,
-): string {
-  const params = new URLSearchParams({
-    bankCorpCode: bankCode,
-    accountNo,
-  });
-  return `naverpay://send/sendMoney/account?${params.toString()}`;
-}
-
 /**
- * Naver Pay mobile web URL with pre-filled bank and account.
- * The Npay app may intercept this on device when installed.
+ * Opens a URL inside the Naver app's in-app browser.
+ * naversearchapp:// is the Naver app's documented scheme (used by KCP/NICE PG
+ * guides); the in-app browser keeps the user's Naver login for the remit page.
  */
-export function buildNaverPayWebUrl(bankCode: string, accountNo: string): string {
-  const params = new URLSearchParams({
-    bankCorpCode: bankCode,
-    accountNo,
-  });
-  return `${NAVER_PAY_MOBILE_WEB_BASE}?${params.toString()}`;
+export function buildNaverAppInAppBrowserUrl(targetUrl: string): string {
+  return `naversearchapp://inappbrowser?url=${encodeURIComponent(targetUrl)}&target=new&version=6`;
 }
 
 export function buildAndroidCustomSchemeIntent(
@@ -154,13 +142,17 @@ export function resolveTransferLaunchUrl(
     };
   }
 
-  const webUrl = buildNaverPayWebUrl(normalizedCode, normalizedAccount);
-  const schemeUrl = buildNaverPaySchemeUrl(normalizedCode, normalizedAccount);
+  // Naver Pay has no public account-prefill deep link (verified 2026), so we
+  // open the real remit page — via the Naver app when installed (keeps the
+  // user logged in), otherwise mobile web. The account number is copied on
+  // tap (see transfer-gateway.tsx) so the user can paste it in the send flow.
+  const webUrl = NAVER_PAY_REMIT_URL;
+  const schemeUrl = buildNaverAppInAppBrowserUrl(webUrl);
 
   if (isAndroidUserAgent(userAgent)) {
     return {
       href: buildAndroidCustomSchemeIntent(schemeUrl, {
-        androidPackage: NAVER_PAY_ANDROID_PACKAGE,
+        androidPackage: NAVER_APP_ANDROID_PACKAGE,
         fallbackUrl: webUrl,
       }),
       fallbackHref: webUrl,
@@ -178,7 +170,6 @@ export function resolveTransferLaunchUrl(
 
   return {
     href: webUrl,
-    fallbackHref: NAVER_PAY_MOBILE_FALLBACK,
     openViaScript: false,
   };
 }
@@ -204,14 +195,14 @@ export function buildDeepLinks(
     {
       id: "kakaopay",
       label: "카카오페이로 송금",
-      description: "카카오페이 앱에서 계좌 정보가 자동 입력됩니다",
+      description: "계좌번호가 복사되고 카카오페이 앱이 열립니다",
       accentClass:
         "border-yellow-200/80 bg-gradient-to-r from-white to-yellow-50/90 hover:border-yellow-300 hover:shadow-yellow-100/70",
     },
     {
       id: "naverpay",
       label: "네이버페이로 송금",
-      description: "네이버페이 송금 화면으로 이동합니다",
+      description: "계좌번호가 복사되고 네이버페이 송금 화면이 열립니다",
       accentClass:
         "border-emerald-200/80 bg-gradient-to-r from-white to-emerald-50/90 hover:border-emerald-300 hover:shadow-emerald-100/70",
     },
