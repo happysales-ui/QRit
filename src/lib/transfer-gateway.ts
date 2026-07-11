@@ -263,8 +263,8 @@ export type BankAppScheme = {
   scheme: string;
   /** Android package name for intent:// fallbacks. */
   androidPackage?: string;
-  /** App Store search term when the app is not installed (defaults to "{label} 스마트뱅킹"). */
-  appStoreSearchTerm?: string;
+  /** Numeric App Store ID → https://apps.apple.com/kr/app/id{appStoreId} (verified 2026-07). */
+  appStoreId: string;
 };
 
 export type BankAppSchemeGroup = {
@@ -288,7 +288,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store nh.smart.nhcok; NH mutual-finance app (replaces legacy nhappbankansimclick)
     scheme: "nhcok://",
     androidPackage: "nh.smart.nhcok",
-    appStoreSearchTerm: "NH콕뱅크",
+    appStoreId: "1131147442",
   },
   {
     id: "011-smart",
@@ -298,7 +298,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store nh.smart.banking; current NH smart banking (not nhappbankansimclick)
     scheme: "com.nonghyup.newsmartbanking://",
     androidPackage: "nh.smart.banking",
-    appStoreSearchTerm: "NH스마트뱅킹",
+    appStoreId: "1444712671",
   },
   // ── KB국민 (004) ───────────────────────────────────────────────────────
   {
@@ -309,30 +309,21 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // KG이니시스/Smartro: kbbank:// + com.kbstar.kbbank (NOT kb-acp = KB Pay card)
     scheme: "kbbank://",
     androidPackage: "com.kbstar.kbbank",
-    appStoreSearchTerm: "KB스타뱅킹",
+    appStoreId: "373742138",
   },
-  // ── 신한 (088) — SOL뱅크 + 슈퍼SOL ─────────────────────────────────────
+  // ── 신한 (088) — 슈퍼SOL (2026-06 rebrand of SOL뱅크; smartcaremgr app discontinued) ──
   {
     id: "088-sol",
     bankCode: "088",
-    label: "신한SOL",
+    label: "신한 슈퍼SOL",
     group: "major",
-    // KCP/NHN Smartro: com.shinhan.sbanking (신한 SOL뱅크)
+    // KCP/NHN Smartro: com.shinhan.sbanking — the existing SOL뱅크 app was
+    // updated in place into 슈퍼SOL (2026-06-17); iOS App Store id357484932.
     scheme: "sbank://",
     androidPackage: "com.shinhan.sbanking",
-    appStoreSearchTerm: "신한 SOL뱅크",
+    appStoreId: "357484932",
   },
-  {
-    id: "088-supersol",
-    bankCode: "088",
-    label: "신한슈퍼SOL",
-    group: "major",
-    // spa.shinhan.com app_link: smailapp:// + com.shinhan.smartcaremgr
-    scheme: "smailapp://",
-    androidPackage: "com.shinhan.smartcaremgr",
-    appStoreSearchTerm: "신한 슈퍼SOL",
-  },
-  // ── 하나 (081) — new + legacy app ──────────────────────────────────────
+  // ── 하나 (081) ─────────────────────────────────────────────────────────
   {
     id: "081-new",
     bankCode: "081",
@@ -341,17 +332,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store com.hanabank.oqf (2024+ redesigned app)
     scheme: "hanaansim://",
     androidPackage: "com.hanabank.oqf",
-    appStoreSearchTerm: "하나원큐",
-  },
-  {
-    id: "081-legacy",
-    bankCode: "081",
-    label: "하나(구)",
-    group: "major",
-    // Play Store com.kebhana.hanapush — sunset but still installed by some users
-    scheme: "hanaansim://",
-    androidPackage: "com.kebhana.hanapush",
-    appStoreSearchTerm: "하나원큐",
+    appStoreId: "6743190232",
   },
   // ── 우리 (020) ─────────────────────────────────────────────────────────
   {
@@ -362,7 +343,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // KG이니시스/KCP: newsmartpib:// + com.wooribank.smart.npib (NOT wooribank://)
     scheme: "newsmartpib://",
     androidPackage: "com.wooribank.smart.npib",
-    appStoreSearchTerm: "우리WON뱅킹",
+    appStoreId: "1470181651",
   },
   // ── IBK기업 (003) ──────────────────────────────────────────────────────
   {
@@ -373,7 +354,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store com.ibk.android.ionebank (i-ONE Bank 개인)
     scheme: "ibkapp://",
     androidPackage: "com.ibk.android.ionebank",
-    appStoreSearchTerm: "i-ONE Bank",
+    appStoreId: "1460543865",
   },
   // ── Internet banks ─────────────────────────────────────────────────────
   {
@@ -384,7 +365,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Smartro/KCP: kakaobank:// + com.kakaobank.channel
     scheme: "kakaobank://",
     androidPackage: "com.kakaobank.channel",
-    appStoreSearchTerm: "카카오뱅크",
+    appStoreId: "1258016944",
   },
   {
     id: "089",
@@ -394,7 +375,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // KG이니시스 계좌이체: ukbanksmartbanknonloginpay:// + com.kbankwith.smartbank
     scheme: "ukbanksmartbanknonloginpay://",
     androidPackage: "com.kbankwith.smartbank",
-    appStoreSearchTerm: "케이뱅크",
+    appStoreId: "1178872627",
   },
   {
     id: "092",
@@ -404,7 +385,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // KCP/Smartro: supertoss:// + viva.republica.toss (same app as 토스; opens app for paste)
     scheme: "supertoss://",
     androidPackage: "viva.republica.toss",
-    appStoreSearchTerm: "토스",
+    appStoreId: "839333328",
   },
   // ── Regional / other commercial banks ──────────────────────────────────
   {
@@ -415,7 +396,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store com.scbank.ma30 (replaces deprecated com.scbank.maepay)
     scheme: "scbankapp://",
     androidPackage: "com.scbank.ma30",
-    appStoreSearchTerm: "SC제일은행",
+    appStoreId: "1457418899",
   },
   {
     id: "032",
@@ -425,7 +406,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store kr.co.busanbank.mbp
     scheme: "busanbank://",
     androidPackage: "kr.co.busanbank.mbp",
-    appStoreSearchTerm: "BNK부산은행",
+    appStoreId: "1445137607",
   },
   {
     id: "031",
@@ -435,7 +416,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store kr.co.dgb.dgbm (DGB/iM뱅크; scheme imbank:// not dgbbank://)
     scheme: "imbank://",
     androidPackage: "kr.co.dgb.dgbm",
-    appStoreSearchTerm: "iM뱅크",
+    appStoreId: "1067748687",
   },
   {
     id: "037",
@@ -445,7 +426,7 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store kr.co.jbbank.privatebank (쏙뱅크; replaces com.jbbank.smartbank)
     scheme: "jbbank://",
     androidPackage: "kr.co.jbbank.privatebank",
-    appStoreSearchTerm: "전북은행 쏙뱅크",
+    appStoreId: "1547903285",
   },
   {
     id: "039",
@@ -455,22 +436,35 @@ export const BANK_APP_SCHEMES: BankAppScheme[] = [
     // Play Store com.knb.psb (BNK경남)
     scheme: "knbank://",
     androidPackage: "com.knb.psb",
-    appStoreSearchTerm: "BNK경남은행",
+    appStoreId: "678852685",
   },
   {
     id: "007",
     bankCode: "007",
     label: "수협",
     group: "regional",
-    // Play Store com.suhyup.psmb (파트너뱅크; Hey Bank merged Jun 2025)
+    // Play Store com.suhyup.psmb (파트너뱅크 개인; Hey Bank merged Jun 2025)
     scheme: "suhyup://",
     androidPackage: "com.suhyup.psmb",
-    appStoreSearchTerm: "수협 파트너뱅크",
+    appStoreId: "1229985989",
   },
 ];
 
+/**
+ * Removed picker entries → the consolidated app that replaces them.
+ * Keeps old saved references (e.g. dashboard data or bookmarked state)
+ * resolving to a live button:
+ * - 088-supersol (구 신한슈퍼SOL, com.shinhan.smartcaremgr) → 088-sol
+ *   (슈퍼SOL is now the updated com.shinhan.sbanking app)
+ * - 081-legacy (구 하나원큐, com.kebhana.hanapush, sunset) → 081-new
+ */
+const LEGACY_BANK_APP_ID_ALIASES: Record<string, string> = {
+  "088-supersol": "088-sol",
+  "081-legacy": "081-new",
+};
+
 export function getBankAppById(id: string): BankAppScheme | undefined {
-  const normalized = id.trim();
+  const normalized = LEGACY_BANK_APP_ID_ALIASES[id.trim()] ?? id.trim();
   return BANK_APP_SCHEMES.find((entry) => entry.id === normalized);
 }
 
@@ -531,8 +525,9 @@ export function buildPlayStoreUrl(androidPackage: string): string {
   return `https://play.google.com/store/apps/details?id=${encodeURIComponent(androidPackage)}`;
 }
 
-export function buildAppStoreSearchUrl(searchTerm: string): string {
-  return `https://apps.apple.com/kr/search?term=${encodeURIComponent(searchTerm)}`;
+/** Direct App Store product page (apps.apple.com/kr/search?term=… is a 404). */
+export function buildAppStoreUrl(appStoreId: string): string {
+  return `https://apps.apple.com/kr/app/id${appStoreId}`;
 }
 
 export function getBankAppFallbackUrl(
@@ -544,9 +539,7 @@ export function getBankAppFallbackUrl(
   }
 
   if (isIOSUserAgent(userAgent)) {
-    const searchTerm =
-      scheme.appStoreSearchTerm ?? `${scheme.label} 스마트뱅킹`;
-    return buildAppStoreSearchUrl(searchTerm);
+    return buildAppStoreUrl(scheme.appStoreId);
   }
 
   return undefined;
@@ -675,14 +668,34 @@ export function tryOpenWithFallback(primaryUrl: string, fallbackUrl?: string): v
   }, APP_LAUNCH_FALLBACK_DELAY_MS);
 }
 
+export type BankAppLaunchOutcome =
+  /** Attempted the app scheme; store fallback fires if the app is missing. */
+  | "app-attempt"
+  /** Went straight to the App Store page (iOS in-app browsers block schemes). */
+  | "store-redirect"
+  /** No app launch possible (desktop) — the copied account number is the flow. */
+  | "unsupported";
+
+export type BankAppLaunchResult = {
+  scheme: BankAppScheme;
+  outcome: BankAppLaunchOutcome;
+};
+
 /**
  * Opens a major bank app with Play/App Store fallback when the app is missing.
  * Accepts a BankAppScheme or an app id / bank code string.
+ *
+ * Mirrors the pay-button strategy (see resolveAppLaunchPlan):
+ * - Android: intent:// with S.browser_fallback_url (Chrome and most
+ *   Chrome-based webviews handle it) + timer fallback for non-Chrome browsers
+ * - iOS: custom scheme + timer fallback to the App Store page; in-app
+ *   browsers (KakaoTalk …) block schemes entirely → App Store page directly
+ * - desktop: no launch attempt
  */
 export function openBankAppWithFallback(
   target: BankAppScheme | string,
   userAgent = "",
-): BankAppScheme | undefined {
+): BankAppLaunchResult | undefined {
   const scheme =
     typeof target === "string"
       ? getBankAppById(target) ?? getBankAppScheme(target)
@@ -692,17 +705,27 @@ export function openBankAppWithFallback(
   }
 
   const fallbackUrl = getBankAppFallbackUrl(scheme, userAgent);
-  const launchUrl = isAndroidUserAgent(userAgent)
-    ? buildAndroidBankAppIntent(scheme, { fallbackUrl })
-    : scheme.scheme;
 
-  if (isMobileUserAgent(userAgent) && fallbackUrl && !isAndroidUserAgent(userAgent)) {
+  if (isAndroidUserAgent(userAgent)) {
+    const launchUrl = buildAndroidBankAppIntent(scheme, { fallbackUrl });
     tryOpenWithFallback(launchUrl, fallbackUrl);
-  } else {
-    tryOpenCustomScheme(launchUrl);
+    return { scheme, outcome: "app-attempt" };
   }
 
-  return scheme;
+  if (isIOSUserAgent(userAgent)) {
+    if (isInAppBrowserUserAgent(userAgent)) {
+      if (fallbackUrl && typeof window !== "undefined") {
+        window.location.assign(fallbackUrl);
+        return { scheme, outcome: "store-redirect" };
+      }
+      return { scheme, outcome: "unsupported" };
+    }
+
+    tryOpenWithFallback(scheme.scheme, fallbackUrl);
+    return { scheme, outcome: "app-attempt" };
+  }
+
+  return { scheme, outcome: "unsupported" };
 }
 
 export function resolveTransferAccount(

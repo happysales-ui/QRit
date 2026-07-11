@@ -9,6 +9,7 @@ import {
   formatAccountNo,
   getFormattedTransferCopyText,
   getBankAppSchemeGroups,
+  isMobileUserAgent,
   openBankAppWithFallback,
   tryOpenWithFallback,
   type BankAppScheme,
@@ -81,6 +82,8 @@ export function TransferGateway({
   const deepLinks = buildDeepLinks(account.bankCode, account.accountNo, userAgent);
   const copyText = getFormattedTransferCopyText(account);
   const bankAppGroups = getBankAppSchemeGroups();
+  // Empty UA = SSR pass; only flag desktop after the client UA is known.
+  const isDesktop = userAgent !== "" && !isMobileUserAgent(userAgent);
 
   const showToast = useCallback((message: string) => {
     if (toastTimerRef.current !== null) {
@@ -134,9 +137,19 @@ export function TransferGateway({
       return;
     }
 
-    const opened = openBankAppWithFallback(pendingBank, userAgent);
-    if (opened) {
-      showToast(`${opened.label} 앱을 여는 중입니다`);
+    const result = openBankAppWithFallback(pendingBank, userAgent);
+    if (result) {
+      if (result.outcome === "store-redirect") {
+        showToast(
+          `앱 실행이 제한되어 ${result.scheme.label} 스토어로 이동합니다 · 외부 브라우저에서 열면 앱이 바로 실행됩니다`,
+        );
+      } else if (result.outcome === "unsupported") {
+        showToast("계좌번호가 복사되었습니다 · 앱 실행은 모바일에서 가능합니다");
+      } else {
+        showToast(
+          `계좌번호가 복사되었습니다 · ${result.scheme.label} 앱이 없으면 스토어로 이동합니다`,
+        );
+      }
     }
 
     setPendingBank(null);
@@ -273,8 +286,14 @@ export function TransferGateway({
             <p className={qritBrand.bankPickerTitle}>내 은행 앱 선택</p>
             <p className="mt-1 text-xs leading-relaxed text-zinc-500">
               은행을 선택하면 계좌번호가 복사되고, 확인 후 해당 은행 앱으로
-              이동합니다. NH·신한·하나 등은 사용 중인 앱 버전을 선택하세요.
+              이동합니다. NH농협은 사용 중인 앱 버전을 선택하세요.
             </p>
+            {isDesktop ? (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-amber-600">
+                은행 앱 실행은 모바일에서만 가능합니다. PC에서는 계좌번호
+                복사만 이용해 주세요.
+              </p>
+            ) : null}
             <div className="mt-3 max-h-64 space-y-3 overflow-y-auto pr-0.5">
               {bankAppGroups.map((group) => (
                 <div key={group.id}>
