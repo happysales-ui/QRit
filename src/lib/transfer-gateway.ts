@@ -19,16 +19,23 @@ export type TransferDeepLink = {
   fallbackHref?: string;
   /** When true, open via script instead of default anchor navigation. */
   openViaScript?: boolean;
+  /** Desktop: open the web page in a new tab and keep this page visible. */
+  openInNewTab?: boolean;
   accentClass: string;
 };
 
 export const KAKAO_PAY_ANDROID_PACKAGE = "com.kakaopay.app";
-/** Naver app (네이버) — handles the documented naversearchapp:// scheme. */
-export const NAVER_APP_ANDROID_PACKAGE = "com.nhn.android.search";
+/** Standalone 네이버페이 app (PG guides list scheme naverpayapp://). */
+export const NAVER_PAY_ANDROID_PACKAGE = "com.naverfin.payapp";
+/**
+ * Bare launch scheme for the Naver Pay app. Naver Pay has no publicly
+ * documented remit deep link (only e.g. showservicemenu?menuName=payment for
+ * offline payment), so we launch the app and rely on the copied account no.
+ */
+export const NAVER_PAY_APP_SCHEME = "naverpayapp://";
 /**
  * Naver Pay 송금 mobile-web entry point (verified live; login-gated).
- * Naver Pay has no public deep link that pre-fills bank/account, so we open
- * the real remit page and rely on the copied account number.
+ * Used as the fallback when the app is missing or schemes are blocked.
  */
 export const NAVER_PAY_REMIT_URL = "https://new-m.pay.naver.com/remit";
 export const KAKAO_PAY_WEB_FALLBACK = "https://www.kakaopay.com";
@@ -55,15 +62,6 @@ export function buildKakaoPaySchemeUrl(
   return `kakaopay://money/to/bank?${params.toString()}`;
 }
 
-/**
- * Opens a URL inside the Naver app's in-app browser.
- * naversearchapp:// is the Naver app's documented scheme (used by KCP/NICE PG
- * guides); the in-app browser keeps the user's Naver login for the remit page.
- */
-export function buildNaverAppInAppBrowserUrl(targetUrl: string): string {
-  return `naversearchapp://inappbrowser?url=${encodeURIComponent(targetUrl)}&target=new&version=6`;
-}
-
 export function buildAndroidCustomSchemeIntent(
   schemeUrl: string,
   options: {
@@ -77,82 +75,53 @@ export function buildAndroidCustomSchemeIntent(
   }
 
   const [, schemeName, pathAndQuery] = schemeMatch;
-  const parts = [
-    `intent://${pathAndQuery}`,
-    "#Intent",
-    `scheme=${schemeName}`,
-  ];
+  const intentParams = [`scheme=${schemeName}`];
 
   if (options.androidPackage) {
-    parts.push(`package=${options.androidPackage}`);
+    intentParams.push(`package=${options.androidPackage}`);
   }
 
   if (options.fallbackUrl) {
-    parts.push(
+    intentParams.push(
       `S.browser_fallback_url=${encodeURIComponent(options.fallbackUrl)}`,
     );
   }
 
-  parts.push("end");
-  return parts.join(";");
+  // No separator before "#Intent" — a stray ";" there malforms the intent URL.
+  return `intent://${pathAndQuery}#Intent;${intentParams.join(";")};end`;
 }
 
-export function resolveTransferLaunchUrl(
-  appId: TransferAppId,
-  bankCode: string,
-  accountNo: string,
-  userAgent = "",
-): Pick<TransferDeepLink, "href" | "fallbackHref" | "openViaScript"> {
-  const normalizedCode = bankCode.trim();
-  const normalizedAccount = normalizeAccountNo(accountNo);
+export type TransferLaunchPlan = Pick<
+  TransferDeepLink,
+  "href" | "fallbackHref" | "openViaScript" | "openInNewTab"
+>;
 
-  if (appId === "toss") {
-    return {
-      href: buildTossDeepLink(normalizedCode, normalizedAccount),
-      openViaScript: false,
-    };
+/**
+ * Shared launch strategy for pay apps that use a custom scheme + web fallback
+ * (KakaoPay, NaverPay — Toss ships its own universal link instead):
+ * - in-app browsers (KakaoTalk/Instagram/…): schemes are usually blocked →
+ *   navigate straight to the web page
+ * - Android: intent:// with package + S.browser_fallback_url (Chrome falls
+ *   back by itself; the script timer is a backup for non-Chrome browsers)
+ * - iOS: custom scheme, then visibilitychange/pagehide + timeout fallback
+ * - desktop: no app attempt — open the web page in a new tab
+ */
+export function resolveAppLaunchPlan(options: {
+  schemeUrl: string;
+  webUrl: string;
+  androidPackage: string;
+  userAgent: string;
+}): TransferLaunchPlan {
+  const { schemeUrl, webUrl, androidPackage, userAgent } = options;
+
+  if (isInAppBrowserUserAgent(userAgent)) {
+    return { href: webUrl, openViaScript: false };
   }
-
-  if (appId === "kakaopay") {
-    const schemeUrl = buildKakaoPaySchemeUrl(normalizedCode, normalizedAccount);
-
-    if (isAndroidUserAgent(userAgent)) {
-      return {
-        href: buildAndroidCustomSchemeIntent(schemeUrl, {
-          androidPackage: KAKAO_PAY_ANDROID_PACKAGE,
-          fallbackUrl: KAKAO_PAY_WEB_FALLBACK,
-        }),
-        fallbackHref: KAKAO_PAY_WEB_FALLBACK,
-        openViaScript: true,
-      };
-    }
-
-    if (isMobileUserAgent(userAgent)) {
-      return {
-        href: schemeUrl,
-        fallbackHref: KAKAO_PAY_WEB_FALLBACK,
-        openViaScript: true,
-      };
-    }
-
-    return {
-      href: KAKAO_PAY_WEB_FALLBACK,
-      fallbackHref: schemeUrl,
-      openViaScript: false,
-    };
-  }
-
-  // Naver Pay has no public account-prefill deep link (verified 2026), so we
-  // open the real remit page — via the Naver app when installed (keeps the
-  // user logged in), otherwise mobile web. The account number is copied on
-  // tap (see transfer-gateway.tsx) so the user can paste it in the send flow.
-  const webUrl = NAVER_PAY_REMIT_URL;
-  const schemeUrl = buildNaverAppInAppBrowserUrl(webUrl);
 
   if (isAndroidUserAgent(userAgent)) {
     return {
       href: buildAndroidCustomSchemeIntent(schemeUrl, {
-        androidPackage: NAVER_APP_ANDROID_PACKAGE,
+        androidPackage,
         fallbackUrl: webUrl,
       }),
       fallbackHref: webUrl,
@@ -168,10 +137,44 @@ export function resolveTransferLaunchUrl(
     };
   }
 
-  return {
-    href: webUrl,
-    openViaScript: false,
-  };
+  return { href: webUrl, openViaScript: false, openInNewTab: true };
+}
+
+export function resolveTransferLaunchUrl(
+  appId: TransferAppId,
+  bankCode: string,
+  accountNo: string,
+  userAgent = "",
+): TransferLaunchPlan {
+  const normalizedCode = bankCode.trim();
+  const normalizedAccount = normalizeAccountNo(accountNo);
+
+  if (appId === "toss") {
+    return {
+      href: buildTossDeepLink(normalizedCode, normalizedAccount),
+      openViaScript: false,
+    };
+  }
+
+  if (appId === "kakaopay") {
+    return resolveAppLaunchPlan({
+      schemeUrl: buildKakaoPaySchemeUrl(normalizedCode, normalizedAccount),
+      webUrl: KAKAO_PAY_WEB_FALLBACK,
+      androidPackage: KAKAO_PAY_ANDROID_PACKAGE,
+      userAgent,
+    });
+  }
+
+  // Naver Pay has no public account-prefill deep link (verified 2026-07), so
+  // we launch the standalone Naver Pay app (naverpayapp://) and rely on the
+  // account number copied on tap (see transfer-gateway.tsx). When the app is
+  // missing or schemes are blocked, the login-gated mobile remit page opens.
+  return resolveAppLaunchPlan({
+    schemeUrl: NAVER_PAY_APP_SCHEME,
+    webUrl: NAVER_PAY_REMIT_URL,
+    androidPackage: NAVER_PAY_ANDROID_PACKAGE,
+    userAgent,
+  });
 }
 
 export function buildDeepLinks(
@@ -181,6 +184,10 @@ export function buildDeepLinks(
 ): TransferDeepLink[] {
   const normalizedCode = bankCode.trim();
   const normalizedAccount = normalizeAccountNo(accountNo);
+  // In-app browsers and desktop open a web page, not the native app — make
+  // the button copy describe what actually happens.
+  const opensNativeApp =
+    isMobileUserAgent(userAgent) && !isInAppBrowserUserAgent(userAgent);
 
   const appMeta: Array<
     Pick<TransferDeepLink, "id" | "label" | "description" | "accentClass">
@@ -195,14 +202,18 @@ export function buildDeepLinks(
     {
       id: "kakaopay",
       label: "카카오페이로 송금",
-      description: "계좌번호가 복사되고 카카오페이 앱이 열립니다",
+      description: opensNativeApp
+        ? "계좌번호가 복사되고 카카오페이 앱이 열립니다"
+        : "계좌번호가 복사되고 카카오페이 페이지가 열립니다",
       accentClass:
         "border-yellow-200/80 bg-gradient-to-r from-white to-yellow-50/90 hover:border-yellow-300 hover:shadow-yellow-100/70",
     },
     {
       id: "naverpay",
       label: "네이버페이로 송금",
-      description: "계좌번호가 복사되고 네이버페이 송금 화면이 열립니다",
+      description: opensNativeApp
+        ? "계좌번호가 복사되고 네이버페이 앱이 열립니다"
+        : "계좌번호가 복사되고 네이버페이 송금 페이지가 열립니다",
       accentClass:
         "border-emerald-200/80 bg-gradient-to-r from-white to-emerald-50/90 hover:border-emerald-300 hover:shadow-emerald-100/70",
     },
@@ -505,6 +516,17 @@ export function isMobileUserAgent(userAgent: string): boolean {
   return isAndroidUserAgent(userAgent) || isIOSUserAgent(userAgent);
 }
 
+/**
+ * In-app webviews (KakaoTalk, NAVER app, Instagram, Facebook, LINE, …) tend
+ * to block custom schemes / intent:// URLs, so callers should navigate
+ * straight to the web fallback instead of attempting an app launch.
+ */
+export function isInAppBrowserUserAgent(userAgent: string): boolean {
+  return /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|FB_IAB|Line\/|DaumApps|; wv\)/i.test(
+    userAgent,
+  );
+}
+
 export function buildPlayStoreUrl(androidPackage: string): string {
   return `https://play.google.com/store/apps/details?id=${encodeURIComponent(androidPackage)}`;
 }
@@ -544,17 +566,50 @@ export function buildAndroidBankAppIntent(
   });
 }
 
-export async function copyTextToClipboard(text: string): Promise<boolean> {
-  if (typeof navigator === "undefined") {
+/** Legacy execCommand("copy") path for webviews without the async API. */
+function copyViaExecCommand(text: string): boolean {
+  if (typeof document === "undefined") {
     return false;
   }
 
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  let didCopy = false;
   try {
-    await navigator.clipboard.writeText(text);
-    return true;
+    didCopy = document.execCommand("copy");
   } catch {
-    return false;
+    didCopy = false;
   }
+
+  document.body.removeChild(textarea);
+  return didCopy;
+}
+
+/**
+ * Copies text to the clipboard. Deliberately NOT an async function: iOS
+ * Safari only honors clipboard writes issued synchronously inside the user
+ * gesture, so navigator.clipboard.writeText must be called before any await
+ * boundary. Callers must invoke this directly in the click handler.
+ */
+export function copyTextToClipboard(text: string): Promise<boolean> {
+  if (typeof navigator === "undefined") {
+    return Promise.resolve(false);
+  }
+
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    return navigator.clipboard.writeText(text).then(
+      () => true,
+      () => copyViaExecCommand(text),
+    );
+  }
+
+  return Promise.resolve(copyViaExecCommand(text));
 }
 
 /** Attempt to open a custom scheme via transient anchor click (mobile-friendly). */
@@ -571,7 +626,14 @@ export function tryOpenCustomScheme(url: string): void {
   document.body.removeChild(anchor);
 }
 
-/** Open a deep link and fall back to web when the native app does not launch. */
+export const APP_LAUNCH_FALLBACK_DELAY_MS = 1500;
+
+/**
+ * Open a deep link and fall back to web when the native app does not launch.
+ * An app switch fires visibilitychange/pagehide/blur; if none arrives within
+ * ~1.5s we assume the app is missing (or the scheme was blocked) and navigate
+ * to the fallback URL instead.
+ */
 export function tryOpenWithFallback(primaryUrl: string, fallbackUrl?: string): void {
   if (typeof window === "undefined") {
     return;
@@ -582,23 +644,35 @@ export function tryOpenWithFallback(primaryUrl: string, fallbackUrl?: string): v
     return;
   }
 
-  let didHide = false;
+  let didLeavePage = false;
+  const markLeft = () => {
+    didLeavePage = true;
+  };
 
   const onVisibilityChange = () => {
     if (document.hidden) {
-      didHide = true;
+      markLeft();
     }
   };
 
+  const cleanup = () => {
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.removeEventListener("pagehide", markLeft);
+    window.removeEventListener("blur", markLeft);
+  };
+
   document.addEventListener("visibilitychange", onVisibilityChange);
+  window.addEventListener("pagehide", markLeft);
+  window.addEventListener("blur", markLeft);
+
   tryOpenCustomScheme(primaryUrl);
 
   window.setTimeout(() => {
-    document.removeEventListener("visibilitychange", onVisibilityChange);
-    if (!didHide) {
+    cleanup();
+    if (!didLeavePage && !document.hidden) {
       window.location.assign(fallbackUrl);
     }
-  }, 1200);
+  }, APP_LAUNCH_FALLBACK_DELAY_MS);
 }
 
 /**

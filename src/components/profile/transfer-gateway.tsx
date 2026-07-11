@@ -104,24 +104,27 @@ export function TransferGateway({
     };
   }, []);
 
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(copyText);
-      setCopied(true);
-      showToast("계좌 정보가 복사되었습니다");
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
+  function handleCopy() {
+    // Clipboard write must start synchronously inside the click gesture (iOS).
+    void copyTextToClipboard(copyText).then((didCopy) => {
+      if (didCopy) {
+        setCopied(true);
+        showToast("계좌 정보가 복사되었습니다");
+        window.setTimeout(() => setCopied(false), 2000);
+      } else {
+        setCopied(false);
+      }
+    });
   }
 
-  async function handleSelectBank(bankApp: BankAppScheme) {
-    const didCopy = await copyTextToClipboard(copyText);
-    if (didCopy) {
-      showToast("계좌번호가 복사되었습니다");
-    } else {
-      showToast("복사에 실패했습니다. 계좌 정보를 직접 확인해 주세요");
-    }
+  function handleSelectBank(bankApp: BankAppScheme) {
+    void copyTextToClipboard(copyText).then((didCopy) => {
+      if (didCopy) {
+        showToast("계좌번호가 복사되었습니다");
+      } else {
+        showToast("복사에 실패했습니다. 계좌 정보를 직접 확인해 주세요");
+      }
+    });
 
     setPendingBank(bankApp);
   }
@@ -143,15 +146,21 @@ export function TransferGateway({
     event: React.MouseEvent<HTMLAnchorElement>,
     app: TransferDeepLink,
   ) {
-    // Copy first: KakaoPay/NaverPay cannot pre-fill the account, so the user
-    // pastes it in the app's send screen.
+    // Copy first, synchronously within the click gesture (iOS rejects
+    // clipboard writes issued after an await boundary): KakaoPay/NaverPay
+    // cannot pre-fill the account, so the user pastes it in the send screen.
     void copyTextToClipboard(copyText).then((didCopy) => {
       if (didCopy) {
-        showToast("계좌번호가 복사되었습니다");
+        showToast(
+          app.openInNewTab
+            ? "계좌번호가 복사되었습니다 · 앱 실행은 모바일에서 가능합니다"
+            : "계좌번호가 복사되었습니다",
+        );
       }
     });
 
     if (!app.openViaScript) {
+      // Desktop new-tab / plain web navigation — let the anchor handle it.
       return;
     }
 
@@ -198,7 +207,7 @@ export function TransferGateway({
 
           <button
             type="button"
-            onClick={() => void handleCopy()}
+            onClick={handleCopy}
             className={cn(
               "mt-4 w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors",
               copied
@@ -234,6 +243,8 @@ export function TransferGateway({
             <a
               key={app.id}
               href={app.href}
+              target={app.openInNewTab ? "_blank" : undefined}
+              rel={app.openInNewTab ? "noopener noreferrer" : undefined}
               onClick={(event) => handleOpenPaymentApp(event, app)}
               className={cn(
                 "group flex items-center gap-4 rounded-xl border px-4 py-3.5 shadow-sm transition-all duration-200",
@@ -275,7 +286,7 @@ export function TransferGateway({
                       <button
                         key={bankApp.id}
                         type="button"
-                        onClick={() => void handleSelectBank(bankApp)}
+                        onClick={() => handleSelectBank(bankApp)}
                         className={cn(
                           qritBrand.bankChip,
                           pendingBank?.id === bankApp.id && qritBrand.bankChipActive,
