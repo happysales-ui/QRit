@@ -12,8 +12,16 @@ export async function middleware(request: NextRequest) {
   );
 }
 
+// Only routes that need a Supabase session (or the x-pathname header, used by
+// the admin layout). Public QR routes (/[username], transfer, contact) read
+// public data with an anon client and skip the auth round trip entirely.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/auth/:path*",
   ],
 };

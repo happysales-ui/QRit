@@ -1,4 +1,6 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { SubscriptionStatus } from "@/lib/subscription";
 import type { LinkBlock, Profile } from "@/types";
@@ -42,16 +44,52 @@ function normalizeProfileRow(profile: Record<string, unknown>): Profile {
   };
 }
 
-export async function getProfileByUsername(
-  username: string,
+function toProfileWithLinks(
+  profile: Record<string, unknown>,
+  links: Record<string, unknown>[],
+): ProfileWithLinks {
+  return {
+    profile: normalizeProfileRow({ ...profile, phone: null, is_admin: false }),
+    links: links.map((link) => normalizeLinkRow(link)),
+  };
+}
+
+async function fetchProfileByUsername(
+  normalized: string,
 ): Promise<ProfileWithLinks | null> {
   if (!isSupabaseConfigured()) {
     return null;
   }
 
-  const supabase = await createClient();
-  const normalized = username.toLowerCase();
+  // Cookie-less client: public data only, keeps callers statically cacheable.
+  const supabase = createPublicClient();
 
+  // Single round trip: embed links through the public_profiles view.
+  // The FK hint (links_profile_id_fkey) disambiguates from
+  // profiles.default_link_id -> links.
+  const { data, error } = await supabase
+    .from("public_profiles")
+    .select("*, links!links_profile_id_fkey(*)")
+    .eq("username", normalized)
+    .eq("links.is_active", true)
+    .eq("links.is_hidden", false)
+    .order("sort_order", { ascending: true, referencedTable: "links" })
+    .maybeSingle();
+
+  if (!error) {
+    if (!data) {
+      return null;
+    }
+
+    const { links, ...profile } = data as Record<string, unknown> & {
+      links: Record<string, unknown>[] | null;
+    };
+
+    return toProfileWithLinks(profile, links ?? []);
+  }
+
+  // Fallback (two round trips) in case PostgREST cannot resolve the
+  // view -> links relationship, e.g. a stale schema cache.
   const { data: profile, error: profileError } = await supabase
     .from("public_profiles")
     .select("*")
@@ -74,11 +112,15 @@ export async function getProfileByUsername(
     return null;
   }
 
-  return {
-    profile: normalizeProfileRow({ ...profile, phone: null, is_admin: false }),
-    links: (links ?? []).map((link) => normalizeLinkRow(link)),
-  };
+  return toProfileWithLinks(profile, links ?? []);
 }
+
+// React cache(): generateMetadata and the page component both resolve the
+// profile, this dedupes them into one fetch per request.
+export const getProfileByUsername = cache(
+  (username: string): Promise<ProfileWithLinks | null> =>
+    fetchProfileByUsername(username.toLowerCase()),
+);
 
 export async function getProfileForUser(
   userId: string,

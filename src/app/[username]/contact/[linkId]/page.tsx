@@ -11,6 +11,19 @@ import { getMockProfileByUsername } from "@/lib/mock-profile";
 import { getProfileByUsername } from "@/lib/profile";
 import { isProfileExpired } from "@/lib/service-expiry";
 
+// ISR: cache the rendered gateway and refresh in the background at most every
+// 60s. Dashboard edits also purge it via revalidatePath.
+// The empty generateStaticParams opts the route into on-demand static
+// generation (nothing is prerendered at build time).
+export const revalidate = 60;
+
+export function generateStaticParams(): Array<{
+  username: string;
+  linkId: string;
+}> {
+  return [];
+}
+
 interface ContactPageProps {
   params: Promise<{ username: string; linkId: string }>;
 }
