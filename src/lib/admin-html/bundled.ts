@@ -9,7 +9,7 @@ export type BundledHtmlPage = {
 
 const BUNDLED_META: Record<string, { title: string; file: string }> = {
   fireworks: {
-    title: "당신의 불꽃축제",
+    title: "8월의 첫눈",
     file: "fireworks-seed.html",
   },
 };

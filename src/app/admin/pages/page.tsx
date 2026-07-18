@@ -79,7 +79,7 @@ export default async function AdminPagesPage() {
           if (isMissingTable(error)) {
             pages = bundledPageRows();
             configError =
-              "DB 테이블이 아직 없습니다. Supabase SQL 편집기에서 supabase/migrations/026_admin_html_pages.sql 을 실행하면 추가·수정·삭제가 가능합니다. 번들 fireworks는 /s/fireworks 로 이미 공유할 수 있습니다.";
+              "DB 테이블이 아직 없습니다. Supabase SQL 편집기에서 supabase/migrations/026_admin_html_pages.sql 을 실행하면 추가·수정·삭제가 가능합니다. 번들「8월의 첫눈」은 /s/fireworks 로 이미 공유할 수 있습니다.";
           } else {
             loadError = `페이지 목록을 불러오지 못했습니다. (${error.message})`;
           }

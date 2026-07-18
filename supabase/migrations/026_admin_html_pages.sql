@@ -44,4 +44,4 @@ CREATE POLICY "admin_html_pages_admin_delete"
   USING (public.is_profile_admin());
 
 COMMENT ON TABLE public.admin_html_pages IS
-  'Admin-uploaded HTML pages served publicly at /s/[slug]. Seed fireworks via app or paste in /admin/pages.';
+  'Admin-uploaded HTML pages served publicly at /s/[slug]. Bundled fireworks (8월의 첫눈) is served from app files; other slugs come from this table.';

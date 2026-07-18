@@ -19,6 +19,18 @@ export async function getHtmlPageBySlug(
     return null;
   }
 
+  // Bundled pages ship with the app — prefer them so deploys update /s/[slug]
+  // even when an older DB seed still exists.
+  const bundled = getBundledHtmlPage(slug);
+  if (bundled) {
+    return {
+      slug: bundled.slug,
+      title: bundled.title,
+      html: bundled.html,
+      source: "bundled",
+    };
+  }
+
   if (isSupabaseConfigured()) {
     try {
       const supabase = createPublicClient();
@@ -37,19 +49,9 @@ export async function getHtmlPageBySlug(
         };
       }
     } catch {
-      // Fall through to bundled pages when DB is unavailable.
+      // No DB page for this slug.
     }
   }
 
-  const bundled = getBundledHtmlPage(slug);
-  if (!bundled) {
-    return null;
-  }
-
-  return {
-    slug: bundled.slug,
-    title: bundled.title,
-    html: bundled.html,
-    source: "bundled",
-  };
+  return null;
 }

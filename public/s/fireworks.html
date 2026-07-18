@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>당신의 불꽃축제</title>
+<title>8월의 첫눈</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
   html, body {
     height: 100%;
     overflow: hidden;
-    background: #04060e;
+    background: #070b16;
     font-family: 'Gowun Batang', serif;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
@@ -20,7 +20,7 @@
   }
   #skybg {
     position: fixed; inset: 0;
-    background: radial-gradient(ellipse at 50% 125%, #171d3f 0%, #0a0f26 45%, #04060e 100%);
+    background: linear-gradient(to bottom, #070b16 0%, #0e1530 55%, #1a2547 100%);
   }
   canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
@@ -31,11 +31,11 @@
     width: min(84vw, 360px);
     text-align: center;
     color: rgba(242, 245, 253, 0.93);
-    font-size: 1.08rem; line-height: 1.9; letter-spacing: 0.04em;
+    font-size: 1.08rem; line-height: 1.95; letter-spacing: 0.04em;
     opacity: 0;
-    transition: opacity 2.4s ease;
+    transition: opacity 2.6s ease;
     pointer-events: none;
-    text-shadow: 0 0 20px rgba(130, 150, 255, 0.45), 0 0 40px rgba(4, 6, 14, 0.9);
+    text-shadow: 0 0 20px rgba(150, 170, 255, 0.4), 0 0 40px rgba(7, 11, 22, 0.9);
     word-break: keep-all;
   }
   #message.visible { opacity: 1; }
@@ -48,12 +48,12 @@
     color: rgba(242, 245, 253, 0.45);
     font-size: 0.8rem; letter-spacing: 0.14em;
     opacity: 0;
-    animation: hintFade 7s ease 1.2s forwards;
+    animation: hintFade 8s ease 2s forwards;
     pointer-events: none;
     white-space: nowrap;
   }
   @keyframes hintFade {
-    0% { opacity: 0; } 20% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; }
+    0% { opacity: 0; } 20% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; }
   }
 
   #sign {
@@ -70,15 +70,18 @@
 </head>
 <body>
 <div id="skybg"></div>
-<canvas id="canvas"></canvas>
+<canvas id="fx"></canvas>
+<canvas id="snowc"></canvas>
 <div id="message"></div>
-<div id="hint">누르면 불꽃 · 그리면 불꽃길 · 꾹 누르면 피날레</div>
+<div id="hint">첫눈 속에 불꽃을 숨겨두었어요 · 하늘을 눌러보세요</div>
 <div id="sign">QRIT</div>
 
 <script>
 (function () {
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
+  const fxCanvas = document.getElementById('fx');
+  const fx = fxCanvas.getContext('2d');
+  const snowCanvas = document.getElementById('snowc');
+  const sc = snowCanvas.getContext('2d');
   const messageEl = document.getElementById('message');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -87,24 +90,26 @@
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth;
     H = window.innerHeight;
-    canvas.width = W * DPR;
-    canvas.height = H * DPR;
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    ctx.clearRect(0, 0, W, H);
+    for (const [cv, cx] of [[fxCanvas, fx], [snowCanvas, sc]]) {
+      cv.width = W * DPR;
+      cv.height = H * DPR;
+      cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    fx.clearRect(0, 0, W, H);
   }
   resize();
   window.addEventListener('resize', resize);
 
-  /* ---------- 문장 ---------- */
+  /* ---------- 겨울의 문장 ---------- */
   const messages = [
-    '수고한 당신에게, 오늘의 축포',
-    '박수 대신 불꽃으로 — 오늘도 해냈어요',
-    '지금 이 하늘은 온전히 당신 거예요',
-    '잘 버틴 하루의 끝, 마음껏 터뜨려요',
-    '내일 걱정은 잠깐 꺼두세요',
-    '당신이 주인공인 밤이에요',
-    '기분 좋아질 때까지 눌러도 돼요',
-    '오늘의 나, 생각보다 근사했어요'
+    '한여름의 당신에게, 조금 이른 첫눈을',
+    '눈이 내리면 세상이 잠깐 조용해져요',
+    '오늘의 소란은 여기 묻어두고 가요',
+    '수고한 마음 위에 눈이 소복소복',
+    '겨울처럼, 쉬어가도 괜찮아요',
+    '첫눈처럼 좋은 일이 당신에게 내리기를',
+    '녹지 않는 안부를 보냅니다',
+    '이 고요는 당신을 위해 준비했어요'
   ];
   let msgOrder = shuffle([...messages.keys()]);
   let msgIdx = 0;
@@ -122,29 +127,51 @@
     if (msgIdx === 0) msgOrder = shuffle(msgOrder);
     messageEl.classList.add('visible');
     clearTimeout(msgTimer);
-    msgTimer = setTimeout(() => messageEl.classList.remove('visible'), 5200);
+    msgTimer = setTimeout(() => messageEl.classList.remove('visible'), 5600);
   }
 
   /* ---------- 별 ---------- */
   const stars = [];
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 80; i++) {
     stars.push({
-      x: Math.random(), y: Math.random() * 0.9,
+      x: Math.random(), y: Math.random() * 0.85,
       r: Math.random() * 1.1 + 0.3,
-      base: Math.random() * 0.14 + 0.05,
+      base: Math.random() * 0.4 + 0.15,
       phase: Math.random() * Math.PI * 2,
-      speed: Math.random() * 0.6 + 0.2
+      speed: Math.random() * 0.5 + 0.15
     });
   }
 
-  /* ---------- 팔레트 ---------- */
+  /* ---------- 눈 ---------- */
+  const flakes = [];
+  const FLAKE_COUNT = reduceMotion ? 0 : 130;
+  for (let i = 0; i < FLAKE_COUNT; i++) {
+    flakes.push(newFlake(true));
+  }
+  function newFlake(anywhere) {
+    const depth = Math.random();
+    return {
+      x: Math.random() * 1.1 - 0.05,
+      y: anywhere ? Math.random() : -0.03,
+      depth,
+      r: 0.8 + depth * 2.6,
+      vy: (0.25 + depth * 0.65),
+      sway: Math.random() * Math.PI * 2,
+      swaySpeed: 0.4 + Math.random() * 0.6,
+      swayAmp: 0.15 + depth * 0.45,
+      alpha: 0.35 + depth * 0.55
+    };
+  }
+
+  /* ---------- 불꽃 팔레트 ---------- */
   const PALETTES = [
+    ['#ff8a8a', '#ffc2c2', '#ff5d5d'],
+    ['#8ee6a0', '#c8f5d0', '#5dd47a'],
     ['#ffd166', '#ffedb0', '#ff9e3d'],
-    ['#ff5d8f', '#ffb3c9', '#ff2d70'],
-    ['#4cc9f0', '#a8f0ff', '#2d9ee0'],
-    ['#c77dff', '#e8c4ff', '#9d4edd'],
-    ['#06ffa5', '#a5ffd9', '#00d68a'],
-    ['#ffe0f0', '#ffffff', '#c9d4ff']
+    ['#ff8fd0', '#ffc6e8', '#ff5daf'],
+    ['#7fd8f0', '#c0f0ff', '#4cc9f0'],
+    ['#c9a0ff', '#e8d4ff', '#a86ef0'],
+    ['#ffb36b', '#ffdcb8', '#ff8c2e']
   ];
   const GOLD = ['#ffd980', '#ffedb8', '#ffbf50'];
 
@@ -168,9 +195,36 @@
     flashes.push({ x, y, r: 0, maxR: size || 110, life: 1, color });
   }
 
-  /* ========== 폭죽 타입들 ========== */
+  function snowflakeBurst(x, y) {
+    flash(x, y, '#cfe4ff', 100);
+    const main = '#e8f2ff';
+    for (let arm = 0; arm < 6; arm++) {
+      const a = (Math.PI * 2 * arm) / 6 - Math.PI / 2;
+      const ca = Math.cos(a), sa = Math.sin(a);
+      for (let i = 1; i <= 12; i++) {
+        const s = (i / 12) * 2.4;
+        addP(x, y, ca * s, sa * s, main, { decay: 0.0055, gravity: 0.004, r: 1.5 });
+      }
+      for (const bf of [0.45, 0.75]) {
+        for (const side of [-1, 1]) {
+          const ba = a + side * (Math.PI / 5);
+          const bca = Math.cos(ba), bsa = Math.sin(ba);
+          for (let j = 1; j <= 4; j++) {
+            addP(x, y,
+              ca * bf * 2.4 * 0.92 + bca * (j / 4) * 0.7,
+              sa * bf * 2.4 * 0.92 + bsa * (j / 4) * 0.7,
+              main, { decay: 0.0055, gravity: 0.004, r: 1.2 });
+          }
+        }
+      }
+    }
+    for (let i = 0; i < 16; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = Math.random() * 0.4;
+      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffffff', { decay: 0.014, r: 1, flicker: true });
+    }
+  }
 
-  /* 하트 — 마음을 쏘아올리는 */
   function heartBurst(x, y, palette) {
     flash(x, y, palette[0], 90);
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
@@ -183,14 +237,8 @@
         decay: 0.0055, gravity: 0.006, r: 1.7
       });
     }
-    for (let i = 0; i < 20; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = Math.random() * 0.5;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffffff', { decay: 0.014, r: 1, flicker: true });
-    }
   }
 
-  /* 별 모양 — 다섯 꼭짓점 윤곽 */
   function starBurst(x, y, palette) {
     flash(x, y, palette[0], 90);
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
@@ -213,13 +261,11 @@
     }
   }
 
-  /* 나선 은하 — 세 팔이 회오리치며 */
   function spiralBurst(x, y, palette) {
     flash(x, y, palette[0], 100);
-    const arms = 3;
-    for (let a = 0; a < arms; a++) {
+    for (let a = 0; a < 3; a++) {
       const armColor = palette[a % palette.length];
-      const armBase = (Math.PI * 2 * a) / arms;
+      const armBase = (Math.PI * 2 * a) / 3;
       for (let i = 0; i < 26; i++) {
         const f = i / 26;
         const angle = armBase + f * 2.6;
@@ -232,41 +278,17 @@
     }
   }
 
-  /* 토성 — 구체와 기울어진 고리 */
-  function saturnBurst(x, y, palette) {
-    flash(x, y, palette[0], 100);
-    const core = palette[0];
-    const ring = palette[1];
-    for (let i = 0; i < 50; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = Math.random() * 0.9;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, core, { decay: 0.007 });
-    }
-    const tilt = 0.42;
-    for (let i = 0; i < 60; i++) {
-      const a = (Math.PI * 2 * i) / 60;
-      const rx = Math.cos(a) * 2.5;
-      const ry = Math.sin(a) * 2.5 * 0.32;
-      addP(x, y,
-        rx * Math.cos(tilt) - ry * Math.sin(tilt),
-        rx * Math.sin(tilt) + ry * Math.cos(tilt),
-        ring, { decay: 0.0065, gravity: 0.004, r: 1.5 });
-    }
-  }
-
-  /* 변색 국화 — 금색으로 피었다가 분홍으로 지는 */
   function shiftChrys(x, y) {
-    flash(x, y, '#ffd166', 110);
+    flash(x, y, '#aef0b8', 110);
     for (let i = 0; i < 84; i++) {
       const a = (Math.PI * 2 * i) / 84;
       const s = 1.9 + Math.random() * 0.5;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffd980', {
-        color2: '#ff5d8f', decay: 0.0042, trailGlow: true, r: 1.7
+      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#8ee6a0', {
+        color2: '#ff6b6b', decay: 0.0042, trailGlow: true, r: 1.7
       });
     }
   }
 
-  /* 연쇄 폭죽 — 터진 조각이 또 터지는 */
   function crossette(x, y, palette) {
     flash(x, y, palette[0], 100);
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
@@ -279,7 +301,6 @@
     }
   }
 
-  /* 황금 폭포 — 하늘에 걸리는 금빛 커튼 */
   function goldenWaterfall(cx, cy) {
     const span = Math.min(W * 0.7, 400);
     const n = 70;
@@ -307,29 +328,27 @@
     }
   }
 
-  /* ---------- 타입 순환: 탭마다 반드시 다른 불꽃 ---------- */
-  const TAP_TYPES = ['heart', 'star', 'spiral', 'saturn', 'shift', 'crossette', 'waterfall'];
-  let tapQueue = shuffle([...TAP_TYPES]);
+  const TAP_TYPES = ['snowflake', 'heart', 'shift', 'star', 'spiral', 'crossette', 'waterfall'];
+  let tapQueue = [...TAP_TYPES];
   let tapIdx = 0;
   function nextTapType() {
     const t = tapQueue[tapIdx];
     tapIdx++;
-    if (tapIdx >= tapQueue.length) { tapQueue = shuffle(tapQueue); tapIdx = 0; }
+    if (tapIdx >= tapQueue.length) { tapQueue = shuffle([...TAP_TYPES]); tapIdx = 0; }
     return t;
   }
 
   function fireType(type, x, y) {
     const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
-    if (type === 'heart') heartBurst(x, y, palette);
+    if (type === 'snowflake') snowflakeBurst(x, y);
+    else if (type === 'heart') heartBurst(x, y, palette);
     else if (type === 'star') starBurst(x, y, palette);
     else if (type === 'spiral') spiralBurst(x, y, palette);
-    else if (type === 'saturn') saturnBurst(x, y, palette);
     else if (type === 'shift') shiftChrys(x, y);
     else if (type === 'waterfall') goldenWaterfall(x, Math.min(y, H * 0.4));
     else crossette(x, y, palette);
   }
 
-  /* ---------- 로켓 (자동 발사용) ---------- */
   function launch(type) {
     const x = W * (0.15 + Math.random() * 0.7);
     const targetY = H * (0.14 + Math.random() * 0.3);
@@ -342,31 +361,25 @@
     });
   }
 
-  /* ---------- 피날레: 3막 구성 ---------- */
   function finale() {
-    /* 1막: 좌우 교차 연발 */
-    for (let i = 0; i < 4; i++) {
-      setTimeout(() => launch('crossette'), i * 220);
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => launch('crossette'), i * 240);
     }
-    /* 2막: 하트와 별 */
-    setTimeout(() => fireType('heart', W * 0.35, H * 0.28), 1300);
-    setTimeout(() => fireType('star', W * 0.65, H * 0.24), 1700);
-    /* 3막: 하늘 전체에 황금 폭포 */
-    setTimeout(() => goldenWaterfall(W * 0.5, H * 0.2), 2400);
-    setTimeout(showMessage, 2900);
+    setTimeout(() => fireType('snowflake', W * 0.32, H * 0.26), 1200);
+    setTimeout(() => fireType('snowflake', W * 0.68, H * 0.22), 1550);
+    setTimeout(() => fireType('heart', W * 0.5, H * 0.3), 1950);
+    setTimeout(() => goldenWaterfall(W * 0.5, H * 0.18), 2500);
+    setTimeout(showMessage, 3000);
   }
 
-  /* ---------- 자동 발사 ---------- */
-  let nextAuto = performance.now() + 800;
+  let nextAuto = performance.now() + 9000;
   let autoCount = 0;
   function schedule(now) {
-    nextAuto = now + 2200 + Math.random() * 2400;
+    nextAuto = now + 9000 + Math.random() * 7000;
   }
 
-  /* ---------- 터치: 탭 · 꾹(피날레) · 드래그(도화선) ---------- */
   const fuses = [];
   function igniteFuse(path) {
-    /* 경로를 일정 간격으로 재샘플링 */
     const pts = [path[0]];
     for (let i = 1; i < path.length; i++) {
       const prev = pts[pts.length - 1];
@@ -398,7 +411,6 @@
     if (d < 6) return;
     dragLen += d;
     dragPath.push({ x: e.clientX, y: e.clientY });
-    /* 손끝에서 금색 불티 — 불꽃막대를 든 것처럼 */
     for (let i = 0; i < 3; i++) {
       const a = Math.random() * Math.PI * 2;
       const s = 0.3 + Math.random() * 0.7;
@@ -425,75 +437,58 @@
     dragging = false;
   });
 
-  /* ---------- 렌더: 잔광이 남는 트레일 ---------- */
   let last = performance.now();
   function frame(now) {
     const dt = Math.min((now - last) / 16.7, 3);
     last = now;
-
-    /* 이전 프레임을 지우지 않고 서서히 지워서 불꽃 꼬리를 만든다 */
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.globalCompositeOperation = 'lighter';
-
-    /* 별 */
     const t = now * 0.001;
-    for (const s of stars) {
-      const tw = reduceMotion ? 1 : (0.6 + 0.4 * Math.sin(t * s.speed + s.phase));
-      ctx.globalAlpha = s.base * tw;
-      ctx.fillStyle = '#eef1fa';
-      ctx.beginPath();
-      ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+
+    fx.globalCompositeOperation = 'destination-out';
+    fx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+    fx.fillRect(0, 0, W, H);
+    fx.globalCompositeOperation = 'lighter';
 
     if (!reduceMotion) {
       if (now > nextAuto) {
         launch();
         schedule(now);
         autoCount++;
-        if (autoCount % 3 === 1) setTimeout(showMessage, 1500);
+        if (autoCount % 2 === 1) setTimeout(showMessage, 1500);
       }
 
-      /* 섬광 */
       for (let i = flashes.length - 1; i >= 0; i--) {
         const f = flashes[i];
         f.r += (f.maxR - f.r) * 0.25 * dt;
         f.life -= 0.07 * dt;
         if (f.life <= 0) { flashes.splice(i, 1); continue; }
-        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+        const g = fx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
         g.addColorStop(0, f.color + '99');
         g.addColorStop(1, 'transparent');
-        ctx.globalAlpha = f.life * 0.45;
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-        ctx.fill();
+        fx.globalAlpha = f.life * 0.45;
+        fx.fillStyle = g;
+        fx.beginPath();
+        fx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        fx.fill();
       }
-      ctx.globalAlpha = 1;
+      fx.globalAlpha = 1;
 
-      /* 로켓 */
       for (let i = rockets.length - 1; i >= 0; i--) {
         const r = rockets[i];
         r.y += r.vy * dt * 4;
         r.x += Math.sin(now * 0.01 + r.wobble) * 0.3 * dt;
         r.vy *= 0.996;
-        ctx.globalAlpha = 0.85;
-        ctx.fillStyle = '#ffe9b8';
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, 1.6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
+        fx.globalAlpha = 0.85;
+        fx.fillStyle = '#ffe9b8';
+        fx.beginPath();
+        fx.arc(r.x, r.y, 1.6, 0, Math.PI * 2);
+        fx.fill();
+        fx.globalAlpha = 1;
         if (r.y <= r.targetY || r.vy > -0.5) {
           fireType(r.type, r.x, r.y);
           rockets.splice(i, 1);
         }
       }
 
-      /* 도화선: 그린 길을 따라 불씨가 달린다 */
       for (let i = fuses.length - 1; i >= 0; i--) {
         const fu = fuses[i];
         let steps = Math.ceil(1.6 * dt);
@@ -511,7 +506,6 @@
         if (fu.idx >= fu.pts.length) {
           const end = fu.pts[fu.pts.length - 1];
           fireType(nextTapType(), end.x, Math.min(end.y, H * 0.85));
-          /* 길게 그렸으면 중간 지점에서 한 발 더 */
           if (fu.pts.length > 26) {
             const mid = fu.pts[Math.floor(fu.pts.length / 2)];
             setTimeout(() => fireType(nextTapType(), mid.x, Math.min(mid.y, H * 0.85)), 250);
@@ -520,7 +514,6 @@
         }
       }
 
-      /* 파티클 */
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.x += p.vx * dt;
@@ -536,31 +529,50 @@
         let alpha = p.life < 0.35 ? p.life / 0.35 : 1;
         if (p.flicker && Math.random() < 0.35) alpha *= 0.2;
         const col = (p.color2 && p.life < 0.55) ? p.color2 : p.color;
-        ctx.globalAlpha = alpha * 0.95;
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * (0.55 + p.life * 0.45), 0, Math.PI * 2);
-        ctx.fill();
+        fx.globalAlpha = alpha * 0.95;
+        fx.fillStyle = col;
+        fx.beginPath();
+        fx.arc(p.x, p.y, p.r * (0.55 + p.life * 0.45), 0, Math.PI * 2);
+        fx.fill();
       }
-      ctx.globalAlpha = 1;
+      fx.globalAlpha = 1;
     }
+    fx.globalCompositeOperation = 'source-over';
 
-    ctx.globalCompositeOperation = 'source-over';
+    sc.clearRect(0, 0, W, H);
+
+    for (const s of stars) {
+      const tw = reduceMotion ? 1 : (0.65 + 0.35 * Math.sin(t * s.speed + s.phase));
+      sc.globalAlpha = s.base * tw;
+      sc.fillStyle = '#eef1fa';
+      sc.beginPath();
+      sc.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+      sc.fill();
+    }
+    sc.globalAlpha = 1;
+
+    for (const f of flakes) {
+      f.y += (f.vy / H) * dt * 1.6;
+      f.sway += f.swaySpeed * 0.016 * dt;
+      const fxpos = (f.x + Math.sin(f.sway) * f.swayAmp * 0.03) * W;
+      const fypos = f.y * H;
+      if (f.y > 1.03) Object.assign(f, newFlake(false));
+      sc.globalAlpha = f.alpha;
+      sc.fillStyle = '#f4f7ff';
+      sc.beginPath();
+      sc.arc(fxpos, fypos, f.r, 0, Math.PI * 2);
+      sc.fill();
+    }
+    sc.globalAlpha = 1;
+
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 
-  /* ---------- 오프닝: 변색 국화 → 나선 → 하트 ---------- */
-  if (!reduceMotion) {
-    setTimeout(() => launch('shift'), 500);
-    setTimeout(() => launch('spiral'), 1200);
-    setTimeout(() => launch('heart'), 1900);
-  }
-  setTimeout(showMessage, 3400);
+  setTimeout(showMessage, 4200);
 
   if (reduceMotion) {
     setInterval(showMessage, 11000);
-    setTimeout(showMessage, 2000);
   }
 })();
 </script>

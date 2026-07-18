@@ -138,7 +138,7 @@ export function PagesPanel({
                 name="title"
                 type="text"
                 defaultValue={editing?.title ?? ""}
-                placeholder="예: 당신의 불꽃축제"
+                placeholder="예: 8월의 첫눈"
                 className={qritBrand.input}
               />
             </div>
