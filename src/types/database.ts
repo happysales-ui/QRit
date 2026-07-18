@@ -143,6 +143,29 @@ export interface Database {
           note?: string | null;
         };
       };
+      admin_html_pages: {
+        Row: {
+          slug: string;
+          title: string;
+          html: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          slug: string;
+          title?: string;
+          html: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          slug?: string;
+          title?: string;
+          html?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       public_profiles: {

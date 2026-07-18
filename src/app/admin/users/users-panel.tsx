@@ -43,12 +43,20 @@ export function UsersPanel({ users }: { users: UserSubscriptionRow[] }) {
         <p className="text-sm text-zinc-600">
           총 {users.length}명 · 만료 임박 순
         </p>
-        <Link
-          href="/admin/invite-codes"
-          className={qritBrand.secondaryButton + " !w-auto px-4 py-2 text-sm"}
-        >
-          인증코드 →
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/pages"
+            className={qritBrand.secondaryButton + " !w-auto px-4 py-2 text-sm"}
+          >
+            HTML 페이지 →
+          </Link>
+          <Link
+            href="/admin/invite-codes"
+            className={qritBrand.secondaryButton + " !w-auto px-4 py-2 text-sm"}
+          >
+            인증코드 →
+          </Link>
+        </div>
       </div>
 
       <div className={`overflow-x-auto ${qritBrand.cardLg}`}>

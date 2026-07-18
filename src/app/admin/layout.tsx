@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const SELF_GATED_ADMIN_PREFIXES = ["/admin/invite-codes"];
+const SELF_GATED_ADMIN_PREFIXES = ["/admin/invite-codes", "/admin/pages"];
 
 function isSelfGatedAdminRoute(pathname: string): boolean {
   return SELF_GATED_ADMIN_PREFIXES.some(

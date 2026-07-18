@@ -30,11 +30,11 @@ export function AdminPanel() {
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-zinc-900">관리자</h2>
         <p className="mt-1 text-sm text-zinc-600">
-          인증코드 발급, 회원 목록, QR 제작, 만료일 연장
+          인증코드 발급, 회원 목록, QR 제작, HTML 페이지, 만료일 연장
         </p>
       </div>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           href="/admin/invite-codes"
           className="rounded-xl border border-[#d4e8ea] bg-white p-4 transition-colors hover:border-[#147278]/40 hover:bg-[#faf8f3]/60"
@@ -66,6 +66,17 @@ export function AdminPanel() {
           </span>
           <span className="mt-1 block text-xs text-zinc-600">
             고객 QR 코드 제작 도구
+          </span>
+        </Link>
+        <Link
+          href="/admin/pages"
+          className="rounded-xl border border-[#d4e8ea] bg-white p-4 transition-colors hover:border-[#147278]/40 hover:bg-[#faf8f3]/60"
+        >
+          <span className="block text-sm font-semibold text-zinc-900">
+            HTML 페이지
+          </span>
+          <span className="mt-1 block text-xs text-zinc-500">
+            HTML 업로드 · 공유 링크
           </span>
         </Link>
       </div>
