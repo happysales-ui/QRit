@@ -24,8 +24,14 @@
   #skybg {
     position: fixed; inset: 0;
     background: linear-gradient(to bottom, #070b16 0%, #0e1530 55%, #1a2547 100%);
+    touch-action: none;
   }
-  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  canvas {
+    position: fixed; inset: 0; width: 100%; height: 100%; display: block;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
   #message {
     position: fixed;
     left: 50%; top: 28%;
@@ -377,9 +383,32 @@
   let pressTimer = null;
   let longPressed = false;
   let dragging = false;
+  let activePointerId = null;
   let dragPath = [];
   let dragLen = 0;
+  const pointerOpts = { passive: false };
+  function endDrag(e) {
+    clearTimeout(pressTimer);
+    if (activePointerId != null) {
+      try { fxCanvas.releasePointerCapture?.(activePointerId); } catch (_) {}
+      activePointerId = null;
+    }
+    const wasDragging = dragging;
+    dragging = false;
+    if (!wasDragging || longPressed) return;
+    if (dragLen < 20) {
+      fireType(nextTapType(), e.clientX, Math.min(e.clientY, H * 0.78));
+    } else {
+      igniteFuse(dragPath.slice());
+    }
+  }
   window.addEventListener('pointerdown', (e) => {
+    if (e.isPrimary === false) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    activePointerId = e.pointerId;
+    try { (e.target || fxCanvas).setPointerCapture?.(e.pointerId); } catch (_) {}
+    try { fxCanvas.setPointerCapture?.(e.pointerId); } catch (_) {}
     longPressed = false;
     dragging = true;
     dragPath = [{ x: e.clientX, y: e.clientY }];
@@ -387,9 +416,11 @@
     pressTimer = setTimeout(() => {
       if (dragLen < 14) { longPressed = true; finale(); }
     }, 450);
-  });
+  }, pointerOpts);
   window.addEventListener('pointermove', (e) => {
     if (!dragging) return;
+    if (activePointerId != null && e.pointerId !== activePointerId) return;
+    e.preventDefault();
     const lastP = dragPath[dragPath.length - 1];
     const d = Math.hypot(e.clientX - lastP.x, e.clientY - lastP.y);
     if (d < 6) return;
@@ -404,21 +435,27 @@
           r: 0.9 + Math.random(), flicker: true, gravity: 0.015
         });
     }
-  });
+  }, pointerOpts);
   window.addEventListener('pointerup', (e) => {
+    if (activePointerId != null && e.pointerId !== activePointerId) return;
+    e.preventDefault();
+    endDrag(e);
+  }, pointerOpts);
+  window.addEventListener('pointercancel', (e) => {
     clearTimeout(pressTimer);
-    dragging = false;
-    if (longPressed) return;
-    if (dragLen < 20) {
-      fireType(nextTapType(), e.clientX, Math.min(e.clientY, H * 0.78));
-    } else {
-      igniteFuse(dragPath.slice());
+    if (activePointerId != null) {
+      try { fxCanvas.releasePointerCapture?.(activePointerId); } catch (_) {}
+      activePointerId = null;
     }
-  });
-  window.addEventListener('pointercancel', () => {
-    clearTimeout(pressTimer);
     dragging = false;
-  });
+  }, pointerOpts);
+  // iOS Safari: block scroll/pull-to-refresh when a stroke is active
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) e.preventDefault();
+  }, pointerOpts);
+  window.addEventListener('touchmove', (e) => {
+    if (dragging) e.preventDefault();
+  }, pointerOpts);
   window.addEventListener('contextmenu', (e) => e.preventDefault());
   /* ---------- 렌더 ---------- */
   let last = performance.now();
