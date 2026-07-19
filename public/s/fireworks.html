@@ -196,6 +196,23 @@
   function roomFor(n) {
     return particles.length + n <= MAX_PARTICLES;
   }
+  /* Keep shaped silhouettes fully on-screen (snowflake arms clip at edges otherwise) */
+  function shapeBurstMargin(type) {
+    const lim = Math.min(W, H);
+    if (type === 'snowflake') return Math.min(120, lim * 0.18);
+    if (type === 'heart' || type === 'star') return Math.min(110, lim * 0.16);
+    if (type === 'spiral' || type === 'saturn' || type === 'shift') return Math.min(95, lim * 0.14);
+    return Math.min(72, lim * 0.11);
+  }
+  function clampBurstPoint(x, y, margin) {
+    const m = margin != null ? margin : 100;
+    const mx = Math.min(m, W * 0.45);
+    const my = Math.min(m, H * 0.45);
+    return {
+      x: Math.max(mx, Math.min(W - mx, x)),
+      y: Math.max(my, Math.min(H - my, y))
+    };
+  }
   function addP(x, y, vx, vy, color, opts) {
     if (particles.length >= MAX_PARTICLES) return false;
     particles.push(Object.assign({
@@ -603,6 +620,8 @@
   function fireType(type, x, y, palette, feel) {
     const pal = palette || pick(PALETTES);
     const f = feel || shellFeel();
+    const p = clampBurstPoint(x, y, shapeBurstMargin(type));
+    x = p.x; y = p.y;
     if (type === 'snowflake') snowflakeBurst(x, y, f);
     else if (type === 'heart') heartBurst(x, y, pal, f);
     else if (type === 'star') starBurst(x, y, pal, f);
@@ -617,6 +636,8 @@
     return pal;
   }
   function fireStage2(kind, x, y, palette, scale, feel, bright) {
+    const p = clampBurstPoint(x, y, shapeBurstMargin(kind));
+    x = p.x; y = p.y;
     if (kind === 'peony') peonyBurst(x, y, palette, scale, feel, { bright: !!bright });
     else if (kind === 'willow') willowBurst(x, y, palette, scale * 0.95, feel);
     else if (kind === 'ring') ringBurst(x, y, palette, scale, feel);
@@ -636,6 +657,8 @@
   function fireShell(type, x, y) {
     const feel = shellFeel();
     const palette = pick(PALETTES);
+    const origin = clampBurstPoint(x, y, shapeBurstMargin(type));
+    x = origin.x; y = origin.y;
     fireType(type, x, y, palette, feel);
     if (reduceMotion) return;
     const delicate = type === 'heart' || type === 'star' || type === 'snowflake';
@@ -645,9 +668,9 @@
       : (1.25 + Math.random() * 0.45);
     const ox = (Math.random() - 0.5) * Math.min(W * (delicate ? 0.14 : 0.06), delicate ? 110 : 48);
     const oy = (Math.random() - 0.5) * Math.min(H * (delicate ? 0.1 : 0.04), delicate ? 70 : 32);
-    const sx = Math.max(W * 0.06, Math.min(W * 0.94, x + ox));
-    const sy = Math.max(H * 0.08, Math.min(H * 0.7, y + oy));
     const stage2Kind = pick(STAGE2_MAP[type] || ['peony', 'ring']);
+    const s2 = clampBurstPoint(x + ox, y + oy, shapeBurstMargin(stage2Kind));
+    const sx = s2.x, sy = s2.y;
     const pal2 = Math.random() < 0.38 ? GOLD
       : (Math.random() < 0.45 ? palette : pick(PALETTES));
     setTimeout(() => {
@@ -661,10 +684,13 @@
       }
       /* Occasional twin accent — different kind again */
       if (Math.random() < (delicate ? 0.1 : 0.2) && particles.length < MAX_PARTICLES * 0.75) {
-        const tx = Math.max(W * 0.08, Math.min(W * 0.92, sx + (Math.random() - 0.5) * 90));
-        const ty = Math.max(H * 0.1, Math.min(H * 0.68, sy + (Math.random() - 0.5) * 60));
         const twin = pick(['peony', 'ring', 'willow', 'star']);
-        setTimeout(() => fireStage2(twin, tx, ty, Math.random() < 0.5 ? GOLD : pal2,
+        const t2 = clampBurstPoint(
+          sx + (Math.random() - 0.5) * 90,
+          sy + (Math.random() - 0.5) * 60,
+          shapeBurstMargin(twin)
+        );
+        setTimeout(() => fireStage2(twin, t2.x, t2.y, Math.random() < 0.5 ? GOLD : pal2,
           0.95 + Math.random() * 0.3, shellFeel(), twin === 'peony'), 90 + Math.random() * 140);
       }
     }, delay2);
@@ -681,13 +707,18 @@
     fireShell(nextTapType(), x, y);
   }
   function launch(type) {
-    const x = W * (0.12 + Math.random() * 0.76);
-    const targetY = H * (0.12 + Math.random() * 0.34);
+    const rocketType = type || TAP_TYPES[Math.floor(Math.random() * TAP_TYPES.length)];
+    const m = shapeBurstMargin(rocketType);
+    const origin = clampBurstPoint(
+      W * (0.12 + Math.random() * 0.76),
+      H * (0.12 + Math.random() * 0.34),
+      m
+    );
     rockets.push({
-      x, y: H + 10, targetY,
+      x: origin.x, y: H + 10, targetY: origin.y,
       vy: -(H * 0.0045 + Math.random() * H * 0.0015),
       wobble: Math.random() * Math.PI * 2,
-      type: type || TAP_TYPES[Math.floor(Math.random() * TAP_TYPES.length)],
+      type: rocketType,
       hue: GOLD[Math.floor(Math.random() * GOLD.length)]
     });
   }
