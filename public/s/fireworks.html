@@ -193,8 +193,11 @@
       trail: Math.random() < 0.58
     };
   }
+  function roomFor(n) {
+    return particles.length + n <= MAX_PARTICLES;
+  }
   function addP(x, y, vx, vy, color, opts) {
-    if (particles.length >= MAX_PARTICLES) return;
+    if (particles.length >= MAX_PARTICLES) return false;
     particles.push(Object.assign({
       x, y, vx, vy, color,
       color2: null,
@@ -205,10 +208,10 @@
       drift: (Math.random() - 0.5) * 0.008,
       trailGlow: false
     }, opts || {}));
+    return true;
   }
   /*
-   * Type-specific bloom — small/subtle by default.
-   * Avoid filling half the sky with the same white blink.
+   * Type-specific bloom — soft by default; bright reserved for dopamine moments.
    * opts: intensity, fade, grow, soft, whiteCore, coreScale
    */
   function flash(x, y, color, size, opts) {
@@ -225,18 +228,32 @@
       const cs = opts.coreScale != null ? opts.coreScale : 0.18;
       flashes.push({
         x, y, r: 0, maxR: maxR * cs, life: 1, color: '#ffffff',
-        intensity: intensity * 0.48, fade: fade * 1.4, grow: grow * 1.2, soft: false
+        intensity: intensity * (opts.soft ? 0.42 : 0.62), fade: fade * 1.35,
+        grow: grow * 1.25, soft: false
       });
     }
   }
-  /* Spherical peony — secondary "빵" with a soft colored bloom (not a white flood) */
-  function peonyBurst(x, y, palette, scale, feel) {
+  /* Satisfying bright pop — finale / stage-2 / crossette / occasional peony */
+  function brightFlash(x, y, color, size) {
+    flash(x, y, color, size || 96, {
+      intensity: 0.78, soft: false, whiteCore: true, coreScale: 0.24,
+      fade: 0.13, grow: 0.46
+    });
+  }
+  /* Spherical peony — soft by default; bright when scale is big or opts.bright */
+  function peonyBurst(x, y, palette, scale, feel, opts) {
     const s = scale || 1;
     const f = feel || shellFeel();
+    const o = opts || {};
     const pickC = () => pick(palette);
-    flash(x, y, palette[0], 52 * s, {
-      intensity: 0.36, soft: true, whiteCore: true, coreScale: 0.16, fade: 0.11
-    });
+    const bright = o.bright || s >= 1.2 || Math.random() < 0.22;
+    if (bright) {
+      brightFlash(x, y, palette[0], 86 * s);
+    } else {
+      flash(x, y, palette[0], 52 * s, {
+        intensity: 0.36, soft: true, whiteCore: true, coreScale: 0.16, fade: 0.11
+      });
+    }
     const n = Math.floor(78 * s);
     const speed = 1.7 * s * f.speed;
     for (let i = 0; i < n; i++) {
@@ -369,34 +386,48 @@
       });
     }
   }
-  /* Soft pink/red petals — gentle bloom, no harsh white flood */
+  /* Soft pink/red petals — slower expand so full silhouette reads longer */
   function heartBurst(x, y, palette, feel) {
     const f = feel || shellFeel();
     const petals = Math.random() < 0.7 ? HEART_PINK : palette;
-    flash(x, y, petals[0], 48, { intensity: 0.32, soft: true, fade: 0.1, grow: 0.26 });
-    const scale = 2.35 * f.speed;
-    for (let i = 0; i < 110; i++) {
-      const t = (Math.PI * 2 * i) / 110;
+    const N = 128;
+    const sparkN = 8;
+    if (!roomFor(N + sparkN)) return;
+    flash(x, y, petals[0], 48, { intensity: 0.3, soft: true, fade: 0.09, grow: 0.24 });
+    /* Milder speed + tip damp so bottom doesn't race away from lobes */
+    const scale = 1.72 * Math.min(f.speed, 1.08);
+    for (let i = 0; i < N; i++) {
+      const t = (Math.PI * 2 * i) / N;
       const hx = 16 * Math.pow(Math.sin(t), 3);
       const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-      addP(x, y, (hx / 16) * scale, (hy / 16) * scale, pick(petals), {
-        decay: 0.0048 * f.decay, gravity: 0.0055 * f.gravity,
-        friction: f.friction, r: 1.7 + Math.random() * 0.5
+      const nx = hx / 16;
+      const ny = hy / 16;
+      /* Tip (down) dampened; upper lobes slightly boosted */
+      const yMul = ny > 0 ? 0.66 : 1.08;
+      addP(x, y, nx * scale, ny * scale * yMul, pick(petals), {
+        decay: 0.0036 * f.decay, gravity: 0.0036 * f.gravity,
+        friction: Math.min(0.994, f.friction + 0.004),
+        r: 1.75 + Math.random() * 0.45
       });
     }
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < sparkN; i++) {
       const a = Math.random() * Math.PI * 2;
-      const s = 0.2 + Math.random() * 0.5;
+      const s = 0.15 + Math.random() * 0.35;
       addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffd0dc', {
-        decay: 0.016, r: 1, flicker: true
+        decay: 0.014, r: 1, flicker: true
       });
     }
   }
-  /* Sharp points + brief sparkle — tiny sharp white core */
+  /* Filled-arm star — denser edges, slower expand (snowflake-quality silhouette) */
   function starBurst(x, y, palette, feel) {
     const f = feel || shellFeel();
-    flash(x, y, palette[0], 38, {
-      intensity: 0.5, whiteCore: true, coreScale: 0.28, fade: 0.16, grow: 0.48
+    const samples = 20;
+    const armFill = 8;
+    const sparkN = 12;
+    const need = 10 * samples + 5 * armFill + sparkN;
+    if (!roomFor(need)) return;
+    flash(x, y, palette[0], 42, {
+      intensity: 0.34, soft: true, whiteCore: true, coreScale: 0.14, fade: 0.11, grow: 0.3
     });
     const points = [];
     for (let k = 0; k < 5; k++) {
@@ -405,25 +436,36 @@
       points.push([Math.cos(outer), Math.sin(outer), 1]);
       points.push([Math.cos(inner), Math.sin(inner), 0.42]);
     }
-    const stretch = 2.65 * f.speed;
+    const stretch = 1.85 * Math.min(f.speed, 1.1);
     for (let seg = 0; seg < 10; seg++) {
       const [ax, ay, ar] = points[seg];
       const [bx, by, br] = points[(seg + 1) % 10];
-      for (let j = 0; j < 12; j++) {
-        const t = j / 12;
+      for (let j = 0; j < samples; j++) {
+        const t = j / samples;
         const px = (ax * ar) * (1 - t) + (bx * br) * t;
         const py = (ay * ar) * (1 - t) + (by * br) * t;
         addP(x, y, px * stretch, py * stretch, pick(palette), {
-          decay: 0.0065 * f.decay, gravity: 0.004 * f.gravity,
-          friction: f.friction, r: 1.55
+          decay: 0.0044 * f.decay, gravity: 0.0028 * f.gravity,
+          friction: Math.min(0.994, f.friction + 0.004), r: 1.55
         });
       }
     }
-    for (let i = 0; i < 28; i++) {
+    /* Fill each arm from center → tip so outline doesn't look broken */
+    for (let k = 0; k < 5; k++) {
+      const [ox, oy] = points[k * 2];
+      for (let j = 1; j <= armFill; j++) {
+        const t = j / armFill;
+        addP(x, y, ox * stretch * t, oy * stretch * t, pick(palette), {
+          decay: 0.0042 * f.decay, gravity: 0.0028 * f.gravity,
+          friction: Math.min(0.994, f.friction + 0.004), r: 1.35 + t * 0.3
+        });
+      }
+    }
+    for (let i = 0; i < sparkN; i++) {
       const a = Math.random() * Math.PI * 2;
-      const s = 0.8 + Math.random() * 1.6;
+      const s = 0.45 + Math.random() * 0.9;
       addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffffff', {
-        decay: 0.02 + Math.random() * 0.01, r: 0.85, flicker: true
+        decay: 0.018 + Math.random() * 0.008, r: 0.8, flicker: true
       });
     }
   }
@@ -494,13 +536,11 @@
       });
     }
   }
-  /* Outer particles delay-pop into 4-way splits */
+  /* Outer particles delay-pop into 4-way splits — bright main break */
   function crossette(x, y, palette, scale, feel) {
     const sc = scale || 1;
     const f = feel || shellFeel();
-    flash(x, y, palette[0], 40 * sc, {
-      intensity: 0.38, whiteCore: true, coreScale: 0.15, fade: 0.12
-    });
+    brightFlash(x, y, palette[0], 72 * sc);
     const n = Math.floor(72 * sc);
     for (let i = 0; i < n; i++) {
       const a = (Math.PI * 2 * i) / n + Math.random() * 0.1;
@@ -537,8 +577,9 @@
   /* Stage-2 uses a DIFFERENT shape/palette — not a brighter clone of stage-1 */
   const STAGE2_MAP = {
     snowflake: ['willow', 'peony', 'ring', 'star'],
-    heart: ['peony', 'ring', 'willow', 'spiral'],
-    star: ['peony', 'crossette', 'ring', 'spiral'],
+    /* Gentler secondaries so heart/star silhouette isn't erased instantly */
+    heart: ['willow', 'ring', 'spiral', 'peony'],
+    star: ['willow', 'ring', 'spiral', 'peony'],
     spiral: ['peony', 'star', 'ring', 'saturn'],
     saturn: ['peony', 'willow', 'crossette', 'star'],
     shift: ['peony', 'ring', 'willow', 'heart'],
@@ -569,8 +610,8 @@
     else crossette(x, y, pal, 1, f);
     return pal;
   }
-  function fireStage2(kind, x, y, palette, scale, feel) {
-    if (kind === 'peony') peonyBurst(x, y, palette, scale, feel);
+  function fireStage2(kind, x, y, palette, scale, feel, bright) {
+    if (kind === 'peony') peonyBurst(x, y, palette, scale, feel, { bright: !!bright });
     else if (kind === 'willow') willowBurst(x, y, palette, scale * 0.95, feel);
     else if (kind === 'ring') ringBurst(x, y, palette, scale, feel);
     else if (kind === 'crossette') crossette(x, y, palette, scale, feel);
@@ -578,12 +619,12 @@
     else if (kind === 'spiral') spiralBurst(x, y, palette, feel);
     else if (kind === 'saturn') saturnBurst(x, y, palette, feel);
     else if (kind === 'heart') heartBurst(x, y, palette, feel);
-    else peonyBurst(x, y, palette, scale, feel);
+    else peonyBurst(x, y, palette, scale, feel, { bright: !!bright });
   }
   /*
    * Multi-stage shell:
    *  1) typed first bang
-   *  2) different-shape secondary ~350–700ms later
+   *  2) different-shape secondary (later/farther after delicate shapes)
    *  3) optional brocade glitter
    */
   function fireShell(type, x, y) {
@@ -591,10 +632,13 @@
     const palette = pick(PALETTES);
     fireType(type, x, y, palette, feel);
     if (reduceMotion) return;
-    const delay2 = 350 + Math.random() * 350;
-    const scale2 = 1.25 + Math.random() * 0.45;
-    const ox = (Math.random() - 0.5) * Math.min(W * 0.06, 48);
-    const oy = (Math.random() - 0.5) * Math.min(H * 0.04, 32);
+    const delicate = type === 'heart' || type === 'star' || type === 'snowflake';
+    const delay2 = delicate ? (720 + Math.random() * 480) : (350 + Math.random() * 350);
+    const scale2 = delicate
+      ? (0.88 + Math.random() * 0.32)
+      : (1.25 + Math.random() * 0.45);
+    const ox = (Math.random() - 0.5) * Math.min(W * (delicate ? 0.14 : 0.06), delicate ? 110 : 48);
+    const oy = (Math.random() - 0.5) * Math.min(H * (delicate ? 0.1 : 0.04), delicate ? 70 : 32);
     const sx = Math.max(W * 0.06, Math.min(W * 0.94, x + ox));
     const sy = Math.max(H * 0.08, Math.min(H * 0.7, y + oy));
     const stage2Kind = pick(STAGE2_MAP[type] || ['peony', 'ring']);
@@ -602,17 +646,23 @@
       : (Math.random() < 0.45 ? palette : pick(PALETTES));
     setTimeout(() => {
       if (particles.length > MAX_PARTICLES * 0.92) return;
-      fireStage2(stage2Kind, sx, sy, pal2, scale2, shellFeel());
+      /* Bigger-bang stage-2: bright peony / crossette, or a pop on large non-delicate shells */
+      const bangBright = scale2 >= 1.2 || stage2Kind === 'peony' || stage2Kind === 'crossette';
+      fireStage2(stage2Kind, sx, sy, pal2, scale2, shellFeel(), bangBright);
+      if (bangBright && !delicate && stage2Kind !== 'peony' && stage2Kind !== 'crossette'
+          && stage2Kind !== 'willow') {
+        brightFlash(sx, sy, pal2[0], 78 * scale2);
+      }
       /* Occasional twin accent — different kind again */
-      if (Math.random() < 0.2 && particles.length < MAX_PARTICLES * 0.75) {
+      if (Math.random() < (delicate ? 0.1 : 0.2) && particles.length < MAX_PARTICLES * 0.75) {
         const tx = Math.max(W * 0.08, Math.min(W * 0.92, sx + (Math.random() - 0.5) * 90));
         const ty = Math.max(H * 0.1, Math.min(H * 0.68, sy + (Math.random() - 0.5) * 60));
         const twin = pick(['peony', 'ring', 'willow', 'star']);
         setTimeout(() => fireStage2(twin, tx, ty, Math.random() < 0.5 ? GOLD : pal2,
-          0.95 + Math.random() * 0.3, shellFeel()), 90 + Math.random() * 140);
+          0.95 + Math.random() * 0.3, shellFeel(), twin === 'peony'), 90 + Math.random() * 140);
       }
     }, delay2);
-    if (Math.random() < 0.45) {
+    if (Math.random() < (delicate ? 0.28 : 0.45)) {
       const delay3 = delay2 + 220 + Math.random() * 380;
       setTimeout(() => {
         if (particles.length > MAX_PARTICLES * 0.9) return;
@@ -641,22 +691,29 @@
     for (let i = 0; i < barrage.length; i++) {
       setTimeout(() => launch(barrage[i]), i * 160);
     }
+    /* A few sky-wide bright pops — not every shell */
+    setTimeout(() => brightFlash(W * 0.5, H * 0.22, '#fff4d0', 150), 980);
     setTimeout(() => fireType('snowflake', W * 0.22, H * 0.24), 1050);
     setTimeout(() => fireType('star', W * 0.5, H * 0.16), 1180);
     setTimeout(() => fireType('snowflake', W * 0.78, H * 0.26), 1320);
     setTimeout(() => fireType('heart', W * 0.34, H * 0.3), 1550);
     setTimeout(() => fireType('spiral', W * 0.66, H * 0.28), 1680);
-    setTimeout(() => fireType('saturn', W * 0.5, H * 0.2), 1820);
+    setTimeout(() => {
+      brightFlash(W * 0.5, H * 0.2, GOLD[0], 130);
+      fireType('saturn', W * 0.5, H * 0.2);
+    }, 1820);
     setTimeout(() => fireType('shift', W * 0.5, H * 0.22), 1980);
     for (let i = 0; i < 5; i++) {
       setTimeout(() => launch(i % 2 ? 'crossette' : 'saturn'), 2100 + i * 170);
     }
+    setTimeout(() => brightFlash(W * 0.42, H * 0.28, '#ffd980', 110), 2450);
     setTimeout(() => fireType('heart', W * 0.5, H * 0.24), 3000);
     setTimeout(() => fireType('snowflake', W * 0.28, H * 0.2), 3200);
     setTimeout(() => fireType('snowflake', W * 0.72, H * 0.18), 3350);
     setTimeout(() => goldenWaterfall(W * 0.5, H * 0.15), 3600);
     setTimeout(() => fireType('crossette', W * 0.4, H * 0.26), 3900);
     setTimeout(() => fireType('crossette', W * 0.6, H * 0.22), 4050);
+    setTimeout(() => brightFlash(W * 0.5, H * 0.24, '#fff8e8', 160), 4100);
     setTimeout(showMessage, 4400);
   }
   /* ---------- 자동 발사: 잦은 리듬 + 가끔 일제 사격 ---------- */
