@@ -177,7 +177,10 @@
   const rockets = [];
   const particles = [];
   const flashes = [];
+  /* Cap for mid-phone FPS — prefer frequent launches over unlimited particles */
+  const MAX_PARTICLES = 1050;
   function addP(x, y, vx, vy, color, opts) {
+    if (particles.length >= MAX_PARTICLES) return;
     particles.push(Object.assign({
       x, y, vx, vy, color,
       color2: null,
@@ -189,58 +192,65 @@
     }, opts || {}));
   }
   function flash(x, y, color, size) {
-    flashes.push({ x, y, r: 0, maxR: size || 110, life: 1, color });
+    const maxR = size || 150;
+    flashes.push({ x, y, r: 0, maxR, life: 1, color });
+    /* bright white core for dopamine pop */
+    flashes.push({ x, y, r: 0, maxR: maxR * 0.38, life: 1, color: '#ffffff' });
   }
   /* ========== 불꽃 타입 (눈송이 포함) ========== */
   /* 눈송이 불꽃 — 여섯 갈래 결정이 하늘에 그려진다 */
   function snowflakeBurst(x, y) {
-    flash(x, y, '#cfe4ff', 100);
+    flash(x, y, '#cfe4ff', 155);
     const main = '#e8f2ff';
     for (let arm = 0; arm < 6; arm++) {
       const a = (Math.PI * 2 * arm) / 6 - Math.PI / 2;
       const ca = Math.cos(a), sa = Math.sin(a);
       /* 본가지 */
-      for (let i = 1; i <= 12; i++) {
-        const s = (i / 12) * 2.4;
-        addP(x, y, ca * s, sa * s, main, { decay: 0.0055, gravity: 0.004, r: 1.5 });
+      for (let i = 1; i <= 16; i++) {
+        const s = (i / 16) * 2.75;
+        addP(x, y, ca * s, sa * s, main, { decay: 0.0052, gravity: 0.004, r: 1.65 });
       }
-      /* 곁가지 두 쌍 */
-      for (const bf of [0.45, 0.75]) {
+      /* 곁가지 세 단 */
+      for (const bf of [0.35, 0.55, 0.78]) {
         for (const side of [-1, 1]) {
           const ba = a + side * (Math.PI / 5);
           const bca = Math.cos(ba), bsa = Math.sin(ba);
-          for (let j = 1; j <= 4; j++) {
-            const bs = bf * 2.4 + (j / 4) * 0.55;
+          for (let j = 1; j <= 5; j++) {
             addP(x, y,
-              ca * bf * 2.4 * 0.92 + bca * (j / 4) * 0.7,
-              sa * bf * 2.4 * 0.92 + bsa * (j / 4) * 0.7,
-              main, { decay: 0.0055, gravity: 0.004, r: 1.2 });
+              ca * bf * 2.75 * 0.92 + bca * (j / 5) * 0.85,
+              sa * bf * 2.75 * 0.92 + bsa * (j / 5) * 0.85,
+              main, { decay: 0.0052, gravity: 0.004, r: 1.25 });
           }
         }
       }
     }
     /* 중심 반짝임 */
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 28; i++) {
       const a = Math.random() * Math.PI * 2;
-      const s = Math.random() * 0.4;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffffff', { decay: 0.014, r: 1, flicker: true });
+      const s = Math.random() * 0.55;
+      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffffff', { decay: 0.012, r: 1.15, flicker: true });
     }
   }
   function heartBurst(x, y, palette) {
-    flash(x, y, palette[0], 90);
+    flash(x, y, palette[0], 145);
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
-    const scale = 2.1;
-    for (let i = 0; i < 72; i++) {
-      const t = (Math.PI * 2 * i) / 72;
+    const scale = 2.45;
+    for (let i = 0; i < 110; i++) {
+      const t = (Math.PI * 2 * i) / 110;
       const hx = 16 * Math.pow(Math.sin(t), 3);
       const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
       addP(x, y, (hx / 16) * scale, (hy / 16) * scale, pick(), {
-        decay: 0.0055, gravity: 0.006, r: 1.7
+        decay: 0.0052, gravity: 0.006, r: 1.85
       });
+    }
+    for (let i = 0; i < 18; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 0.3 + Math.random() * 0.7;
+      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffffff', { decay: 0.014, r: 1.1, flicker: true });
     }
   }
   function starBurst(x, y, palette) {
-    flash(x, y, palette[0], 90);
+    flash(x, y, palette[0], 145);
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
     const points = [];
     for (let k = 0; k < 5; k++) {
@@ -252,73 +262,78 @@
     for (let seg = 0; seg < 10; seg++) {
       const [ax, ay, ar] = points[seg];
       const [bx, by, br] = points[(seg + 1) % 10];
-      for (let j = 0; j < 8; j++) {
-        const f = j / 8;
+      for (let j = 0; j < 12; j++) {
+        const f = j / 12;
         const px = (ax * ar) * (1 - f) + (bx * br) * f;
         const py = (ay * ar) * (1 - f) + (by * br) * f;
-        addP(x, y, px * 2.3, py * 2.3, pick(), { decay: 0.006, gravity: 0.005, r: 1.6 });
+        addP(x, y, px * 2.55, py * 2.55, pick(), { decay: 0.0056, gravity: 0.005, r: 1.7 });
       }
+    }
+    for (let i = 0; i < 20; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 0.4 + Math.random() * 1.1;
+      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(), { decay: 0.012, r: 1.2, flicker: true });
     }
   }
   function spiralBurst(x, y, palette) {
-    flash(x, y, palette[0], 100);
-    for (let a = 0; a < 3; a++) {
+    flash(x, y, palette[0], 150);
+    for (let a = 0; a < 4; a++) {
       const armColor = palette[a % palette.length];
-      const armBase = (Math.PI * 2 * a) / 3;
-      for (let i = 0; i < 26; i++) {
-        const f = i / 26;
-        const angle = armBase + f * 2.6;
-        const speed = 0.5 + f * 2.1;
+      const armBase = (Math.PI * 2 * a) / 4;
+      for (let i = 0; i < 36; i++) {
+        const f = i / 36;
+        const angle = armBase + f * 2.9;
+        const speed = 0.55 + f * 2.35;
         addP(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, armColor, {
-          decay: 0.0055, gravity: 0.004, friction: 0.982,
-          r: 1.2 + f * 1.2, trailGlow: true
+          decay: 0.0052, gravity: 0.004, friction: 0.982,
+          r: 1.25 + f * 1.3, trailGlow: true
         });
       }
     }
   }
   function shiftChrys(x, y) {
-    flash(x, y, '#aef0b8', 110);
-    for (let i = 0; i < 84; i++) {
-      const a = (Math.PI * 2 * i) / 84;
-      const s = 1.9 + Math.random() * 0.5;
+    flash(x, y, '#aef0b8', 165);
+    for (let i = 0; i < 120; i++) {
+      const a = (Math.PI * 2 * i) / 120;
+      const s = 2.05 + Math.random() * 0.55;
       addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#8ee6a0', {
-        color2: '#ff6b6b', decay: 0.0042, trailGlow: true, r: 1.7
+        color2: '#ff6b6b', decay: 0.004, trailGlow: true, r: 1.85
       });
     }
   }
   function crossette(x, y, palette) {
-    flash(x, y, palette[0], 100);
+    flash(x, y, palette[0], 150);
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
-    for (let i = 0; i < 60; i++) {
-      const a = (Math.PI * 2 * i) / 60 + Math.random() * 0.1;
-      const s = 1.7 * (0.5 + Math.random() * 0.6);
+    for (let i = 0; i < 92; i++) {
+      const a = (Math.PI * 2 * i) / 92 + Math.random() * 0.1;
+      const s = 1.9 * (0.5 + Math.random() * 0.65);
       addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(), {
-        sub: Math.random() < 0.3 ? palette : null, decay: 0.008
+        sub: Math.random() < 0.38 ? palette : null, decay: 0.0075
       });
     }
   }
   function goldenWaterfall(cx, cy) {
-    const span = Math.min(W * 0.7, 400);
-    const n = 70;
+    const span = Math.min(W * 0.78, 460);
+    const n = 110;
     for (let i = 0; i < n; i++) {
       const f = i / (n - 1);
       const px = cx - span / 2 + span * f;
-      const arc = Math.sin(f * Math.PI) * 26;
-      addP(px, cy - arc, (Math.random() - 0.5) * 0.15, 0.15 + Math.random() * 0.25,
+      const arc = Math.sin(f * Math.PI) * 32;
+      addP(px, cy - arc, (Math.random() - 0.5) * 0.18, 0.12 + Math.random() * 0.28,
         GOLD[Math.floor(Math.random() * GOLD.length)], {
-          decay: 0.0028, gravity: 0.02, friction: 0.992,
-          flicker: true, r: 1.2 + Math.random(), trailGlow: true
+          decay: 0.0026, gravity: 0.02, friction: 0.992,
+          flicker: true, r: 1.3 + Math.random(), trailGlow: true
         });
     }
-    flash(cx, cy, '#ffd980', 130);
+    flash(cx, cy, '#ffd980', 180);
   }
   function miniBurst(x, y, palette) {
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 24; i++) {
       const a = Math.random() * Math.PI * 2;
-      const s = 0.5 + Math.random() * 0.9;
+      const s = 0.55 + Math.random() * 1.05;
       addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(), {
-        decay: 0.013, r: 1 + Math.random(), flicker: true
+        decay: 0.012, r: 1.1 + Math.random(), flicker: true
       });
     }
   }
@@ -342,9 +357,22 @@
     else if (type === 'waterfall') goldenWaterfall(x, Math.min(y, H * 0.4));
     else crossette(x, y, palette);
   }
+  /* Tap reward: first tap stays snowflake; ~1/3 get a twin burst nearby */
+  function rewardTap(x, y) {
+    const type = nextTapType();
+    fireType(type, x, y);
+    if (Math.random() < 0.34) {
+      const ox = (Math.random() - 0.5) * Math.min(W * 0.22, 140);
+      const oy = (Math.random() - 0.5) * Math.min(H * 0.14, 90);
+      const twin = TAP_TYPES[Math.floor(Math.random() * TAP_TYPES.length)];
+      const tx = Math.max(W * 0.08, Math.min(W * 0.92, x + ox));
+      const ty = Math.max(H * 0.1, Math.min(H * 0.72, y + oy));
+      setTimeout(() => fireType(twin, tx, ty), 160 + Math.random() * 220);
+    }
+  }
   function launch(type) {
-    const x = W * (0.15 + Math.random() * 0.7);
-    const targetY = H * (0.14 + Math.random() * 0.3);
+    const x = W * (0.12 + Math.random() * 0.76);
+    const targetY = H * (0.12 + Math.random() * 0.34);
     rockets.push({
       x, y: H + 10, targetY,
       vy: -(H * 0.0045 + Math.random() * H * 0.0015),
@@ -353,22 +381,51 @@
       trail: []
     });
   }
-  /* ---------- 피날레: 눈의 나라 축포 ---------- */
+  /* ---------- 피날레: 하늘 가득 겹치는 축포 ---------- */
   function finale() {
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => launch('crossette'), i * 240);
+    const barrage = ['crossette', 'star', 'spiral', 'shift', 'crossette', 'heart', 'star'];
+    for (let i = 0; i < barrage.length; i++) {
+      setTimeout(() => launch(barrage[i]), i * 160);
     }
-    setTimeout(() => fireType('snowflake', W * 0.32, H * 0.26), 1200);
-    setTimeout(() => fireType('snowflake', W * 0.68, H * 0.22), 1550);
-    setTimeout(() => fireType('heart', W * 0.5, H * 0.3), 1950);
-    setTimeout(() => goldenWaterfall(W * 0.5, H * 0.18), 2500);
-    setTimeout(showMessage, 3000);
+    setTimeout(() => fireType('snowflake', W * 0.22, H * 0.24), 1050);
+    setTimeout(() => fireType('star', W * 0.5, H * 0.16), 1180);
+    setTimeout(() => fireType('snowflake', W * 0.78, H * 0.26), 1320);
+    setTimeout(() => fireType('heart', W * 0.34, H * 0.3), 1550);
+    setTimeout(() => fireType('spiral', W * 0.66, H * 0.28), 1680);
+    setTimeout(() => fireType('shift', W * 0.5, H * 0.22), 1900);
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => launch(i % 2 ? 'crossette' : 'star'), 2100 + i * 170);
+    }
+    setTimeout(() => fireType('heart', W * 0.5, H * 0.24), 3000);
+    setTimeout(() => fireType('snowflake', W * 0.28, H * 0.2), 3200);
+    setTimeout(() => fireType('snowflake', W * 0.72, H * 0.18), 3350);
+    setTimeout(() => goldenWaterfall(W * 0.5, H * 0.15), 3600);
+    setTimeout(() => fireType('crossette', W * 0.4, H * 0.26), 3900);
+    setTimeout(() => fireType('crossette', W * 0.6, H * 0.22), 4050);
+    setTimeout(showMessage, 4400);
   }
-  /* ---------- 자동 발사: 드물게, 고요가 주인공 ---------- */
-  let nextAuto = performance.now() + 9000;
+  /* ---------- 자동 발사: 잦은 리듬 + 가끔 일제 사격 ---------- */
+  let nextAuto = performance.now() + 2600;
   let autoCount = 0;
   function schedule(now) {
-    nextAuto = now + 9000 + Math.random() * 7000;
+    nextAuto = now + 2500 + Math.random() * 2500;
+  }
+  function autoLaunch(now) {
+    const roll = Math.random();
+    if (roll < 0.24) {
+      const n = 2 + (Math.random() < 0.5 ? 1 : 0);
+      for (let i = 0; i < n; i++) {
+        setTimeout(() => launch(), i * (140 + Math.random() * 100));
+      }
+    } else if (roll < 0.42) {
+      launch();
+      setTimeout(() => launch(), 80 + Math.random() * 140);
+    } else {
+      launch();
+    }
+    schedule(now);
+    autoCount++;
+    if (autoCount % 3 === 1) setTimeout(showMessage, 1400);
   }
   /* ---------- 터치: 탭 · 꾹 · 드래그(도화선) ---------- */
   const fuses = [];
@@ -397,7 +454,7 @@
     dragging = false;
     if (!wasDragging || longPressed) return;
     if (dragLen < 20) {
-      fireType(nextTapType(), e.clientX, Math.min(e.clientY, H * 0.78));
+      rewardTap(e.clientX, Math.min(e.clientY, H * 0.78));
     } else {
       igniteFuse(dragPath.slice());
     }
@@ -469,21 +526,18 @@
     fx.fillRect(0, 0, W, H);
     fx.globalCompositeOperation = 'lighter';
     if (!reduceMotion) {
-      if (now > nextAuto) {
-        launch();
-        schedule(now);
-        autoCount++;
-        if (autoCount % 2 === 1) setTimeout(showMessage, 1500);
-      }
+      if (now > nextAuto) autoLaunch(now);
       for (let i = flashes.length - 1; i >= 0; i--) {
         const f = flashes[i];
-        f.r += (f.maxR - f.r) * 0.25 * dt;
-        f.life -= 0.07 * dt;
+        f.r += (f.maxR - f.r) * 0.28 * dt;
+        f.life -= 0.065 * dt;
         if (f.life <= 0) { flashes.splice(i, 1); continue; }
         const g = fx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
-        g.addColorStop(0, f.color + '99');
+        const core = f.color === '#ffffff' ? 'cc' : 'bb';
+        g.addColorStop(0, f.color + core);
+        g.addColorStop(0.45, f.color + '55');
         g.addColorStop(1, 'transparent');
-        fx.globalAlpha = f.life * 0.45;
+        fx.globalAlpha = f.life * (f.color === '#ffffff' ? 0.75 : 0.62);
         fx.fillStyle = g;
         fx.beginPath();
         fx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
@@ -522,10 +576,10 @@
         }
         if (fu.idx >= fu.pts.length) {
           const end = fu.pts[fu.pts.length - 1];
-          fireType(nextTapType(), end.x, Math.min(end.y, H * 0.85));
+          rewardTap(end.x, Math.min(end.y, H * 0.85));
           if (fu.pts.length > 26) {
             const mid = fu.pts[Math.floor(fu.pts.length / 2)];
-            setTimeout(() => fireType(nextTapType(), mid.x, Math.min(mid.y, H * 0.85)), 250);
+            setTimeout(() => rewardTap(mid.x, Math.min(mid.y, H * 0.85)), 250);
           }
           fuses.splice(i, 1);
         }
