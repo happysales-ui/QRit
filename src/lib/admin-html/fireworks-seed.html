@@ -177,8 +177,8 @@
   const rockets = [];
   const particles = [];
   const flashes = [];
-  /* Cap for mid-phone FPS — prefer frequent launches over unlimited particles */
-  const MAX_PARTICLES = 1050;
+  /* Cap for mid-phone FPS — multi-stage shells share this budget */
+  const MAX_PARTICLES = 1150;
   function addP(x, y, vx, vy, color, opts) {
     if (particles.length >= MAX_PARTICLES) return;
     particles.push(Object.assign({
@@ -196,6 +196,47 @@
     flashes.push({ x, y, r: 0, maxR, life: 1, color });
     /* bright white core for dopamine pop */
     flashes.push({ x, y, r: 0, maxR: maxR * 0.38, life: 1, color: '#ffffff' });
+  }
+  /* Spherical peony — used for the satisfying secondary "빵" */
+  function peonyBurst(x, y, palette, scale) {
+    const s = scale || 1;
+    const pick = () => palette[Math.floor(Math.random() * palette.length)];
+    flash(x, y, palette[0], 145 * s);
+    flash(x, y, '#ffffff', 70 * s);
+    const n = Math.floor(88 * s);
+    const speed = 1.85 * s;
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i) / n + Math.random() * 0.12;
+      const sp = speed * (0.55 + Math.random() * 0.55);
+      addP(x, y, Math.cos(a) * sp, Math.sin(a) * sp, pick(), {
+        decay: 0.0048 + Math.random() * 0.002,
+        gravity: 0.009, r: 1.5 + Math.random() * 1.2 * s,
+        trailGlow: true
+      });
+    }
+    for (let i = 0; i < Math.floor(22 * s); i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 0.25 + Math.random() * 0.7 * s;
+      addP(x, y, Math.cos(a) * sp, Math.sin(a) * sp, '#ffffff', {
+        decay: 0.014, r: 1.1, flicker: true
+      });
+    }
+  }
+  /* Delayed hanging glitter after the main break (brocade) */
+  function brocadeSparkles(x, y, palette) {
+    const pick = () => palette[Math.floor(Math.random() * palette.length)];
+    const n = 55 + Math.floor(Math.random() * 35);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 0.35 + Math.random() * 1.4;
+      addP(x + (Math.random() - 0.5) * 18, y + (Math.random() - 0.5) * 14,
+        Math.cos(a) * sp, Math.sin(a) * sp * 0.55 + 0.15, pick(), {
+          decay: 0.0028 + Math.random() * 0.002,
+          gravity: 0.014 + Math.random() * 0.01,
+          friction: 0.991, r: 1.05 + Math.random(),
+          flicker: true, trailGlow: true
+        });
+    }
   }
   /* ========== 불꽃 타입 (눈송이 포함) ========== */
   /* 눈송이 불꽃 — 여섯 갈래 결정이 하늘에 그려진다 */
@@ -301,14 +342,16 @@
       });
     }
   }
-  function crossette(x, y, palette) {
-    flash(x, y, palette[0], 150);
+  function crossette(x, y, palette, scale) {
+    const sc = scale || 1;
+    flash(x, y, palette[0], 150 * sc);
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
-    for (let i = 0; i < 92; i++) {
-      const a = (Math.PI * 2 * i) / 92 + Math.random() * 0.1;
-      const s = 1.9 * (0.5 + Math.random() * 0.65);
+    const n = Math.floor(92 * sc);
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i) / n + Math.random() * 0.1;
+      const s = 1.9 * sc * (0.5 + Math.random() * 0.65);
       addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(), {
-        sub: Math.random() < 0.38 ? palette : null, decay: 0.0075
+        sub: Math.random() < 0.55 ? palette : null, decay: 0.0075
       });
     }
   }
@@ -329,11 +372,12 @@
   }
   function miniBurst(x, y, palette) {
     const pick = () => palette[Math.floor(Math.random() * palette.length)];
-    for (let i = 0; i < 24; i++) {
+    const n = 32 + Math.floor(Math.random() * 10);
+    for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
-      const s = 0.55 + Math.random() * 1.05;
+      const s = 0.65 + Math.random() * 1.25;
       addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(), {
-        decay: 0.012, r: 1.1 + Math.random(), flicker: true
+        decay: 0.011, r: 1.15 + Math.random(), flicker: true
       });
     }
   }
@@ -347,28 +391,66 @@
     if (tapIdx >= tapQueue.length) { tapQueue = shuffle([...TAP_TYPES]); tapIdx = 0; }
     return t;
   }
-  function fireType(type, x, y) {
-    const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+  function fireType(type, x, y, palette) {
+    const pal = palette || PALETTES[Math.floor(Math.random() * PALETTES.length)];
     if (type === 'snowflake') snowflakeBurst(x, y);
-    else if (type === 'heart') heartBurst(x, y, palette);
-    else if (type === 'star') starBurst(x, y, palette);
-    else if (type === 'spiral') spiralBurst(x, y, palette);
+    else if (type === 'heart') heartBurst(x, y, pal);
+    else if (type === 'star') starBurst(x, y, pal);
+    else if (type === 'spiral') spiralBurst(x, y, pal);
     else if (type === 'shift') shiftChrys(x, y);
     else if (type === 'waterfall') goldenWaterfall(x, Math.min(y, H * 0.4));
-    else crossette(x, y, palette);
+    else crossette(x, y, pal);
+    return pal;
   }
-  /* Tap reward: first tap stays snowflake; ~1/3 get a twin burst nearby */
-  function rewardTap(x, y) {
-    const type = nextTapType();
-    fireType(type, x, y);
-    if (Math.random() < 0.34) {
-      const ox = (Math.random() - 0.5) * Math.min(W * 0.22, 140);
-      const oy = (Math.random() - 0.5) * Math.min(H * 0.14, 90);
-      const twin = TAP_TYPES[Math.floor(Math.random() * TAP_TYPES.length)];
-      const tx = Math.max(W * 0.08, Math.min(W * 0.92, x + ox));
-      const ty = Math.max(H * 0.1, Math.min(H * 0.72, y + oy));
-      setTimeout(() => fireType(twin, tx, ty), 160 + Math.random() * 220);
+  /*
+   * Multi-stage shell (YouTube-style cascading break):
+   *  1) first bang at point
+   *  2) bigger secondary bang ~350–700ms later
+   *  3) optional brocade / crossette mini-bursts
+   */
+  function fireShell(type, x, y) {
+    const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+    fireType(type, x, y, palette);
+    if (reduceMotion) return;
+    const delay2 = 350 + Math.random() * 350;
+    const scale2 = 1.35 + Math.random() * 0.5;
+    const ox = (Math.random() - 0.5) * Math.min(W * 0.06, 48);
+    const oy = (Math.random() - 0.5) * Math.min(H * 0.04, 32);
+    const sx = Math.max(W * 0.06, Math.min(W * 0.94, x + ox));
+    const sy = Math.max(H * 0.08, Math.min(H * 0.7, y + oy));
+    setTimeout(() => {
+      if (particles.length > MAX_PARTICLES * 0.92) return;
+      /* Same-family second bang, or a fat peony — variety */
+      const mode = Math.random();
+      if (type === 'crossette' || mode < 0.28) {
+        crossette(sx, sy, palette, scale2);
+      } else if (type === 'waterfall' || mode < 0.42) {
+        peonyBurst(sx, sy, GOLD, scale2 * 0.95);
+      } else if (type === 'snowflake' && mode < 0.55) {
+        snowflakeBurst(sx, sy);
+        peonyBurst(sx, sy, ['#e8f2ff', '#cfe4ff', '#ffffff'], scale2 * 0.72);
+      } else {
+        peonyBurst(sx, sy, palette, scale2);
+      }
+      /* Occasional twin secondary for a fuller sky */
+      if (Math.random() < 0.22 && particles.length < MAX_PARTICLES * 0.75) {
+        const tx = Math.max(W * 0.08, Math.min(W * 0.92, sx + (Math.random() - 0.5) * 90));
+        const ty = Math.max(H * 0.1, Math.min(H * 0.68, sy + (Math.random() - 0.5) * 60));
+        setTimeout(() => peonyBurst(tx, ty, palette, 1.05 + Math.random() * 0.25), 90 + Math.random() * 140);
+      }
+    }, delay2);
+    /* Stage 3: brocade glitter or delayed peony sparkles */
+    if (Math.random() < 0.48) {
+      const delay3 = delay2 + 220 + Math.random() * 380;
+      setTimeout(() => {
+        if (particles.length > MAX_PARTICLES * 0.9) return;
+        brocadeSparkles(sx, sy, Math.random() < 0.35 ? GOLD : palette);
+      }, delay3);
     }
+  }
+  /* Tap: first tap stays snowflake; every tap is a multi-stage shell */
+  function rewardTap(x, y) {
+    fireShell(nextTapType(), x, y);
   }
   function launch(type) {
     const x = W * (0.12 + Math.random() * 0.76);
@@ -378,7 +460,7 @@
       vy: -(H * 0.0045 + Math.random() * H * 0.0015),
       wobble: Math.random() * Math.PI * 2,
       type: type || TAP_TYPES[Math.floor(Math.random() * TAP_TYPES.length)],
-      trail: []
+      hue: GOLD[Math.floor(Math.random() * GOLD.length)]
     });
   }
   /* ---------- 피날레: 하늘 가득 겹치는 축포 ---------- */
@@ -546,17 +628,33 @@
       fx.globalAlpha = 1;
       for (let i = rockets.length - 1; i >= 0; i--) {
         const r = rockets[i];
+        const prevY = r.y;
         r.y += r.vy * dt * 4;
         r.x += Math.sin(now * 0.01 + r.wobble) * 0.3 * dt;
         r.vy *= 0.996;
-        fx.globalAlpha = 0.85;
-        fx.fillStyle = '#ffe9b8';
+        /* Bright rising trail before the break */
+        fx.strokeStyle = r.hue || '#ffe9b8';
+        fx.globalAlpha = 0.55;
+        fx.lineWidth = 2.2;
         fx.beginPath();
-        fx.arc(r.x, r.y, 1.6, 0, Math.PI * 2);
+        fx.moveTo(r.x, prevY + 10);
+        fx.lineTo(r.x, r.y);
+        fx.stroke();
+        fx.globalAlpha = 0.9;
+        fx.fillStyle = '#fff6d8';
+        fx.beginPath();
+        fx.arc(r.x, r.y, 2.1, 0, Math.PI * 2);
         fx.fill();
         fx.globalAlpha = 1;
+        if (Math.random() < 0.55 && particles.length < MAX_PARTICLES) {
+          addP(r.x, r.y + 4, (Math.random() - 0.5) * 0.25, 0.4 + Math.random() * 0.5,
+            r.hue || '#ffd980', {
+              decay: 0.04, r: 0.9 + Math.random() * 0.6,
+              gravity: 0.02, flicker: true
+            });
+        }
         if (r.y <= r.targetY || r.vy > -0.5) {
-          fireType(r.type, r.x, r.y);
+          fireShell(r.type, r.x, r.y);
           rockets.splice(i, 1);
         }
       }
