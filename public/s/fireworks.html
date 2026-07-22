@@ -2,1020 +2,645 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>8월의 첫눈</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>오늘도 고생한 나를 위한 불꽃놀이</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    height: 100%;
-    overflow: hidden;
-    background: #070b16;
-    font-family: 'Gowun Batang', serif;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
-    overscroll-behavior: none;
-    -webkit-touch-callout: none;
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#05070f; }
+  body { font-family:'Gowun Batang', serif; -webkit-tap-highlight-color:transparent; }
+  #sky {
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse 120% 70% at 50% 110%, rgba(38,32,74,.55) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(20,30,66,.6) 0%, transparent 60%),
+      linear-gradient(180deg, #04050c 0%, #070a18 45%, #0b0f24 78%, #101331 100%);
   }
-  #skybg {
-    position: fixed; inset: 0;
-    background: linear-gradient(to bottom, #070b16 0%, #0e1530 55%, #1a2547 100%);
-    touch-action: none;
+  canvas { position:fixed; inset:0; display:block; }
+  #fw   { z-index:3; }
+  #snow { z-index:4; pointer-events:none; }
+  #city {
+    position:fixed; left:0; right:0; bottom:0; height:18vh; min-height:110px;
+    z-index:2; pointer-events:none;
   }
-  canvas {
-    position: fixed; inset: 0; width: 100%; height: 100%; display: block;
-    touch-action: none;
-    -webkit-user-select: none;
-    user-select: none;
+  #quote {
+    position:fixed; left:50%; top:16%;
+    transform:translateX(-50%);
+    z-index:6; pointer-events:none;
+    width:min(88vw, 640px); text-align:center;
+    color:#f4ead8;
+    opacity:0; transition:opacity 2.4s ease, filter 2.4s ease;
+    filter:blur(6px);
+    text-shadow:0 0 22px rgba(255,214,150,.35), 0 0 60px rgba(160,120,255,.18);
   }
-  #message {
-    position: fixed;
-    left: 50%; top: 28%;
-    transform: translate(-50%, -50%);
-    width: min(84vw, 360px);
-    text-align: center;
-    color: rgba(242, 245, 253, 0.93);
-    font-size: 1.08rem; line-height: 1.95; letter-spacing: 0.04em;
-    opacity: 0;
-    transition: opacity 2.6s ease;
-    pointer-events: none;
-    text-shadow: 0 0 20px rgba(150, 170, 255, 0.4), 0 0 40px rgba(7, 11, 22, 0.9);
-    word-break: keep-all;
+  #quote.show { opacity:1; filter:blur(0); }
+  #quote .line {
+    font-size:clamp(1.15rem, 3.4vw, 1.8rem);
+    line-height:1.75; font-weight:700; letter-spacing:.04em;
+    word-break:keep-all;
   }
-  #message.visible { opacity: 1; }
+  #quote .sub {
+    margin-top:.9em;
+    font-size:clamp(.78rem, 2vw, .95rem);
+    letter-spacing:.28em; color:rgba(244,234,216,.55); font-weight:400;
+  }
   #hint {
-    position: fixed;
-    left: 50%;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 48px);
-    transform: translateX(-50%);
-    color: rgba(242, 245, 253, 0.45);
-    font-size: 0.8rem; letter-spacing: 0.14em;
-    opacity: 0;
-    animation: hintFade 8s ease 2s forwards;
-    pointer-events: none;
-    white-space: nowrap;
+    position:fixed; left:50%; bottom:20vh; transform:translateX(-50%);
+    z-index:6; pointer-events:none;
+    color:rgba(244,234,216,.6);
+    font-size:clamp(.8rem,2.4vw,.95rem); letter-spacing:.22em;
+    animation:hintPulse 3.2s ease-in-out infinite;
+    transition:opacity 1.6s ease;
   }
-  @keyframes hintFade {
-    0% { opacity: 0; } 20% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; }
-  }
-  #sign {
-    position: fixed;
-    left: 50%;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
-    transform: translateX(-50%);
-    color: rgba(242, 245, 253, 0.22);
-    font-size: 0.68rem; letter-spacing: 0.3em;
-    pointer-events: none;
-    font-family: sans-serif;
+  @keyframes hintPulse { 0%,100%{opacity:.35} 50%{opacity:.85} }
+  #hint.gone { opacity:0 !important; animation:none; }
+  @media (prefers-reduced-motion: reduce) {
+    #hint { animation:none; opacity:.6; }
   }
 </style>
 </head>
 <body>
-<div id="skybg"></div>
-<canvas id="fx"></canvas>
-<canvas id="snowc"></canvas>
-<div id="message"></div>
-<div id="hint">첫눈 속에 불꽃을 숨겨두었어요 · 하늘을 눌러보세요</div>
-<div id="sign">QRIT</div>
+<div id="sky"></div>
+<canvas id="city"></canvas>
+<canvas id="fw"></canvas>
+<canvas id="snow"></canvas>
+<div id="quote" aria-live="polite">
+  <div class="line" id="quoteLine"></div>
+  <div class="sub" id="quoteSub"></div>
+</div>
+<div id="hint">하늘 어디든 손끝을 대어 보세요 · 누를 때마다 다른 폭죽이 핍니다</div>
 <script>
-(function () {
-  const fxCanvas = document.getElementById('fx');
-  const fx = fxCanvas.getContext('2d');
-  const snowCanvas = document.getElementById('snowc');
-  const sc = snowCanvas.getContext('2d');
-  const messageEl = document.getElementById('message');
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let W, H, DPR;
+(() => {
+  'use strict';
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fwC = document.getElementById('fw');
+  const snowC = document.getElementById('snow');
+  const cityC = document.getElementById('city');
+  const fx = fwC.getContext('2d');
+  const sx = snowC.getContext('2d');
+  let W = 0, H = 0;
+  /* ---------- 도시 실루엣 ---------- */
+  function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function drawCity() {
+    const c = cityC, ctx = c.getContext('2d');
+    const cw = window.innerWidth, ch = Math.max(window.innerHeight * 0.18, 110);
+    c.width = cw * DPR; c.height = ch * DPR;
+    c.style.width = cw + 'px'; c.style.height = ch + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, cw, ch);
+    const g = ctx.createLinearGradient(0, 0, 0, ch);
+    g.addColorStop(0, 'rgba(255,190,120,0)');
+    g.addColorStop(1, 'rgba(255,170,90,.07)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+    const rng = mulberry(20260722);
+    let x = -10;
+    ctx.fillStyle = '#04040a';
+    const buildings = [];
+    while (x < cw + 10) {
+      const bw = 26 + rng() * 60;
+      const bh = ch * (0.35 + rng() * 0.6);
+      buildings.push({ x, bw, bh });
+      ctx.fillRect(x, ch - bh, bw, bh);
+      if (rng() < 0.35) ctx.fillRect(x + bw * 0.3, ch - bh - 8, bw * 0.25, 8);
+      x += bw + 2 + rng() * 8;
+    }
+    for (const b of buildings) {
+      const cols = Math.floor(b.bw / 9), rows = Math.floor(b.bh / 12);
+      for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+        if (rng() < 0.16) {
+          const warm = rng() < 0.8;
+          ctx.fillStyle = warm ? 'rgba(255,203,130,' + (0.25 + rng() * 0.5) + ')'
+                               : 'rgba(160,200,255,' + (0.2 + rng() * 0.4) + ')';
+          ctx.fillRect(b.x + 3 + i * 9, ch - b.bh + 5 + j * 12, 3.5, 5);
+        }
+      }
+    }
+  }
   function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth;
-    H = window.innerHeight;
-    for (const [cv, cx] of [[fxCanvas, fx], [snowCanvas, sc]]) {
-      cv.width = W * DPR;
-      cv.height = H * DPR;
-      cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    W = window.innerWidth; H = window.innerHeight;
+    for (const c of [fwC, snowC]) {
+      c.width = W * DPR; c.height = H * DPR;
+      c.style.width = W + 'px'; c.style.height = H + 'px';
+      c.getContext('2d').setTransform(DPR, 0, 0, DPR, 0, 0);
     }
-    fx.clearRect(0, 0, W, H);
+    drawCity();
   }
-  resize();
   window.addEventListener('resize', resize);
-  /* ---------- 겨울의 문장 ---------- */
-  const messages = [
-    '한여름의 당신에게, 조금 이른 첫눈을',
-    '눈이 내리면 세상이 잠깐 조용해져요',
-    '오늘의 소란은 여기 묻어두고 가요',
-    '수고한 마음 위에 눈이 소복소복',
-    '겨울처럼, 쉬어가도 괜찮아요',
-    '첫눈처럼 좋은 일이 당신에게 내리기를',
-    '녹지 않는 안부를 보냅니다',
-    '이 고요는 당신을 위해 준비했어요'
-  ];
-  let msgOrder = shuffle([...messages.keys()]);
-  let msgIdx = 0;
-  function shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
-  let msgTimer = null;
-  function showMessage() {
-    messageEl.textContent = messages[msgOrder[msgIdx]];
-    msgIdx = (msgIdx + 1) % msgOrder.length;
-    if (msgIdx === 0) msgOrder = shuffle(msgOrder);
-    messageEl.classList.add('visible');
-    clearTimeout(msgTimer);
-    msgTimer = setTimeout(() => messageEl.classList.remove('visible'), 5600);
-  }
-  /* ---------- 별 ---------- */
-  const stars = [];
-  for (let i = 0; i < 80; i++) {
-    stars.push({
-      x: Math.random(), y: Math.random() * 0.85,
-      r: Math.random() * 1.1 + 0.3,
-      base: Math.random() * 0.4 + 0.15,
-      phase: Math.random() * Math.PI * 2,
-      speed: Math.random() * 0.5 + 0.15
-    });
-  }
-  /* ---------- 눈 ---------- */
-  const flakes = [];
-  const FLAKE_COUNT = reduceMotion ? 0 : 130;
-  for (let i = 0; i < FLAKE_COUNT; i++) {
-    flakes.push(newFlake(true));
-  }
-  function newFlake(anywhere) {
-    const depth = Math.random();           /* 0 멀리 ~ 1 가까이 */
-    return {
-      x: Math.random() * 1.1 - 0.05,
-      y: anywhere ? Math.random() : -0.03,
-      depth,
-      r: 0.8 + depth * 2.6,
-      vy: (0.25 + depth * 0.65),
-      sway: Math.random() * Math.PI * 2,
-      swaySpeed: 0.4 + Math.random() * 0.6,
-      swayAmp: 0.15 + depth * 0.45,
-      alpha: 0.35 + depth * 0.55
-    };
-  }
-  /* ---------- 불꽃 팔레트: 눈은 희게, 불꽃은 선명하게 ---------- */
+  resize();
+  /* ---------- 색상 팔레트 ---------- */
   const PALETTES = [
-    ['#ff8a8a', '#ffc2c2', '#ff5d5d'],   /* 연빨강 */
-    ['#8ee6a0', '#c8f5d0', '#5dd47a'],   /* 연초록 */
-    ['#ffd166', '#ffedb0', '#ff9e3d'],   /* 골드 */
-    ['#ff8fd0', '#ffc6e8', '#ff5daf'],   /* 핑크 */
-    ['#7fd8f0', '#c0f0ff', '#4cc9f0'],   /* 하늘빛 */
-    ['#c9a0ff', '#e8d4ff', '#a86ef0'],   /* 라벤더 */
-    ['#ffb36b', '#ffdcb8', '#ff8c2e']    /* 코랄 오렌지 */
+    ['#ffd873','#ffb347','#fff3c4','#ff9d5c'],            // 황금
+    ['#ff5e6c','#ff2e4c','#ffd1d6','#ff9aa8'],            // 홍색
+    ['#ffd873','#ff5e6c','#fff3c4','#ff2e4c'],            // 금홍
+    ['#7ce8ff','#4cc3ff','#e0f8ff','#9ad9ff'],            // 얼음빛
+    ['#c48cff','#9d5cff','#f0deff','#ff8cf0'],            // 보라·분홍
+    ['#8cffb0','#4ce88c','#e0ffe8','#c4ffd6'],            // 비취
+    ['#ffd873','#c48cff','#7ce8ff','#ff9aa8'],            // 오색
+    ['#ff9d5c','#ffdf9e','#ff5e6c','#fff3c4'],            // 노을
   ];
-  const GOLD = ['#ffd980', '#ffedb8', '#ffbf50'];
-  const ICE = ['#e8f2ff', '#cfe4ff', '#b8d4ff', '#dce9ff'];
-  const HEART_PINK = ['#ff6b8a', '#ff9eb5', '#ff4d6d', '#ffc2d0'];
+  const GOLD = PALETTES[0];
   const rockets = [];
   const particles = [];
   const flashes = [];
-  /* Cap for mid-phone FPS — multi-stage shells share this budget */
-  const MAX_PARTICLES = 1150;
-  function rand(a, b) { return a + Math.random() * (b - a); }
-  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-  /* Per-shell knobs so consecutive taps don't feel cloned */
-  function shellFeel() {
-    return {
-      speed: rand(0.82, 1.24),
-      gravity: rand(0.82, 1.28),
-      friction: rand(0.978, 0.993),
-      decay: rand(0.82, 1.22),
-      trail: Math.random() < 0.58
-    };
+  const MAX_P = reduced ? 900 : 3000;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[(Math.random() * arr.length) | 0];
+  function spawnParticle(o) {
+    if (particles.length >= MAX_P) particles.shift();
+    particles.push(o);
   }
-  function roomFor(n) {
-    return particles.length + n <= MAX_PARTICLES;
-  }
-  /* Keep shaped silhouettes fully on-screen (snowflake arms clip at edges otherwise) */
-  function shapeBurstMargin(type) {
-    const lim = Math.min(W, H);
-    if (type === 'snowflake') return Math.min(120, lim * 0.18);
-    if (type === 'heart' || type === 'star') return Math.min(110, lim * 0.16);
-    if (type === 'spiral' || type === 'saturn' || type === 'shift') return Math.min(95, lim * 0.14);
-    return Math.min(72, lim * 0.11);
-  }
-  function clampBurstPoint(x, y, margin) {
-    const m = margin != null ? margin : 100;
-    const mx = Math.min(m, W * 0.45);
-    const my = Math.min(m, H * 0.45);
-    return {
-      x: Math.max(mx, Math.min(W - mx, x)),
-      y: Math.max(my, Math.min(H - my, y))
-    };
-  }
-  function addP(x, y, vx, vy, color, opts) {
-    if (particles.length >= MAX_PARTICLES) return false;
-    particles.push(Object.assign({
-      x, y, vx, vy, color,
-      color2: null,
-      life: 1, decay: 0.007 + Math.random() * 0.003,
-      r: 1.3 + Math.random() * 1.4,
-      gravity: 0.011, friction: 0.986,
-      flicker: false, sub: null, subAt: null,
-      drift: (Math.random() - 0.5) * 0.008,
-      trailGlow: false
-    }, opts || {}));
-    return true;
-  }
-  /*
-   * Type-specific bloom — soft by default; bright reserved for dopamine moments.
-   * opts: intensity, fade, grow, soft, whiteCore, coreScale
-   */
-  function flash(x, y, color, size, opts) {
-    opts = opts || {};
-    const maxR = size || 64;
-    const intensity = opts.intensity != null ? opts.intensity : 0.4;
-    const fade = opts.fade != null ? opts.fade : 0.095;
-    const grow = opts.grow != null ? opts.grow : 0.34;
-    flashes.push({
-      x, y, r: 0, maxR, life: 1, color,
-      intensity, fade, grow, soft: !!opts.soft
-    });
-    if (opts.whiteCore) {
-      const cs = opts.coreScale != null ? opts.coreScale : 0.18;
-      flashes.push({
-        x, y, r: 0, maxR: maxR * cs, life: 1, color: '#ffffff',
-        intensity: intensity * (opts.soft ? 0.42 : 0.62), fade: fade * 1.35,
-        grow: grow * 1.25, soft: false
-      });
-    }
-  }
-  /* Satisfying bright pop — finale / stage-2 / crossette / occasional peony */
-  function brightFlash(x, y, color, size) {
-    flash(x, y, color, size || 96, {
-      intensity: 0.78, soft: false, whiteCore: true, coreScale: 0.24,
-      fade: 0.13, grow: 0.46
+  function launchRocket(tx, ty, type, palette) {
+    const sxp = tx + rand(-30, 30);
+    rockets.push({
+      x: sxp, y: H + 10,
+      tx, ty,
+      vx: (tx - sxp) / rand(70, 90),
+      vy: -rand(H * 0.011, H * 0.0135),
+      type, palette,
+      life: 0
     });
   }
-  /* Spherical peony — soft by default; bright when scale is big or opts.bright */
-  function peonyBurst(x, y, palette, scale, feel, opts) {
-    const s = scale || 1;
-    const f = feel || shellFeel();
-    const o = opts || {};
-    const pickC = () => pick(palette);
-    const bright = o.bright || s >= 1.2 || Math.random() < 0.22;
-    if (bright) {
-      brightFlash(x, y, palette[0], 86 * s);
-    } else {
-      flash(x, y, palette[0], 52 * s, {
-        intensity: 0.36, soft: true, whiteCore: true, coreScale: 0.16, fade: 0.11
-      });
-    }
-    const n = Math.floor(78 * s);
-    const speed = 1.7 * s * f.speed;
+  /* ---------- 모양 좌표 생성 유틸 ---------- */
+  // 파라메트릭 곡선을 방향벡터 배열로
+  function heartDirs(n) {
+    const dirs = [];
     for (let i = 0; i < n; i++) {
-      const a = (Math.PI * 2 * i) / n + Math.random() * 0.12;
-      const sp = speed * (0.5 + Math.random() * 0.6);
-      addP(x, y, Math.cos(a) * sp, Math.sin(a) * sp, pickC(), {
-        decay: (0.0045 + Math.random() * 0.002) * f.decay,
-        gravity: 0.009 * f.gravity, friction: f.friction,
-        r: 1.4 + Math.random() * 1.1 * s, trailGlow: f.trail
-      });
+      const t = (i / n) * Math.PI * 2;
+      const hx = 16 * Math.pow(Math.sin(t), 3);
+      const hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+      dirs.push([hx / 17, hy / 17]);
     }
-    for (let i = 0; i < Math.floor(12 * s); i++) {
-      const a = Math.random() * Math.PI * 2;
-      const sp = 0.2 + Math.random() * 0.5 * s;
-      addP(x, y, Math.cos(a) * sp, Math.sin(a) * sp, '#ffffff', {
-        decay: 0.018, r: 0.9, flicker: true
-      });
-    }
+    return dirs;
   }
-  /* Hanging willow — long golden/color trails, almost no flash */
-  function willowBurst(x, y, palette, scale, feel) {
-    const s = scale || 1;
-    const f = feel || shellFeel();
-    flash(x, y, palette[0], 36 * s, { intensity: 0.24, soft: true, fade: 0.13 });
-    const n = Math.floor(68 * s);
+  function starDirs(n, points) {
+    const dirs = [];
+    const outer = 1, inner = 0.42;
     for (let i = 0; i < n; i++) {
-      const a = (Math.PI * 2 * i) / n + Math.random() * 0.18;
-      const sp = (1.05 + Math.random() * 0.95) * s * f.speed;
-      addP(x, y, Math.cos(a) * sp * 0.5, Math.sin(a) * sp * 0.3 - 0.25, pick(palette), {
-        decay: (0.002 + Math.random() * 0.0014) * f.decay,
-        gravity: 0.024 * f.gravity, friction: 0.994,
-        r: 1.05 + Math.random(), flicker: true, trailGlow: true
-      });
+      const t = i / n;
+      const seg = t * points * 2;
+      const idx = Math.floor(seg), frac = seg - idx;
+      const a0 = (idx / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+      const a1 = ((idx + 1) / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+      const r0 = idx % 2 === 0 ? outer : inner;
+      const r1 = idx % 2 === 0 ? inner : outer;
+      const x = Math.cos(a0) * r0 * (1 - frac) + Math.cos(a1) * r1 * frac;
+      const y = Math.sin(a0) * r0 * (1 - frac) + Math.sin(a1) * r1 * frac;
+      dirs.push([x, y]);
     }
+    return dirs;
   }
-  /* Flat ring — Saturn / stage-2 ring silhouette */
-  function ringBurst(x, y, palette, scale, feel) {
-    const s = scale || 1;
-    const f = feel || shellFeel();
-    flash(x, y, palette[0], 42 * s, {
-      intensity: 0.3, soft: true, whiteCore: true, coreScale: 0.12, fade: 0.1
-    });
-    const n = Math.floor(100 * s);
-    const speed = 2.2 * s * f.speed;
+  function ringDirs(n, tilt, rot) {
+    const dirs = [];
     for (let i = 0; i < n; i++) {
-      const a = (Math.PI * 2 * i) / n;
-      const jitter = 0.9 + Math.random() * 0.14;
-      addP(x, y, Math.cos(a) * speed * jitter, Math.sin(a) * speed * jitter * 0.38, pick(palette), {
-        decay: (0.0048 + Math.random() * 0.002) * f.decay,
-        gravity: 0.006 * f.gravity, friction: f.friction,
-        r: 1.45 + Math.random() * 0.6, trailGlow: true
+      const a = (i / n) * Math.PI * 2;
+      let dx = Math.cos(a), dy = Math.sin(a) * tilt;
+      dirs.push([
+        dx * Math.cos(rot) - dy * Math.sin(rot),
+        dx * Math.sin(rot) + dy * Math.cos(rot)
+      ]);
+    }
+    return dirs;
+  }
+  function shapeBurst(x, y, dirs, palette, opt = {}) {
+    const speed = opt.speed || 5.2;
+    for (const [dx, dy] of dirs) {
+      const jitter = opt.jitter || 0.05;
+      spawnParticle({
+        x, y,
+        vx: dx * speed * rand(1 - jitter, 1 + jitter),
+        vy: dy * speed * rand(1 - jitter, 1 + jitter),
+        g: opt.g ?? 0.02, drag: opt.drag ?? 0.988,
+        life: rand(opt.lifeMin || 80, opt.lifeMax || 120), age: 0,
+        size: rand(1.5, 2.4), color: opt.solid ? palette[0] : pick(palette),
+        trail: true, twinkle: opt.twinkle || false,
+        color2: opt.color2 || null
       });
     }
   }
-  /* Delayed hanging glitter after the main break (brocade) */
-  function brocadeSparkles(x, y, palette) {
-    const n = 48 + Math.floor(Math.random() * 30);
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const sp = 0.3 + Math.random() * 1.25;
-      addP(x + (Math.random() - 0.5) * 18, y + (Math.random() - 0.5) * 14,
-        Math.cos(a) * sp, Math.sin(a) * sp * 0.5 + 0.12, pick(palette), {
-          decay: 0.0026 + Math.random() * 0.002,
-          gravity: 0.014 + Math.random() * 0.01,
-          friction: 0.991, r: 1 + Math.random(),
-          flicker: true, trailGlow: true
-        });
-    }
-  }
-  /* Crossette secondary: 4-way split from outer particle (the interesting part) */
-  function crossettePop(x, y, palette) {
-    const base = Math.random() * (Math.PI / 2);
-    for (let k = 0; k < 4; k++) {
-      const a = base + (Math.PI / 2) * k + rand(-0.12, 0.12);
-      const s = 1.35 + Math.random() * 0.9;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(palette), {
-        decay: 0.011 + Math.random() * 0.004, r: 1.15 + Math.random() * 0.5,
-        flicker: true, trailGlow: true, gravity: 0.012
-      });
-    }
-  }
-  function miniBurst(x, y, palette) {
-    const n = 22 + Math.floor(Math.random() * 10);
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = 0.55 + Math.random() * 1.1;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(palette), {
-        decay: 0.012, r: 1.05 + Math.random(), flicker: true
-      });
-    }
-  }
-  /* ========== 불꽃 타입 — each has its own flash + motion identity ========== */
-  /* Cool blue-white crystalline, slow drift, soft ice bloom */
-  function snowflakeBurst(x, y, feel) {
-    const f = feel || shellFeel();
-    /* 6 arms × (16 spine + 3×2×5 branches) + 22 core — must be all-or-nothing */
-    const armMain = 16;
-    const armBranch = 3 * 2 * 5;
-    const sparkN = 22;
-    const need = 6 * (armMain + armBranch) + sparkN;
-    if (!roomFor(need)) return;
-    flash(x, y, '#9ec8ff', 58, { intensity: 0.26, soft: true, fade: 0.08, grow: 0.22 });
-    const main = pick(ICE);
-    const armSp = 2.55 * f.speed;
-    for (let arm = 0; arm < 6; arm++) {
-      const a = (Math.PI * 2 * arm) / 6 - Math.PI / 2;
-      const ca = Math.cos(a), sa = Math.sin(a);
-      for (let i = 1; i <= armMain; i++) {
-        const s = (i / armMain) * armSp;
-        addP(x, y, ca * s, sa * s, main, {
-          decay: 0.0042 * f.decay, gravity: 0.0032 * f.gravity,
-          friction: 0.992, r: 1.55
-        });
+  /* ---------- 폭발: 13종 ---------- */
+  function explode(x, y, type, palette) {
+    flashes.push({ x, y, r: 0, max: rand(120, 200), a: 0.5 });
+    const [c1] = palette;
+    const N = reduced ? 0.5 : 1;
+    switch (type) {
+      case 'chrys': { // ① 국화: 꼬리 긴 구형 대폭발
+        const n = 190 * N | 0;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2 + rand(-0.02, 0.02);
+          const sp = rand(2.2, 7.4) * (0.75 + Math.random() * 0.5);
+          spawnParticle({
+            x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            g: 0.028, drag: 0.985, life: rand(70, 120), age: 0,
+            size: rand(1.4, 2.6), color: pick(palette), trail: true,
+            twinkle: Math.random() < 0.4
+          });
+        }
+        break;
       }
-      for (const bf of [0.35, 0.55, 0.78]) {
-        for (const side of [-1, 1]) {
-          const ba = a + side * (Math.PI / 5);
-          const bca = Math.cos(ba), bsa = Math.sin(ba);
-          for (let j = 1; j <= 5; j++) {
-            addP(x, y,
-              ca * bf * armSp * 0.92 + bca * (j / 5) * 0.8,
-              sa * bf * armSp * 0.92 + bsa * (j / 5) * 0.8,
-              main, {
-                decay: 0.0042 * f.decay, gravity: 0.0032 * f.gravity,
-                friction: 0.992, r: 1.15
-              });
+      case 'willow': { // ② 수양버들: 금빛으로 길게 늘어짐
+        const n = 140 * N | 0;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2;
+          const sp = rand(1.6, 4.6);
+          spawnParticle({
+            x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            g: 0.02, drag: 0.992, life: rand(150, 230), age: 0,
+            size: rand(1.2, 2.2), color: pick(GOLD), trail: true,
+            twinkle: false, willow: true
+          });
+        }
+        break;
+      }
+      case 'heart': { // ③ 하트
+        shapeBurst(x, y, heartDirs(110 * N | 0), pick([PALETTES[1], PALETTES[4]]), 
+          { speed: rand(4.6, 5.6), g: 0.016, drag: 0.99, lifeMin: 90, lifeMax: 130 });
+        // 중심 반짝임
+        for (let i = 0; i < 24 * N; i++) {
+          const a = Math.random() * Math.PI * 2, sp = Math.random() * 1.4;
+          spawnParticle({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
+            g: 0.014, drag: 0.985, life: rand(50, 80), age: 0,
+            size: rand(0.9, 1.6), color: '#fff0f4', trail: false, twinkle: true });
+        }
+        break;
+      }
+      case 'star5': { // ④ 오각별
+        shapeBurst(x, y, starDirs(120 * N | 0, 5), palette,
+          { speed: rand(4.8, 5.8), g: 0.017, drag: 0.99, solid: true, lifeMin: 85, lifeMax: 125 });
+        break;
+      }
+      case 'spiral': { // ⑤ 나선 은하: 4개의 팔이 휘감김
+        const arms = 4, per = 34 * N | 0;
+        const rot0 = rand(0, Math.PI * 2);
+        for (let ar = 0; ar < arms; ar++) {
+          for (let i = 0; i < per; i++) {
+            const t = i / per;
+            const a = rot0 + (ar / arms) * Math.PI * 2 + t * 2.4;
+            const sp = 1.6 + t * 5.4;
+            spawnParticle({
+              x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+              g: 0.02, drag: 0.987, life: rand(80, 115), age: 0,
+              size: rand(1.3, 2.2), color: pick(palette), trail: true,
+              twinkle: t > 0.7, curl: rand(0.015, 0.03) * (Math.random() < 0.5 ? 1 : 1)
+            });
           }
         }
+        break;
+      }
+      case 'saturn': { // ⑥ 토성: 코어 + 기울어진 링
+        const core = 80 * N | 0;
+        for (let i = 0; i < core; i++) {
+          const a = (i / core) * Math.PI * 2;
+          const sp = rand(1.2, 2.6);
+          spawnParticle({
+            x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            g: 0.02, drag: 0.986, life: rand(70, 100), age: 0,
+            size: rand(1.4, 2.2), color: pick(palette), trail: true, twinkle: false
+          });
+        }
+        shapeBurst(x, y, ringDirs(90 * N | 0, rand(0.28, 0.42), rand(-0.5, 0.5)), GOLD,
+          { speed: rand(5.4, 6.2), g: 0.02, drag: 0.987, solid: true, lifeMin: 80, lifeMax: 110 });
+        break;
+      }
+      case 'butterfly': { // ⑦ 나비: 두 링이 교차
+        const rot = rand(0, Math.PI);
+        const p2 = pick(PALETTES);
+        shapeBurst(x, y, ringDirs(70 * N | 0, 0.5, rot + 0.6), palette,
+          { speed: 5.2, g: 0.02, drag: 0.988, solid: true });
+        shapeBurst(x, y, ringDirs(70 * N | 0, 0.5, rot - 0.6), p2,
+          { speed: 5.2, g: 0.02, drag: 0.988, solid: true });
+        break;
+      }
+      case 'palm': { // ⑧ 야자수: 굵은 금빛 줄기가 뻗어 늘어짐
+        const trunks = 10 * N | 0;
+        for (let t = 0; t < Math.max(trunks, 6); t++) {
+          const a = -Math.PI / 2 + rand(-1.4, 1.4);
+          const sp = rand(4.5, 6.5);
+          const seg = 14;
+          for (let i = 0; i < seg; i++) {
+            spawnParticle({
+              x, y,
+              vx: Math.cos(a) * sp * (1 - i * 0.03) + rand(-0.15, 0.15),
+              vy: Math.sin(a) * sp * (1 - i * 0.03) + rand(-0.15, 0.15),
+              g: 0.032, drag: 0.99, life: rand(120, 180), age: 0,
+              size: rand(2, 3.2), color: pick(GOLD), trail: true,
+              willow: true, twinkle: i > 9
+            });
+          }
+        }
+        break;
+      }
+      case 'shift': { // ⑨ 변색 피오니: 날아가다 색이 바뀜
+        const p2 = pick(PALETTES.filter(p => p !== palette));
+        const n = 150 * N | 0;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2 + rand(-0.03, 0.03);
+          const sp = rand(3.6, 6.6);
+          spawnParticle({
+            x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            g: 0.025, drag: 0.986, life: rand(85, 125), age: 0,
+            size: rand(1.5, 2.5), color: c1, color2: pick(p2),
+            trail: true, twinkle: false
+          });
+        }
+        break;
+      }
+      case 'wave': { // ⑩ 파문: 세 겹의 물결이 시차를 두고 퍼짐
+        const cols = [palette[0], palette[1], '#fff3c4'];
+        for (let w = 0; w < 3; w++) {
+          setTimeout(() => {
+            const n = 80 * N | 0;
+            for (let i = 0; i < n; i++) {
+              const a = (i / n) * Math.PI * 2;
+              const sp = 5.6 - w * 0.4;
+              spawnParticle({
+                x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                g: 0.02, drag: 0.985, life: rand(70, 95), age: 0,
+                size: rand(1.5, 2.3), color: cols[w], trail: true, twinkle: w === 2
+              });
+            }
+          }, w * 260);
+        }
+        break;
+      }
+      case 'crossette': { // ⑪ 크로세트: 별이 4갈래로 재분열
+        const n = 42 * N | 0;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2 + rand(-0.05, 0.05);
+          const sp = rand(3.4, 5.6);
+          spawnParticle({
+            x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            g: 0.026, drag: 0.986, life: rand(40, 60), age: 0,
+            size: rand(1.8, 2.6), color: pick(palette), trail: true,
+            split: true, palette
+          });
+        }
+        break;
+      }
+      case 'crackle': { // ⑫ 크래클: 은반짝이 점멸 구름
+        const n = 240 * N | 0;
+        for (let i = 0; i < n; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = Math.pow(Math.random(), 0.5) * 6.2;
+          spawnParticle({
+            x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            g: 0.03, drag: 0.982, life: rand(60, 130), age: 0,
+            size: rand(0.9, 1.8), color: Math.random() < 0.7 ? '#fff6dc' : pick(palette),
+            trail: false, twinkle: true
+          });
+        }
+        break;
+      }
+      case 'peony2': { // ⑬ 이중 피오니: 안팎 두 색의 겹폭발
+        const inner = pick(PALETTES);
+        for (const [pal, spMin, spMax, cnt] of [[palette, 4.4, 7, 130 * N | 0], [inner, 1.6, 3, 90 * N | 0]]) {
+          for (let i = 0; i < cnt; i++) {
+            const a = (i / cnt) * Math.PI * 2 + rand(-0.03, 0.03);
+            const sp = rand(spMin, spMax);
+            spawnParticle({
+              x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+              g: 0.027, drag: 0.985, life: rand(70, 115), age: 0,
+              size: rand(1.4, 2.5), color: pick(pal), trail: true,
+              twinkle: Math.random() < 0.3
+            });
+          }
+        }
+        break;
       }
     }
-    for (let i = 0; i < sparkN; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = Math.random() * 0.45;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#dceeff', {
-        decay: 0.0038, gravity: 0.002, friction: 0.996, r: 1.25, flicker: true
+  }
+  function splitStar(p) {
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + rand(0, Math.PI / 2);
+      const sp = rand(1.4, 2.6);
+      spawnParticle({
+        x: p.x, y: p.y,
+        vx: Math.cos(a) * sp + p.vx * 0.3,
+        vy: Math.sin(a) * sp + p.vy * 0.3,
+        g: 0.028, drag: 0.985, life: rand(35, 60), age: 0,
+        size: rand(1, 1.8), color: pick(p.palette), trail: true, twinkle: true
       });
     }
   }
-  /* Soft pink/red petals — slower expand so full silhouette reads longer */
-  function heartBurst(x, y, palette, feel) {
-    const f = feel || shellFeel();
-    const petals = Math.random() < 0.7 ? HEART_PINK : palette;
-    const N = 128;
-    const sparkN = 8;
-    if (!roomFor(N + sparkN)) return;
-    flash(x, y, petals[0], 48, { intensity: 0.3, soft: true, fade: 0.09, grow: 0.24 });
-    /* Milder speed + tip damp so bottom doesn't race away from lobes */
-    const scale = 1.72 * Math.min(f.speed, 1.08);
-    for (let i = 0; i < N; i++) {
-      const t = (Math.PI * 2 * i) / N;
-      const hx = 16 * Math.pow(Math.sin(t), 3);
-      const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-      const nx = hx / 16;
-      const ny = hy / 16;
-      /* Tip (down) dampened; upper lobes slightly boosted */
-      const yMul = ny > 0 ? 0.66 : 1.08;
-      addP(x, y, nx * scale, ny * scale * yMul, pick(petals), {
-        decay: 0.0036 * f.decay, gravity: 0.0036 * f.gravity,
-        friction: Math.min(0.994, f.friction + 0.004),
-        r: 1.75 + Math.random() * 0.45
-      });
+  const TYPES = ['chrys','willow','heart','star5','spiral','saturn','butterfly','palm','shift','wave','crossette','crackle','peony2'];
+  /* ---------- 터치 순환 큐: 누를 때마다 반드시 새로운 모양 ---------- */
+  let tapQueue = [];
+  function refillQueue(lastType) {
+    tapQueue = TYPES.slice();
+    for (let i = tapQueue.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      [tapQueue[i], tapQueue[j]] = [tapQueue[j], tapQueue[i]];
     }
-    for (let i = 0; i < sparkN; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = 0.15 + Math.random() * 0.35;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffd0dc', {
-        decay: 0.014, r: 1, flicker: true
-      });
+    // 직전 것과 연달아 같지 않도록
+    if (tapQueue[tapQueue.length - 1] === lastType) {
+      [tapQueue[0], tapQueue[tapQueue.length - 1]] = [tapQueue[tapQueue.length - 1], tapQueue[0]];
     }
   }
-  /* Filled-arm star — denser edges, slower expand (snowflake-quality silhouette) */
-  function starBurst(x, y, palette, feel) {
-    const f = feel || shellFeel();
-    const samples = 20;
-    const armFill = 8;
-    const sparkN = 12;
-    const need = 10 * samples + 5 * armFill + sparkN;
-    if (!roomFor(need)) return;
-    flash(x, y, palette[0], 42, {
-      intensity: 0.34, soft: true, whiteCore: true, coreScale: 0.14, fade: 0.11, grow: 0.3
-    });
-    const points = [];
-    for (let k = 0; k < 5; k++) {
-      const outer = -Math.PI / 2 + (Math.PI * 2 * k) / 5;
-      const inner = outer + Math.PI / 5;
-      points.push([Math.cos(outer), Math.sin(outer), 1]);
-      points.push([Math.cos(inner), Math.sin(inner), 0.42]);
-    }
-    const stretch = 1.85 * Math.min(f.speed, 1.1);
-    for (let seg = 0; seg < 10; seg++) {
-      const [ax, ay, ar] = points[seg];
-      const [bx, by, br] = points[(seg + 1) % 10];
-      for (let j = 0; j < samples; j++) {
-        const t = j / samples;
-        const px = (ax * ar) * (1 - t) + (bx * br) * t;
-        const py = (ay * ar) * (1 - t) + (by * br) * t;
-        addP(x, y, px * stretch, py * stretch, pick(palette), {
-          decay: 0.0044 * f.decay, gravity: 0.0028 * f.gravity,
-          friction: Math.min(0.994, f.friction + 0.004), r: 1.55
-        });
-      }
-    }
-    /* Fill each arm from center → tip so outline doesn't look broken */
-    for (let k = 0; k < 5; k++) {
-      const [ox, oy] = points[k * 2];
-      for (let j = 1; j <= armFill; j++) {
-        const t = j / armFill;
-        addP(x, y, ox * stretch * t, oy * stretch * t, pick(palette), {
-          decay: 0.0042 * f.decay, gravity: 0.0028 * f.gravity,
-          friction: Math.min(0.994, f.friction + 0.004), r: 1.35 + t * 0.3
-        });
-      }
-    }
-    for (let i = 0; i < sparkN; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = 0.45 + Math.random() * 0.9;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, '#ffffff', {
-        decay: 0.018 + Math.random() * 0.008, r: 0.8, flicker: true
-      });
-    }
-  }
-  /* Trailing spiral arms — motion identity, tiny colored tip flash */
-  function spiralBurst(x, y, palette, feel) {
-    const f = feel || shellFeel();
-    flash(x, y, palette[0], 34, { intensity: 0.28, soft: true, fade: 0.12 });
-    const twist = rand(2.4, 3.4);
-    for (let a = 0; a < 4; a++) {
-      const armColor = palette[a % palette.length];
-      const armBase = (Math.PI * 2 * a) / 4 + rand(0, 0.4);
-      for (let i = 0; i < 38; i++) {
-        const t = i / 38;
-        const angle = armBase + t * twist;
-        const speed = (0.5 + t * 2.4) * f.speed;
-        addP(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, armColor, {
-          decay: 0.0046 * f.decay, gravity: 0.0035 * f.gravity,
-          friction: 0.98 + (f.friction - 0.978) * 0.4,
-          r: 1.15 + t * 1.35, trailGlow: true
-        });
-      }
-    }
-  }
-  /* Saturn: dense core globe + clear equatorial ring */
-  function saturnBurst(x, y, palette, feel) {
-    const f = feel || shellFeel();
-    flash(x, y, GOLD[0], 44, {
-      intensity: 0.34, soft: true, whiteCore: true, coreScale: 0.14, fade: 0.1
-    });
-    const coreN = 36;
-    for (let i = 0; i < coreN; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = (0.35 + Math.random() * 0.85) * f.speed;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(GOLD), {
-        decay: 0.007 * f.decay, gravity: 0.008 * f.gravity, r: 1.3
-      });
-    }
-    const ringN = 110;
-    const ringSp = 2.35 * f.speed;
-    const tilt = 0.32;
-    for (let i = 0; i < ringN; i++) {
-      const a = (Math.PI * 2 * i) / ringN;
-      const jitter = 0.94 + Math.random() * 0.1;
-      addP(x, y,
-        Math.cos(a) * ringSp * jitter,
-        Math.sin(a) * ringSp * jitter * tilt,
-        pick(palette), {
-          decay: 0.0044 * f.decay, gravity: 0.005 * f.gravity,
-          friction: f.friction, r: 1.5 + Math.random() * 0.5, trailGlow: true
-        });
-    }
-  }
-  /* Color-morph chrys: gold → pink/green → red */
-  function shiftChrys(x, y, feel) {
-    const f = feel || shellFeel();
-    const morph = Math.random() < 0.5
-      ? { from: '#ffd166', mid: '#ff8fd0', to: '#ff5d5d' }
-      : { from: '#ffd980', mid: '#8ee6a0', to: '#ff6b6b' };
-    flash(x, y, morph.from, 50, { intensity: 0.34, soft: true, fade: 0.09 });
-    const n = 112;
-    for (let i = 0; i < n; i++) {
-      const a = (Math.PI * 2 * i) / n + Math.random() * 0.08;
-      const s = (1.9 + Math.random() * 0.6) * f.speed;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, morph.from, {
-        color2: morph.to, colorMid: morph.mid,
-        decay: 0.0036 * f.decay, gravity: 0.008 * f.gravity,
-        friction: f.friction, trailGlow: true, r: 1.7
-      });
-    }
-  }
-  /* Outer particles delay-pop into 4-way splits — bright main break */
-  function crossette(x, y, palette, scale, feel) {
-    const sc = scale || 1;
-    const f = feel || shellFeel();
-    brightFlash(x, y, palette[0], 72 * sc);
-    const n = Math.floor(72 * sc);
-    for (let i = 0; i < n; i++) {
-      const a = (Math.PI * 2 * i) / n + Math.random() * 0.1;
-      const s = 1.85 * sc * f.speed * (0.55 + Math.random() * 0.55);
-      const isOuter = s > 1.35 * sc * f.speed;
-      addP(x, y, Math.cos(a) * s, Math.sin(a) * s, pick(palette), {
-        decay: 0.0065 * f.decay, gravity: 0.01 * f.gravity, friction: f.friction,
-        sub: isOuter && Math.random() < 0.72 ? palette : null,
-        subAt: isOuter ? rand(0.42, 0.68) : null,
-        r: 1.35
-      });
-    }
-  }
-  /* Long golden trails falling — almost no big flash */
-  function goldenWaterfall(cx, cy, feel) {
-    const f = feel || shellFeel();
-    flash(cx, cy, '#ffd980', 28, { intensity: 0.18, soft: true, fade: 0.14 });
-    const span = Math.min(W * 0.78, 460);
-    const n = 105;
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1);
-      const px = cx - span / 2 + span * t;
-      const arc = Math.sin(t * Math.PI) * 32;
-      addP(px, cy - arc, (Math.random() - 0.5) * 0.16, 0.1 + Math.random() * 0.32,
-        pick(GOLD), {
-          decay: (0.0022 + Math.random() * 0.001) * f.decay,
-          gravity: 0.021 * f.gravity, friction: 0.993,
-          flicker: true, r: 1.25 + Math.random(), trailGlow: true
-        });
-    }
-  }
-  /* ---------- 타입 순환 (눈송이 불꽃이 첫 번째) ---------- */
-  const TAP_TYPES = ['snowflake', 'heart', 'shift', 'star', 'spiral', 'saturn', 'crossette', 'waterfall'];
-  /* Stage-2 uses a DIFFERENT shape/palette — not a brighter clone of stage-1 */
-  const STAGE2_MAP = {
-    snowflake: ['willow', 'peony', 'ring', 'star'],
-    /* Gentler secondaries so heart/star silhouette isn't erased instantly */
-    heart: ['willow', 'ring', 'spiral', 'peony'],
-    star: ['willow', 'ring', 'spiral', 'peony'],
-    spiral: ['peony', 'star', 'ring', 'saturn'],
-    saturn: ['peony', 'willow', 'crossette', 'star'],
-    shift: ['peony', 'ring', 'willow', 'heart'],
-    crossette: ['peony', 'star', 'saturn', 'ring'],
-    waterfall: ['willow', 'peony', 'ring', 'saturn']
-  };
-  let tapQueue = [...TAP_TYPES];   /* 첫 바퀴는 고정 순서: 첫 탭은 반드시 눈송이 */
-  let tapIdx = 0;
+  let lastTapType = null;
   function nextTapType() {
-    const t = tapQueue[tapIdx];
-    tapIdx++;
-    if (tapIdx >= tapQueue.length) { tapQueue = shuffle([...TAP_TYPES]); tapIdx = 0; }
-    return t;
+    if (tapQueue.length === 0) refillQueue(lastTapType);
+    lastTapType = tapQueue.pop();
+    return lastTapType;
   }
-  function fireType(type, x, y, palette, feel) {
-    const pal = palette || pick(PALETTES);
-    const f = feel || shellFeel();
-    const p = clampBurstPoint(x, y, shapeBurstMargin(type));
-    x = p.x; y = p.y;
-    if (type === 'snowflake') snowflakeBurst(x, y, f);
-    else if (type === 'heart') heartBurst(x, y, pal, f);
-    else if (type === 'star') starBurst(x, y, pal, f);
-    else if (type === 'spiral') spiralBurst(x, y, pal, f);
-    else if (type === 'saturn') saturnBurst(x, y, pal, f);
-    else if (type === 'shift') shiftChrys(x, y, f);
-    else if (type === 'waterfall') goldenWaterfall(x, Math.min(y, H * 0.4), f);
-    else if (type === 'peony') peonyBurst(x, y, pal, 1, f);
-    else if (type === 'willow') willowBurst(x, y, pal, 1, f);
-    else if (type === 'ring') ringBurst(x, y, pal, 1, f);
-    else crossette(x, y, pal, 1, f);
-    return pal;
-  }
-  function fireStage2(kind, x, y, palette, scale, feel, bright) {
-    const p = clampBurstPoint(x, y, shapeBurstMargin(kind));
-    x = p.x; y = p.y;
-    if (kind === 'peony') peonyBurst(x, y, palette, scale, feel, { bright: !!bright });
-    else if (kind === 'willow') willowBurst(x, y, palette, scale * 0.95, feel);
-    else if (kind === 'ring') ringBurst(x, y, palette, scale, feel);
-    else if (kind === 'crossette') crossette(x, y, palette, scale, feel);
-    else if (kind === 'star') starBurst(x, y, palette, feel);
-    else if (kind === 'spiral') spiralBurst(x, y, palette, feel);
-    else if (kind === 'saturn') saturnBurst(x, y, palette, feel);
-    else if (kind === 'heart') heartBurst(x, y, palette, feel);
-    else peonyBurst(x, y, palette, scale, feel, { bright: !!bright });
-  }
-  /*
-   * Multi-stage shell:
-   *  1) typed first bang
-   *  2) different-shape secondary (later/farther after delicate shapes)
-   *  3) optional brocade glitter
-   */
-  function fireShell(type, x, y) {
-    const feel = shellFeel();
-    const palette = pick(PALETTES);
-    const origin = clampBurstPoint(x, y, shapeBurstMargin(type));
-    x = origin.x; y = origin.y;
-    fireType(type, x, y, palette, feel);
-    if (reduceMotion) return;
-    const delicate = type === 'heart' || type === 'star' || type === 'snowflake';
-    const delay2 = delicate ? (720 + Math.random() * 480) : (350 + Math.random() * 350);
-    const scale2 = delicate
-      ? (0.88 + Math.random() * 0.32)
-      : (1.25 + Math.random() * 0.45);
-    const ox = (Math.random() - 0.5) * Math.min(W * (delicate ? 0.14 : 0.06), delicate ? 110 : 48);
-    const oy = (Math.random() - 0.5) * Math.min(H * (delicate ? 0.1 : 0.04), delicate ? 70 : 32);
-    const stage2Kind = pick(STAGE2_MAP[type] || ['peony', 'ring']);
-    const s2 = clampBurstPoint(x + ox, y + oy, shapeBurstMargin(stage2Kind));
-    const sx = s2.x, sy = s2.y;
-    const pal2 = Math.random() < 0.38 ? GOLD
-      : (Math.random() < 0.45 ? palette : pick(PALETTES));
-    setTimeout(() => {
-      if (particles.length > MAX_PARTICLES * 0.92) return;
-      /* Bigger-bang stage-2: bright peony / crossette, or a pop on large non-delicate shells */
-      const bangBright = scale2 >= 1.2 || stage2Kind === 'peony' || stage2Kind === 'crossette';
-      fireStage2(stage2Kind, sx, sy, pal2, scale2, shellFeel(), bangBright);
-      if (bangBright && !delicate && stage2Kind !== 'peony' && stage2Kind !== 'crossette'
-          && stage2Kind !== 'willow') {
-        brightFlash(sx, sy, pal2[0], 78 * scale2);
+  /* ---------- 자동 발사 + 피날레 ---------- */
+  let nextLaunch = 800;
+  let nextFinale = 14000;
+  function autoLaunch(dt) {
+    nextLaunch -= dt;
+    nextFinale -= dt;
+    if (nextLaunch <= 0) {
+      launchRocket(rand(W * 0.15, W * 0.85), rand(H * 0.14, H * 0.42), pick(TYPES), pick(PALETTES));
+      nextLaunch = reduced ? rand(2600, 4200) : rand(1100, 2300);
+    }
+    if (nextFinale <= 0 && !reduced) {
+      const count = 4 + (Math.random() * 3 | 0);
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          launchRocket(rand(W * 0.1, W * 0.9), rand(H * 0.12, H * 0.4), pick(TYPES), pick(PALETTES));
+        }, i * rand(120, 300));
       }
-      /* Occasional twin accent — different kind again */
-      if (Math.random() < (delicate ? 0.1 : 0.2) && particles.length < MAX_PARTICLES * 0.75) {
-        const twin = pick(['peony', 'ring', 'willow', 'star']);
-        const t2 = clampBurstPoint(
-          sx + (Math.random() - 0.5) * 90,
-          sy + (Math.random() - 0.5) * 60,
-          shapeBurstMargin(twin)
-        );
-        setTimeout(() => fireStage2(twin, t2.x, t2.y, Math.random() < 0.5 ? GOLD : pal2,
-          0.95 + Math.random() * 0.3, shellFeel(), twin === 'peony'), 90 + Math.random() * 140);
-      }
-    }, delay2);
-    if (Math.random() < (delicate ? 0.28 : 0.45)) {
-      const delay3 = delay2 + 220 + Math.random() * 380;
-      setTimeout(() => {
-        if (particles.length > MAX_PARTICLES * 0.9) return;
-        brocadeSparkles(sx, sy, Math.random() < 0.4 ? GOLD : pal2);
-      }, delay3);
+      nextFinale = rand(16000, 24000);
     }
   }
-  /* Tap: first tap stays snowflake; every tap is a multi-stage shell */
-  function rewardTap(x, y) {
-    fireShell(nextTapType(), x, y);
-  }
-  function launch(type) {
-    const rocketType = type || TAP_TYPES[Math.floor(Math.random() * TAP_TYPES.length)];
-    const m = shapeBurstMargin(rocketType);
-    const origin = clampBurstPoint(
-      W * (0.12 + Math.random() * 0.76),
-      H * (0.12 + Math.random() * 0.34),
-      m
-    );
-    rockets.push({
-      x: origin.x, y: H + 10, targetY: origin.y,
-      vy: -(H * 0.0045 + Math.random() * H * 0.0015),
-      wobble: Math.random() * Math.PI * 2,
-      type: rocketType,
-      hue: GOLD[Math.floor(Math.random() * GOLD.length)]
-    });
-  }
-  /* ---------- 피날레: 하늘 가득 겹치는 축포 ---------- */
-  function finale() {
-    const barrage = ['crossette', 'star', 'spiral', 'saturn', 'shift', 'crossette', 'heart', 'star'];
-    for (let i = 0; i < barrage.length; i++) {
-      setTimeout(() => launch(barrage[i]), i * 160);
-    }
-    /* A few sky-wide bright pops — not every shell */
-    setTimeout(() => brightFlash(W * 0.5, H * 0.22, '#fff4d0', 150), 980);
-    setTimeout(() => fireType('snowflake', W * 0.22, H * 0.24), 1050);
-    setTimeout(() => fireType('star', W * 0.5, H * 0.16), 1180);
-    setTimeout(() => fireType('snowflake', W * 0.78, H * 0.26), 1320);
-    setTimeout(() => fireType('heart', W * 0.34, H * 0.3), 1550);
-    setTimeout(() => fireType('spiral', W * 0.66, H * 0.28), 1680);
-    setTimeout(() => {
-      brightFlash(W * 0.5, H * 0.2, GOLD[0], 130);
-      fireType('saturn', W * 0.5, H * 0.2);
-    }, 1820);
-    setTimeout(() => fireType('shift', W * 0.5, H * 0.22), 1980);
-    for (let i = 0; i < 5; i++) {
-      setTimeout(() => launch(i % 2 ? 'crossette' : 'saturn'), 2100 + i * 170);
-    }
-    setTimeout(() => brightFlash(W * 0.42, H * 0.28, '#ffd980', 110), 2450);
-    setTimeout(() => fireType('heart', W * 0.5, H * 0.24), 3000);
-    setTimeout(() => fireType('snowflake', W * 0.28, H * 0.2), 3200);
-    setTimeout(() => fireType('snowflake', W * 0.72, H * 0.18), 3350);
-    setTimeout(() => goldenWaterfall(W * 0.5, H * 0.15), 3600);
-    setTimeout(() => fireType('crossette', W * 0.4, H * 0.26), 3900);
-    setTimeout(() => fireType('crossette', W * 0.6, H * 0.22), 4050);
-    setTimeout(() => brightFlash(W * 0.5, H * 0.24, '#fff8e8', 160), 4100);
-    setTimeout(showMessage, 4400);
-  }
-  /* ---------- 자동 발사: 잦은 리듬 + 가끔 일제 사격 ---------- */
-  let nextAuto = performance.now() + 2600;
-  let autoCount = 0;
-  function schedule(now) {
-    nextAuto = now + 2500 + Math.random() * 2500;
-  }
-  function autoLaunch(now) {
-    const roll = Math.random();
-    if (roll < 0.24) {
-      const n = 2 + (Math.random() < 0.5 ? 1 : 0);
-      for (let i = 0; i < n; i++) {
-        setTimeout(() => launch(), i * (140 + Math.random() * 100));
-      }
-    } else if (roll < 0.42) {
-      launch();
-      setTimeout(() => launch(), 80 + Math.random() * 140);
-    } else {
-      launch();
-    }
-    schedule(now);
-    autoCount++;
-    if (autoCount % 3 === 1) setTimeout(showMessage, 1400);
-  }
-  /* ---------- 터치: 탭 · 꾹 · 드래그(도화선) ---------- */
-  const fuses = [];
-  function igniteFuse(path) {
-    const pts = [path[0]];
-    for (let i = 1; i < path.length; i++) {
-      const prev = pts[pts.length - 1];
-      if (Math.hypot(path[i].x - prev.x, path[i].y - prev.y) >= 10) pts.push(path[i]);
-    }
-    if (pts.length > 1) fuses.push({ pts, idx: 0 });
-  }
-  let pressTimer = null;
-  let longPressed = false;
-  let dragging = false;
-  let activePointerId = null;
-  let dragPath = [];
-  let dragLen = 0;
-  const pointerOpts = { passive: false };
-  function endDrag(e) {
-    clearTimeout(pressTimer);
-    if (activePointerId != null) {
-      try { fxCanvas.releasePointerCapture?.(activePointerId); } catch (_) {}
-      activePointerId = null;
-    }
-    const wasDragging = dragging;
-    dragging = false;
-    if (!wasDragging || longPressed) return;
-    if (dragLen < 20) {
-      rewardTap(e.clientX, Math.min(e.clientY, H * 0.78));
-    } else {
-      igniteFuse(dragPath.slice());
+  /* ---------- 터치/클릭 ---------- */
+  const hint = document.getElementById('hint');
+  let touched = false;
+  fwC.addEventListener('pointerdown', e => {
+    if (!touched) { touched = true; hint.classList.add('gone'); }
+    explode(e.clientX, e.clientY, nextTapType(), pick(PALETTES));
+  });
+  /* ---------- 눈 ---------- */
+  const flakes = [];
+  function initSnow() {
+    flakes.length = 0;
+    const n = reduced ? 45 : Math.min(140, (window.innerWidth * window.innerHeight) / 12000 | 0);
+    for (let i = 0; i < n; i++) {
+      flakes.push({
+        x: Math.random() * W, y: Math.random() * H,
+        r: rand(0.8, 2.6), sp: rand(0.18, 0.65),
+        sway: rand(0.4, 1.4), ph: Math.random() * Math.PI * 2,
+        a: rand(0.25, 0.85)
+      });
     }
   }
-  window.addEventListener('pointerdown', (e) => {
-    if (e.isPrimary === false) return;
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    e.preventDefault();
-    activePointerId = e.pointerId;
-    try { (e.target || fxCanvas).setPointerCapture?.(e.pointerId); } catch (_) {}
-    try { fxCanvas.setPointerCapture?.(e.pointerId); } catch (_) {}
-    longPressed = false;
-    dragging = true;
-    dragPath = [{ x: e.clientX, y: e.clientY }];
-    dragLen = 0;
-    pressTimer = setTimeout(() => {
-      if (dragLen < 14) { longPressed = true; finale(); }
-    }, 450);
-  }, pointerOpts);
-  window.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
-    if (activePointerId != null && e.pointerId !== activePointerId) return;
-    e.preventDefault();
-    const lastP = dragPath[dragPath.length - 1];
-    const d = Math.hypot(e.clientX - lastP.x, e.clientY - lastP.y);
-    if (d < 6) return;
-    dragLen += d;
-    dragPath.push({ x: e.clientX, y: e.clientY });
-    for (let i = 0; i < 3; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = 0.3 + Math.random() * 0.7;
-      addP(e.clientX, e.clientY, Math.cos(a) * s, Math.sin(a) * s,
-        GOLD[Math.floor(Math.random() * GOLD.length)], {
-          decay: 0.028 + Math.random() * 0.02,
-          r: 0.9 + Math.random(), flicker: true, gravity: 0.015
-        });
+  initSnow();
+  window.addEventListener('resize', initSnow);
+  function drawSnow(t) {
+    sx.clearRect(0, 0, W, H);
+    sx.fillStyle = '#eaf2ff';
+    for (const f of flakes) {
+      f.y += f.sp;
+      f.x += Math.sin(t / 1800 + f.ph) * f.sway * 0.3;
+      if (f.y > H + 4) { f.y = -4; f.x = Math.random() * W; }
+      if (f.x > W + 4) f.x = -4; else if (f.x < -4) f.x = W + 4;
+      sx.globalAlpha = f.a;
+      sx.beginPath();
+      sx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      sx.fill();
     }
-  }, pointerOpts);
-  window.addEventListener('pointerup', (e) => {
-    if (activePointerId != null && e.pointerId !== activePointerId) return;
-    e.preventDefault();
-    endDrag(e);
-  }, pointerOpts);
-  window.addEventListener('pointercancel', (e) => {
-    clearTimeout(pressTimer);
-    if (activePointerId != null) {
-      try { fxCanvas.releasePointerCapture?.(activePointerId); } catch (_) {}
-      activePointerId = null;
-    }
-    dragging = false;
-  }, pointerOpts);
-  // iOS Safari: block scroll/pull-to-refresh when a stroke is active
-  window.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) e.preventDefault();
-  }, pointerOpts);
-  window.addEventListener('touchmove', (e) => {
-    if (dragging) e.preventDefault();
-  }, pointerOpts);
-  window.addEventListener('contextmenu', (e) => e.preventDefault());
-  /* ---------- 렌더 ---------- */
+    sx.globalAlpha = 1;
+  }
+  /* ---------- 별 ---------- */
+  const stars = [];
+  for (let i = 0; i < 90; i++) {
+    stars.push({ x: Math.random(), y: Math.random() * 0.7, r: rand(0.4, 1.3), tw: Math.random() * Math.PI * 2 });
+  }
+  /* ---------- 메인 루프 ---------- */
   let last = performance.now();
-  function frame(now) {
-    const dt = Math.min((now - last) / 16.7, 3);
-    last = now;
-    const t = now * 0.001;
-    /* === 불꽃 캔버스: 잔광 페이드 === */
+  function frame(t) {
+    const dt = Math.min(t - last, 50);
+    last = t;
+    autoLaunch(dt);
     fx.globalCompositeOperation = 'destination-out';
-    fx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+    fx.fillStyle = 'rgba(4,5,12,0.22)';
     fx.fillRect(0, 0, W, H);
     fx.globalCompositeOperation = 'lighter';
-    if (!reduceMotion) {
-      if (now > nextAuto) autoLaunch(now);
-      for (let i = flashes.length - 1; i >= 0; i--) {
-        const f = flashes[i];
-        f.r += (f.maxR - f.r) * (f.grow || 0.34) * dt;
-        f.life -= (f.fade || 0.095) * dt;
-        if (f.life <= 0) { flashes.splice(i, 1); continue; }
-        const g = fx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
-        const coreA = f.soft ? '66' : (f.color === '#ffffff' ? '99' : '88');
-        const midA = f.soft ? '33' : '44';
-        g.addColorStop(0, f.color + coreA);
-        g.addColorStop(0.4, f.color + midA);
-        g.addColorStop(1, 'transparent');
-        fx.globalAlpha = f.life * (f.intensity != null ? f.intensity : 0.4);
-        fx.fillStyle = g;
-        fx.beginPath();
-        fx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-        fx.fill();
-      }
-      fx.globalAlpha = 1;
-      for (let i = rockets.length - 1; i >= 0; i--) {
-        const r = rockets[i];
-        const prevY = r.y;
-        r.y += r.vy * dt * 4;
-        r.x += Math.sin(now * 0.01 + r.wobble) * 0.3 * dt;
-        r.vy *= 0.996;
-        /* Bright rising trail before the break */
-        fx.strokeStyle = r.hue || '#ffe9b8';
-        fx.globalAlpha = 0.55;
-        fx.lineWidth = 2.2;
-        fx.beginPath();
-        fx.moveTo(r.x, prevY + 10);
-        fx.lineTo(r.x, r.y);
-        fx.stroke();
-        fx.globalAlpha = 0.9;
-        fx.fillStyle = '#fff6d8';
-        fx.beginPath();
-        fx.arc(r.x, r.y, 2.1, 0, Math.PI * 2);
-        fx.fill();
-        fx.globalAlpha = 1;
-        if (Math.random() < 0.55 && particles.length < MAX_PARTICLES) {
-          addP(r.x, r.y + 4, (Math.random() - 0.5) * 0.25, 0.4 + Math.random() * 0.5,
-            r.hue || '#ffd980', {
-              decay: 0.04, r: 0.9 + Math.random() * 0.6,
-              gravity: 0.02, flicker: true
-            });
-        }
-        if (r.y <= r.targetY || r.vy > -0.5) {
-          fireShell(r.type, r.x, r.y);
-          rockets.splice(i, 1);
-        }
-      }
-      for (let i = fuses.length - 1; i >= 0; i--) {
-        const fu = fuses[i];
-        let steps = Math.ceil(1.6 * dt);
-        while (steps-- > 0 && fu.idx < fu.pts.length) {
-          const pt = fu.pts[fu.idx];
-          for (let k = 0; k < 4; k++) {
-            const a = Math.random() * Math.PI * 2;
-            const s = 0.4 + Math.random() * 1;
-            addP(pt.x, pt.y, Math.cos(a) * s, Math.sin(a) * s, '#fff3d6', {
-              decay: 0.04, r: 1 + Math.random(), flicker: true
-            });
-          }
-          fu.idx++;
-        }
-        if (fu.idx >= fu.pts.length) {
-          const end = fu.pts[fu.pts.length - 1];
-          rewardTap(end.x, Math.min(end.y, H * 0.85));
-          if (fu.pts.length > 26) {
-            const mid = fu.pts[Math.floor(fu.pts.length / 2)];
-            setTimeout(() => rewardTap(mid.x, Math.min(mid.y, H * 0.85)), 250);
-          }
-          fuses.splice(i, 1);
-        }
-      }
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.vx = p.vx * p.friction + p.drift * dt;
-        p.vy = p.vy * p.friction + p.gravity * dt;
-        p.life -= p.decay * dt;
-        /* Crossette: delayed secondary pops while still in flight */
-        if (p.sub && p.subAt != null && p.life <= p.subAt) {
-          crossettePop(p.x, p.y, p.sub);
-          p.sub = null;
-          p.subAt = null;
-        }
-        if (p.life <= 0) {
-          if (p.sub) miniBurst(p.x, p.y, p.sub);
-          particles.splice(i, 1);
-          continue;
-        }
-        let alpha = p.life < 0.35 ? p.life / 0.35 : 1;
-        if (p.flicker && Math.random() < 0.35) alpha *= 0.2;
-        let col = p.color;
-        if (p.color2) {
-          if (p.colorMid && p.life < 0.72 && p.life >= 0.42) col = p.colorMid;
-          else if (p.life < 0.42) col = p.color2;
-        }
-        fx.globalAlpha = alpha * 0.95;
-        fx.fillStyle = col;
-        fx.beginPath();
-        fx.arc(p.x, p.y, p.r * (0.55 + p.life * 0.45), 0, Math.PI * 2);
-        fx.fill();
-      }
-      fx.globalAlpha = 1;
-    }
-    fx.globalCompositeOperation = 'source-over';
-    /* === 눈 캔버스: 매 프레임 새로 (또렷한 눈) === */
-    sc.clearRect(0, 0, W, H);
     for (const s of stars) {
-      const tw = reduceMotion ? 1 : (0.65 + 0.35 * Math.sin(t * s.speed + s.phase));
-      sc.globalAlpha = s.base * tw;
-      sc.fillStyle = '#eef1fa';
-      sc.beginPath();
-      sc.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
-      sc.fill();
+      const tw = 0.35 + 0.35 * Math.sin(t / 900 + s.tw);
+      fx.globalAlpha = tw;
+      fx.fillStyle = '#dfe8ff';
+      fx.beginPath();
+      fx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+      fx.fill();
     }
-    sc.globalAlpha = 1;
-    for (const f of flakes) {
-      f.y += (f.vy / H) * dt * 1.6;
-      f.sway += f.swaySpeed * 0.016 * dt;
-      const fxpos = (f.x + Math.sin(f.sway) * f.swayAmp * 0.03) * W;
-      const fypos = f.y * H;
-      if (f.y > 1.03) Object.assign(f, newFlake(false));
-      sc.globalAlpha = f.alpha;
-      sc.fillStyle = '#f4f7ff';
-      sc.beginPath();
-      sc.arc(fxpos, fypos, f.r, 0, Math.PI * 2);
-      sc.fill();
+    fx.globalAlpha = 1;
+    for (let i = flashes.length - 1; i >= 0; i--) {
+      const f = flashes[i];
+      f.r += (f.max - f.r) * 0.25;
+      f.a *= 0.82;
+      if (f.a < 0.01) { flashes.splice(i, 1); continue; }
+      const g = fx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+      g.addColorStop(0, 'rgba(255,250,235,' + f.a + ')');
+      g.addColorStop(1, 'rgba(255,250,235,0)');
+      fx.fillStyle = g;
+      fx.beginPath(); fx.arc(f.x, f.y, f.r, 0, Math.PI * 2); fx.fill();
     }
-    sc.globalAlpha = 1;
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const r = rockets[i];
+      r.x += r.vx * (dt / 16.7);
+      r.y += r.vy * (dt / 16.7);
+      r.vy += 0.012 * (dt / 16.7);
+      fx.fillStyle = '#ffdf9e';
+      fx.globalAlpha = 0.9;
+      fx.beginPath(); fx.arc(r.x, r.y, 1.8, 0, Math.PI * 2); fx.fill();
+      fx.globalAlpha = 0.35;
+      fx.beginPath(); fx.arc(r.x + rand(-1.2,1.2), r.y + rand(2,9), 1, 0, Math.PI * 2); fx.fill();
+      fx.globalAlpha = 1;
+      if (Math.random() < 0.5) {
+        spawnParticle({
+          x: r.x + rand(-1, 1), y: r.y + rand(1, 4),
+          vx: rand(-0.3, 0.3), vy: rand(0.4, 1),
+          g: 0.005, drag: 0.98, life: rand(18, 32), age: 0,
+          size: rand(0.6, 1.1), color: '#ffcf8a', trail: false, twinkle: false
+        });
+      }
+      if (r.y <= r.ty || r.vy > -1.2) {
+        explode(r.x, r.y, r.type, r.palette);
+        rockets.splice(i, 1);
+      }
+    }
+    const k = dt / 16.7;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.age += k;
+      if (p.age >= p.life) {
+        if (p.split) splitStar(p);
+        particles.splice(i, 1);
+        continue;
+      }
+      // 나선용 소용돌이
+      if (p.curl) {
+        const cvx = p.vx, cvy = p.vy;
+        const ca = p.curl * k;
+        p.vx = cvx * Math.cos(ca) - cvy * Math.sin(ca);
+        p.vy = cvx * Math.sin(ca) + cvy * Math.cos(ca);
+      }
+      p.vx *= Math.pow(p.drag, k);
+      p.vy = p.vy * Math.pow(p.drag, k) + p.g * k;
+      p.x += p.vx * k;
+      p.y += p.vy * k;
+      const lifeRatio = 1 - p.age / p.life;
+      let alpha = lifeRatio;
+      if (p.twinkle) alpha *= (Math.random() < 0.25 ? 1 : 0.35 + 0.5 * Math.random());
+      if (p.willow) alpha = Math.min(1, lifeRatio * 1.4);
+      // 변색
+      const col = (p.color2 && p.age > p.life * 0.45) ? p.color2 : p.color;
+      fx.globalAlpha = Math.max(alpha, 0);
+      fx.fillStyle = col;
+      if (p.trail) {
+        const tl = p.willow ? 6 : 3.4;
+        fx.strokeStyle = col;
+        fx.lineWidth = p.size;
+        fx.lineCap = 'round';
+        fx.beginPath();
+        fx.moveTo(p.x - p.vx * tl, p.y - p.vy * tl);
+        fx.lineTo(p.x, p.y);
+        fx.stroke();
+      } else {
+        fx.beginPath();
+        fx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        fx.fill();
+      }
+    }
+    fx.globalAlpha = 1;
+    fx.globalCompositeOperation = 'source-over';
+    drawSnow(t);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  /* ---------- 오프닝: 고요한 눈, 그리고 첫 문장 ---------- */
-  setTimeout(showMessage, 4200);
-  if (reduceMotion) {
-    setInterval(showMessage, 11000);
+  /* ---------- 힐링 글귀 ---------- */
+  const QUOTES = [
+    ['오늘 하루, 버텨낸 것만으로도\n당신은 충분히 잘했습니다.', '수고했어요, 정말로'],
+    ['화가 났던 일은 저 폭죽처럼\n터뜨리고 흩어 보내세요.', '내일의 나에게는 가볍게'],
+    ['남들이 몰라줘도 괜찮아요.\n오늘의 최선은 내가 알고 있으니까.', '나는 나의 증인'],
+    ['퇴근길의 이 하늘은\n오늘을 견딘 사람에게만 보입니다.', '지금, 당신의 하늘'],
+    ['느리게 가도 괜찮습니다.\n눈송이도 서두르지 않고 내려앉아요.', '천천히, 그러나 분명히'],
+    ['오늘의 분노는 여기 두고 가세요.\n집에는 편안함만 가져가기로 해요.', '마음의 짐 내려놓기'],
+    ['완벽하지 않아도\n오늘의 당신은 이미 빛나고 있어요.', '저 불꽃처럼'],
+    ['잘 참았고, 잘 견뎠고,\n잘 살아낸 하루였습니다.', '토닥토닥'],
+    ['내일 걱정은 내일의 나에게 맡기고\n지금은 이 하늘만 바라봐요.', '오늘은 여기까지'],
+    ['당신이 무너지지 않고 걸어온 길이\n누군가에겐 기적입니다.', '스스로를 안아주세요'],
+    ['쉬어가는 것도 성실함의 일부입니다.\n오늘 밤은 마음 놓고 쉬세요.', '충전 중'],
+    ['이 폭죽은 전부\n오늘도 고생한 당신을 위한 것입니다.', '축하해요, 하루의 완주를'],
+  ];
+  const qEl = document.getElementById('quote');
+  const qLine = document.getElementById('quoteLine');
+  const qSub = document.getElementById('quoteSub');
+  let qi = Math.random() * QUOTES.length | 0;
+  function showQuote() {
+    const [line, sub] = QUOTES[qi % QUOTES.length];
+    qi++;
+    qLine.innerHTML = line.split('\n').join('<br>');
+    qSub.textContent = sub;
+    qEl.classList.add('show');
+    setTimeout(() => qEl.classList.remove('show'), 7000);
+    setTimeout(showQuote, 11000);
   }
+  setTimeout(showQuote, 2500);
+  setTimeout(() => {
+    launchRocket(W * 0.5, H * 0.25, 'peony2', PALETTES[2]);
+  }, 600);
 })();
 </script>
 </body>
