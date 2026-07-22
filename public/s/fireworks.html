@@ -10,6 +10,7 @@
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; overflow:hidden; background:#05070f; }
   body { font-family:'Gowun Batang', serif; -webkit-tap-highlight-color:transparent; }
+
   #sky {
     position:fixed; inset:0;
     background:
@@ -17,13 +18,16 @@
       radial-gradient(ellipse 80% 50% at 20% -10%, rgba(20,30,66,.6) 0%, transparent 60%),
       linear-gradient(180deg, #04050c 0%, #070a18 45%, #0b0f24 78%, #101331 100%);
   }
+
   canvas { position:fixed; inset:0; display:block; }
   #fw   { z-index:3; }
   #snow { z-index:4; pointer-events:none; }
+
   #city {
     position:fixed; left:0; right:0; bottom:0; height:18vh; min-height:110px;
     z-index:2; pointer-events:none;
   }
+
   #quote {
     position:fixed; left:50%; top:16%;
     transform:translateX(-50%);
@@ -45,6 +49,7 @@
     font-size:clamp(.78rem, 2vw, .95rem);
     letter-spacing:.28em; color:rgba(244,234,216,.55); font-weight:400;
   }
+
   #hint {
     position:fixed; left:50%; bottom:20vh; transform:translateX(-50%);
     z-index:6; pointer-events:none;
@@ -55,6 +60,7 @@
   }
   @keyframes hintPulse { 0%,100%{opacity:.35} 50%{opacity:.85} }
   #hint.gone { opacity:0 !important; animation:none; }
+
   @media (prefers-reduced-motion: reduce) {
     #hint { animation:none; opacity:.6; }
   }
@@ -65,22 +71,28 @@
 <canvas id="city"></canvas>
 <canvas id="fw"></canvas>
 <canvas id="snow"></canvas>
+
 <div id="quote" aria-live="polite">
   <div class="line" id="quoteLine"></div>
   <div class="sub" id="quoteSub"></div>
 </div>
 <div id="hint">하늘 어디든 손끝을 대어 보세요 · 누를 때마다 다른 폭죽이 핍니다</div>
+
 <script>
 (() => {
   'use strict';
+
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   const fwC = document.getElementById('fw');
   const snowC = document.getElementById('snow');
   const cityC = document.getElementById('city');
   const fx = fwC.getContext('2d');
   const sx = snowC.getContext('2d');
+
   let W = 0, H = 0;
+
   /* ---------- 도시 실루엣 ---------- */
   function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
   function drawCity() {
@@ -90,10 +102,12 @@
     c.style.width = cw + 'px'; c.style.height = ch + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ctx.clearRect(0, 0, cw, ch);
+
     const g = ctx.createLinearGradient(0, 0, 0, ch);
     g.addColorStop(0, 'rgba(255,190,120,0)');
     g.addColorStop(1, 'rgba(255,170,90,.07)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+
     const rng = mulberry(20260722);
     let x = -10;
     ctx.fillStyle = '#04040a';
@@ -118,6 +132,7 @@
       }
     }
   }
+
   function resize() {
     W = window.innerWidth; H = window.innerHeight;
     for (const c of [fwC, snowC]) {
@@ -129,6 +144,7 @@
   }
   window.addEventListener('resize', resize);
   resize();
+
   /* ---------- 색상 팔레트 ---------- */
   const PALETTES = [
     ['#ffd873','#ffb347','#fff3c4','#ff9d5c'],            // 황금
@@ -141,16 +157,20 @@
     ['#ff9d5c','#ffdf9e','#ff5e6c','#fff3c4'],            // 노을
   ];
   const GOLD = PALETTES[0];
+
   const rockets = [];
   const particles = [];
   const flashes = [];
   const MAX_P = reduced ? 900 : 3000;
+
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = arr => arr[(Math.random() * arr.length) | 0];
+
   function spawnParticle(o) {
     if (particles.length >= MAX_P) particles.shift();
     particles.push(o);
   }
+
   function launchRocket(tx, ty, type, palette) {
     const sxp = tx + rand(-30, 30);
     rockets.push({
@@ -162,6 +182,7 @@
       life: 0
     });
   }
+
   /* ---------- 모양 좌표 생성 유틸 ---------- */
   // 파라메트릭 곡선을 방향벡터 배열로
   function heartDirs(n) {
@@ -203,6 +224,73 @@
     }
     return dirs;
   }
+  // 눈결정: 6각 대칭, 중심 줄기 + 곁가지
+  // spineN: 줄기 점 개수, branches: [위치(0~1), 길이, 점수] 배열, hex: 육각 테두리, tips: 끝 장식
+  function flakeDirs(opts) {
+    const pts = [];
+    const arms = 6;
+    const rot0 = opts.rot || 0;
+    for (let ar = 0; ar < arms; ar++) {
+      const a = rot0 + (ar / arms) * Math.PI * 2;
+      const ux = Math.cos(a), uy = Math.sin(a);
+      // 중심 줄기
+      for (let i = 0; i < opts.spineN; i++) {
+        const t = 0.12 + (i / (opts.spineN - 1)) * 0.88;
+        pts.push([ux * t, uy * t]);
+      }
+      // 곁가지 (±60도)
+      for (const [pos, len, bn] of opts.branches) {
+        for (const sign of [1, -1]) {
+          const ba = a + sign * Math.PI / 3;
+          const bx = Math.cos(ba), by = Math.sin(ba);
+          for (let i = 1; i <= bn; i++) {
+            const bt = (i / bn) * len;
+            pts.push([ux * pos + bx * bt, uy * pos + by * bt]);
+          }
+        }
+      }
+      // 끝 장식: 팔 끝에 작은 점 무리
+      if (opts.tips) {
+        for (let i = 0; i < opts.tips; i++) {
+          const ta = a + rand(-0.25, 0.25);
+          const tr = 1 + rand(0, 0.08);
+          pts.push([Math.cos(ta) * tr, Math.sin(ta) * tr]);
+        }
+      }
+    }
+    // 육각 테두리: 팔 끝을 잇는 선
+    if (opts.hex) {
+      const hr = opts.hex;
+      for (let ar = 0; ar < arms; ar++) {
+        const a0 = rot0 + (ar / arms) * Math.PI * 2;
+        const a1 = rot0 + ((ar + 1) / arms) * Math.PI * 2;
+        const x0 = Math.cos(a0) * hr, y0 = Math.sin(a0) * hr;
+        const x1 = Math.cos(a1) * hr, y1 = Math.sin(a1) * hr;
+        const segN = opts.hexN || 7;
+        for (let i = 1; i < segN; i++) {
+          const f = i / segN;
+          pts.push([x0 * (1 - f) + x1 * f, y0 * (1 - f) + y1 * f]);
+        }
+      }
+    }
+    // 중심 육각 코어
+    if (opts.core) {
+      for (let ar = 0; ar < arms; ar++) {
+        const a = rot0 + (ar / arms) * Math.PI * 2 + Math.PI / 6;
+        pts.push([Math.cos(a) * opts.core, Math.sin(a) * opts.core]);
+      }
+    }
+    return pts;
+  }
+
+  // 얼음 팔레트: 흰빛·얼음빛·은보라
+  const ICE = [
+    ['#ffffff','#dff4ff','#b8e6ff','#eafaff'],
+    ['#f4f8ff','#c9e9ff','#9ad9ff','#ffffff'],
+    ['#ffffff','#e6e0ff','#c4baff','#f0ecff'],
+    ['#eafcff','#aee8f5','#ffffff','#d0f4ff'],
+  ];
+
   function shapeBurst(x, y, dirs, palette, opt = {}) {
     const speed = opt.speed || 5.2;
     for (const [dx, dy] of dirs) {
@@ -215,15 +303,34 @@
         life: rand(opt.lifeMin || 80, opt.lifeMax || 120), age: 0,
         size: rand(1.5, 2.4), color: opt.solid ? palette[0] : pick(palette),
         trail: true, twinkle: opt.twinkle || false,
-        color2: opt.color2 || null
+        color2: opt.color2 || null,
+        curl: opt.curlAll || 0
       });
     }
   }
+
+  // 눈결정 중심의 얼음빛 심장: 은은한 광채 + 흩날리는 서리 가루
+  function iceHeart(x, y, N) {
+    flashes.push({ x, y, r: 0, max: rand(90, 140), a: 0.35, cool: true });
+    const n = 30 * N | 0;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = Math.random() * 1.2;
+      spawnParticle({
+        x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp + 0.1,
+        g: 0.004, drag: 0.988, life: rand(70, 120), age: 0,
+        size: rand(0.7, 1.4), color: pick(['#ffffff','#dff4ff','#eafaff']),
+        trail: false, twinkle: true
+      });
+    }
+  }
+
   /* ---------- 폭발: 13종 ---------- */
   function explode(x, y, type, palette) {
     flashes.push({ x, y, r: 0, max: rand(120, 200), a: 0.5 });
     const [c1] = palette;
     const N = reduced ? 0.5 : 1;
+
     switch (type) {
       case 'chrys': { // ① 국화: 꼬리 긴 구형 대폭발
         const n = 190 * N | 0;
@@ -392,6 +499,70 @@
         }
         break;
       }
+      case 'flakeDendrite': { // ❄① 가지 눈결정: 곁가지가 풍성한 고전 결정
+        const pal = pick(ICE);
+        const dirs = flakeDirs({
+          rot: rand(0, Math.PI / 3), spineN: 14 * N + 6 | 0,
+          branches: [[0.42, 0.3, 5], [0.62, 0.26, 4], [0.8, 0.2, 3]],
+          tips: 3, core: 0.1
+        });
+        shapeBurst(x, y, dirs, pal, {
+          speed: rand(4.2, 5), jitter: 0.02, g: 0.007, drag: 0.991,
+          lifeMin: 130, lifeMax: 180, twinkle: false, curlAll: rand(-0.006, 0.006)
+        });
+        iceHeart(x, y, N);
+        break;
+      }
+      case 'flakeStellar': { // ❄② 성판 눈결정: 육각 테두리가 팔 끝을 잇는 별판형
+        const pal = pick(ICE);
+        const dirs = flakeDirs({
+          rot: rand(0, Math.PI / 3), spineN: 12 * N + 5 | 0,
+          branches: [[0.55, 0.22, 4]],
+          hex: 0.62, hexN: 8, tips: 4, core: 0.12
+        });
+        shapeBurst(x, y, dirs, pal, {
+          speed: rand(4.4, 5.2), jitter: 0.015, g: 0.007, drag: 0.991,
+          lifeMin: 130, lifeMax: 175, curlAll: rand(-0.005, 0.005)
+        });
+        iceHeart(x, y, N);
+        break;
+      }
+      case 'flakeFern': { // ❄③ 고사리 눈결정: 깃털처럼 촘촘한 곁가지, 가장 화려함
+        const pal = pick(ICE);
+        const dirs = flakeDirs({
+          rot: rand(0, Math.PI / 3), spineN: 15 * N + 6 | 0,
+          branches: [[0.3, 0.22, 4], [0.46, 0.28, 5], [0.62, 0.24, 4], [0.78, 0.18, 3], [0.9, 0.12, 2]],
+          tips: 2
+        });
+        shapeBurst(x, y, dirs, pal, {
+          speed: rand(4.4, 5.4), jitter: 0.02, g: 0.006, drag: 0.992,
+          lifeMin: 145, lifeMax: 200, curlAll: rand(-0.007, 0.007)
+        });
+        iceHeart(x, y, N);
+        break;
+      }
+      case 'flakeLace': { // ❄④ 레이스 눈결정: 안팎 이중 육각과 12갈래 잔가시
+        const pal = pick(ICE);
+        // 바깥 결정
+        const outer = flakeDirs({
+          rot: 0, spineN: 10 * N + 5 | 0,
+          branches: [[0.68, 0.2, 3]], hex: 0.8, hexN: 9, tips: 3
+        });
+        // 안쪽 결정: 30도 어긋난 작은 결정
+        const inner = flakeDirs({
+          rot: Math.PI / 6, spineN: 6 * N + 4 | 0,
+          branches: [], hex: 0.42, hexN: 6, core: 0.1
+        }).map(([px, py]) => [px * 0.5, py * 0.5]);
+        shapeBurst(x, y, outer, pal, {
+          speed: rand(4.6, 5.4), jitter: 0.015, g: 0.007, drag: 0.991,
+          lifeMin: 130, lifeMax: 175, curlAll: 0.006
+        });
+        shapeBurst(x, y, inner, ['#ffffff','#f0faff','#dff4ff','#ffffff'], {
+          speed: rand(4.6, 5.4), jitter: 0.015, g: 0.007, drag: 0.991,
+          lifeMin: 130, lifeMax: 175, curlAll: -0.008, twinkle: true
+        });
+        break;
+      }
       case 'peony2': { // ⑬ 이중 피오니: 안팎 두 색의 겹폭발
         const inner = pick(PALETTES);
         for (const [pal, spMin, spMax, cnt] of [[palette, 4.4, 7, 130 * N | 0], [inner, 1.6, 3, 90 * N | 0]]) {
@@ -410,6 +581,7 @@
       }
     }
   }
+
   function splitStar(p) {
     for (let i = 0; i < 4; i++) {
       const a = (i / 4) * Math.PI * 2 + rand(0, Math.PI / 2);
@@ -423,7 +595,9 @@
       });
     }
   }
-  const TYPES = ['chrys','willow','heart','star5','spiral','saturn','butterfly','palm','shift','wave','crossette','crackle','peony2'];
+
+  const TYPES = ['chrys','willow','heart','star5','spiral','saturn','butterfly','palm','shift','wave','crossette','crackle','peony2','flakeDendrite','flakeStellar','flakeFern','flakeLace'];
+
   /* ---------- 터치 순환 큐: 누를 때마다 반드시 새로운 모양 ---------- */
   let tapQueue = [];
   function refillQueue(lastType) {
@@ -443,6 +617,7 @@
     lastTapType = tapQueue.pop();
     return lastTapType;
   }
+
   /* ---------- 자동 발사 + 피날레 ---------- */
   let nextLaunch = 800;
   let nextFinale = 14000;
@@ -463,6 +638,7 @@
       nextFinale = rand(16000, 24000);
     }
   }
+
   /* ---------- 터치/클릭 ---------- */
   const hint = document.getElementById('hint');
   let touched = false;
@@ -470,6 +646,7 @@
     if (!touched) { touched = true; hint.classList.add('gone'); }
     explode(e.clientX, e.clientY, nextTapType(), pick(PALETTES));
   });
+
   /* ---------- 눈 ---------- */
   const flakes = [];
   function initSnow() {
@@ -486,6 +663,7 @@
   }
   initSnow();
   window.addEventListener('resize', initSnow);
+
   function drawSnow(t) {
     sx.clearRect(0, 0, W, H);
     sx.fillStyle = '#eaf2ff';
@@ -501,20 +679,25 @@
     }
     sx.globalAlpha = 1;
   }
+
   /* ---------- 별 ---------- */
   const stars = [];
   for (let i = 0; i < 90; i++) {
     stars.push({ x: Math.random(), y: Math.random() * 0.7, r: rand(0.4, 1.3), tw: Math.random() * Math.PI * 2 });
   }
+
   /* ---------- 메인 루프 ---------- */
   let last = performance.now();
   function frame(t) {
     const dt = Math.min(t - last, 50);
     last = t;
+
     autoLaunch(dt);
+
     fx.globalCompositeOperation = 'destination-out';
     fx.fillStyle = 'rgba(4,5,12,0.22)';
     fx.fillRect(0, 0, W, H);
+
     fx.globalCompositeOperation = 'lighter';
     for (const s of stars) {
       const tw = 0.35 + 0.35 * Math.sin(t / 900 + s.tw);
@@ -525,22 +708,26 @@
       fx.fill();
     }
     fx.globalAlpha = 1;
+
     for (let i = flashes.length - 1; i >= 0; i--) {
       const f = flashes[i];
       f.r += (f.max - f.r) * 0.25;
       f.a *= 0.82;
       if (f.a < 0.01) { flashes.splice(i, 1); continue; }
       const g = fx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
-      g.addColorStop(0, 'rgba(255,250,235,' + f.a + ')');
-      g.addColorStop(1, 'rgba(255,250,235,0)');
+      const fc = f.cool ? '210,238,255' : '255,250,235';
+      g.addColorStop(0, 'rgba(' + fc + ',' + f.a + ')');
+      g.addColorStop(1, 'rgba(' + fc + ',0)');
       fx.fillStyle = g;
       fx.beginPath(); fx.arc(f.x, f.y, f.r, 0, Math.PI * 2); fx.fill();
     }
+
     for (let i = rockets.length - 1; i >= 0; i--) {
       const r = rockets[i];
       r.x += r.vx * (dt / 16.7);
       r.y += r.vy * (dt / 16.7);
       r.vy += 0.012 * (dt / 16.7);
+
       fx.fillStyle = '#ffdf9e';
       fx.globalAlpha = 0.9;
       fx.beginPath(); fx.arc(r.x, r.y, 1.8, 0, Math.PI * 2); fx.fill();
@@ -555,11 +742,13 @@
           size: rand(0.6, 1.1), color: '#ffcf8a', trail: false, twinkle: false
         });
       }
+
       if (r.y <= r.ty || r.vy > -1.2) {
         explode(r.x, r.y, r.type, r.palette);
         rockets.splice(i, 1);
       }
     }
+
     const k = dt / 16.7;
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
@@ -580,14 +769,18 @@
       p.vy = p.vy * Math.pow(p.drag, k) + p.g * k;
       p.x += p.vx * k;
       p.y += p.vy * k;
+
       const lifeRatio = 1 - p.age / p.life;
       let alpha = lifeRatio;
       if (p.twinkle) alpha *= (Math.random() < 0.25 ? 1 : 0.35 + 0.5 * Math.random());
       if (p.willow) alpha = Math.min(1, lifeRatio * 1.4);
+
       // 변색
       const col = (p.color2 && p.age > p.life * 0.45) ? p.color2 : p.color;
+
       fx.globalAlpha = Math.max(alpha, 0);
       fx.fillStyle = col;
+
       if (p.trail) {
         const tl = p.willow ? 6 : 3.4;
         fx.strokeStyle = col;
@@ -605,10 +798,12 @@
     }
     fx.globalAlpha = 1;
     fx.globalCompositeOperation = 'source-over';
+
     drawSnow(t);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+
   /* ---------- 힐링 글귀 ---------- */
   const QUOTES = [
     ['오늘 하루, 버텨낸 것만으로도\n당신은 충분히 잘했습니다.', '수고했어요, 정말로'],
@@ -628,6 +823,7 @@
   const qLine = document.getElementById('quoteLine');
   const qSub = document.getElementById('quoteSub');
   let qi = Math.random() * QUOTES.length | 0;
+
   function showQuote() {
     const [line, sub] = QUOTES[qi % QUOTES.length];
     qi++;
@@ -638,6 +834,7 @@
     setTimeout(showQuote, 11000);
   }
   setTimeout(showQuote, 2500);
+
   setTimeout(() => {
     launchRocket(W * 0.5, H * 0.25, 'peony2', PALETTES[2]);
   }, 600);
