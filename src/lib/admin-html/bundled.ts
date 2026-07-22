@@ -12,6 +12,10 @@ const BUNDLED_META: Record<string, { title: string; file: string }> = {
     title: "8월의 첫눈",
     file: "fireworks-seed.html",
   },
+  water: {
+    title: "맑은 물, 고요한 파문",
+    file: "water-seed.html",
+  },
 };
 
 const cache = new Map<string, BundledHtmlPage>();

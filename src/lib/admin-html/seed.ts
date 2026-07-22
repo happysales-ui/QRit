@@ -1,8 +1,8 @@
-import { getBundledHtmlPage } from "@/lib/admin-html/bundled";
+import { listBundledHtmlPages } from "@/lib/admin-html/bundled";
 import { requireInviteCodesAccess } from "@/lib/auth/admin";
 import { isSupabaseServiceRoleConfigured } from "@/lib/supabase/env";
 
-/** Sync bundled fireworks into DB so admin list and public route stay in sync. */
+/** Sync bundled HTML pages into DB so admin list and public route stay in sync. */
 export async function ensureBundledPagesSeeded(): Promise<void> {
   if (!isSupabaseServiceRoleConfigured()) {
     return;
@@ -10,18 +10,19 @@ export async function ensureBundledPagesSeeded(): Promise<void> {
 
   try {
     const supabase = await requireInviteCodesAccess();
-    const fireworks = getBundledHtmlPage("fireworks");
-    if (!fireworks) {
+    const pages = listBundledHtmlPages();
+    if (pages.length === 0) {
       return;
     }
 
+    const now = new Date().toISOString();
     await supabase.from("admin_html_pages").upsert(
-      {
-        slug: fireworks.slug,
-        title: fireworks.title,
-        html: fireworks.html,
-        updated_at: new Date().toISOString(),
-      },
+      pages.map((page) => ({
+        slug: page.slug,
+        title: page.title,
+        html: page.html,
+        updated_at: now,
+      })),
       { onConflict: "slug" },
     );
   } catch {
