@@ -916,7 +916,7 @@
 
       // 눈: 머리 양옆 (기존 대비 2×)
       const eye = spine[Math.floor(segs * 0.09)];
-      const er = Math.max(sz * 0.032, 1.8);
+      const er = Math.max(sz * 0.0256, 1.44);
       for (const sign of [-1, 1]) {
         const ep = sidePoint(Math.floor(segs * 0.09), sign);
         const ex = eye.x * 0.2 + ep.x * 0.8;
