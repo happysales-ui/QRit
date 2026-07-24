@@ -1217,9 +1217,10 @@
     }
   }
 
-  /* ---------- 물방울 사운드 ---------- */
+  /* ---------- 물방울 사운드 (동굴 낙수) ---------- */
   let actx = null;
   let lastDropAt = 0;
+  let caveSend = null;
   function ensureAudio() {
     if (!actx) {
       try { actx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -1228,42 +1229,71 @@
     if (actx.state === 'suspended') actx.resume();
     return actx;
   }
+  // 동굴 잔향 버스 — 합성 임펄스 리버브 + 벽에 반사되는 이산 에코
+  function ensureCave(ac) {
+    if (caveSend) return caveSend;
+    const conv = ac.createConvolver();
+    const dur = 2.6, rate = ac.sampleRate, len = Math.floor(rate * dur);
+    const ir = ac.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      for (let i = 0; i < len; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6) * 0.35;
+      }
+      // 동굴 벽에 맞고 돌아오는 반사음 몇 개
+      for (const [at, amp] of [[0.09, 0.5], [0.22, 0.3], [0.4, 0.18], [0.66, 0.1]]) {
+        const idx = Math.floor(at * rate);
+        for (let j = 0; j < 400 && idx + j < len; j++) {
+          d[idx + j] += (Math.random() * 2 - 1) * amp * (1 - j / 400);
+        }
+      }
+    }
+    conv.buffer = ir;
+    const lp = ac.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 2600;
+    const wet = ac.createGain();
+    wet.gain.value = 1.2;
+    conv.connect(lp).connect(wet).connect(ac.destination);
+    caveSend = conv;
+    return caveSend;
+  }
   function playDropSound(strength) {
     const ac = ensureAudio();
     if (!ac) return;
+    const cave = ensureCave(ac);
     const t0 = ac.currentTime + 0.005;
     const vol = 0.05 * strength;   // 작고 맑은 볼륨
 
-    // 맑은 '퐁' — 물방울 특유의 피치 곡선(살짝 내려갔다 위로 튀어오름)
+    // 낙수 본체 — 짧고 높은 '띵', 떨어진 직후 피치가 위로 말려 올라감
     const o = ac.createOscillator();
     const g = ac.createGain();
-    const f0 = 620 + Math.random() * 160;
+    const f0 = 850 + Math.random() * 420;
     o.type = 'sine';
     o.frequency.setValueAtTime(f0, t0);
-    o.frequency.exponentialRampToValueAtTime(f0 * 0.72, t0 + 0.028);
-    o.frequency.exponentialRampToValueAtTime(f0 * 2.1, t0 + 0.14);
+    o.frequency.exponentialRampToValueAtTime(f0 * 1.85, t0 + 0.06);
     g.gain.setValueAtTime(0, t0);
-    g.gain.linearRampToValueAtTime(vol, t0 + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
-    o.connect(g).connect(ac.destination);
-    o.start(t0); o.stop(t0 + 0.24);
+    g.gain.linearRampToValueAtTime(vol, t0 + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.13);
+    o.connect(g);
+    g.connect(ac.destination);
+    g.connect(cave);
+    o.start(t0); o.stop(t0 + 0.15);
 
-    // 아주 옅은 물결 반짝임 — 짧은 밴드패스 노이즈
-    const dur = 0.09;
-    const buf = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
-    const src = ac.createBufferSource();
-    src.buffer = buf;
-    const bp = ac.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.value = 2400 + Math.random() * 800;
-    bp.Q.value = 2.2;
-    const ng = ac.createGain();
-    ng.gain.setValueAtTime(vol * 0.45, t0);
-    ng.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    src.connect(bp).connect(ng).connect(ac.destination);
-    src.start(t0); src.stop(t0 + dur);
+    // 웅덩이가 받아주는 낮은 '옹' 공명
+    const o2 = ac.createOscillator();
+    const g2 = ac.createGain();
+    const f2 = 190 + Math.random() * 70;
+    o2.type = 'sine';
+    o2.frequency.setValueAtTime(f2 * 1.15, t0 + 0.012);
+    o2.frequency.exponentialRampToValueAtTime(f2 * 0.82, t0 + 0.34);
+    g2.gain.setValueAtTime(0, t0 + 0.012);
+    g2.gain.linearRampToValueAtTime(vol * 0.34, t0 + 0.04);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42);
+    o2.connect(g2);
+    g2.connect(ac.destination);
+    g2.connect(cave);
+    o2.start(t0 + 0.012); o2.stop(t0 + 0.45);
   }
 
   /* ---------- 터치 ---------- */
@@ -1286,7 +1316,7 @@
     if (dx*dx + dy*dy < 64) return;
     disturb(e.clientX, e.clientY, 2, -105);
     const nowT = performance.now();
-    if (nowT - lastDropAt > 140) { playDropSound(0.4); lastDropAt = nowT; }
+    if (nowT - lastDropAt > 340) { playDropSound(0.5); lastDropAt = nowT; }
     lastMx = e.clientX; lastMy = e.clientY;
   });
   window.addEventListener('pointerup', () => { lastMx = lastMy = -1; });
