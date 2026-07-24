@@ -538,7 +538,8 @@
       glintPh: rand(0, Math.PI*2), // 비늘 반짝임 위상
       sparkX: rand(-0.02, 0.22),   // 반짝임 위치 (프레임마다 튀지 않게 고정)
       size: rand(40, 58) * Math.min(W, H) / 900 + 22,  // 기존↔2배 중간 (~1.45×)
-      tint: Math.random() < 0.5 ? 0 : 1,
+      // 0=주황 1=은백 2=반투명 올리브 — 실사 송사리 색 믹스
+      morph: (() => { const r = Math.random(); return r < 0.34 ? 0 : r < 0.62 ? 1 : 2; })(),
       depth: rand(0.82, 1)         // 수심감: 살짝 흐리거나 진하게
     });
   }
@@ -655,54 +656,57 @@
   }
 
   function drawFish(t) {
-    // 조감(위에서 내려다본) 송사리 — 물면 시점과 맞춤
+    // 조감 송사리 — 실사처럼 가느다란 어뢰형 (길이:폭 ≈ 9:1)
     const order = fishes.slice().sort((a, b) => a.depth - b.depth);
+    // morph 팔레트: 주황 / 은백 / 반투명 올리브갈
+    const MORPHS = [
+      { flank: '#e07a28', pale: '#f0a858', dorsal: '#b85a18', fin: 'rgba(200,120,50,0.28)', alphaMul: 0.92, dorsalA: 0.35 },
+      { flank: '#e8e6dc', pale: '#f5f4ee', dorsal: '#c8c4b8', fin: 'rgba(210,208,198,0.22)', alphaMul: 0.88, dorsalA: 0.22 },
+      { flank: '#8a7a58', pale: '#a89870', dorsal: '#4a4030', fin: 'rgba(120,108,80,0.2)', alphaMul: 0.62, dorsalA: 0.55 }
+    ];
     for (const f of order) {
       const sz = f.size;
       const startled = f.startle > 0;
-      const sAmt = startled ? Math.min(1, f.startle / 220) : 0; // 감쇠에 맞춰 파르르 세기
-      // 옆흔들림(횡요): 꼬리 쪽으로 갈수록 커짐 — 위에서 본 유영
+      const sAmt = startled ? Math.min(1, f.startle / 220) : 0;
       const wagAmp = 0.2 + Math.min(f.dart, 3.8) * 0.17 + sAmt * 0.48;
       const flutter = startled ? Math.sin(f.ph * 3.8) * (0.045 + sAmt * 0.07) : 0;
       const bodyShake = startled ? Math.sin(f.ph * 5.2) * sz * 0.018 * sAmt : 0;
+      const m = MORPHS[f.morph] || MORPHS[2];
 
       octx.save();
       octx.translate(f.x + bodyShake, f.y);
       octx.rotate(f.ang + flutter);
 
-      const alpha = 0.72 + f.depth * 0.22;
-      const dorsal = f.tint ? '#2e382c' : '#2c343c'; // 등선(정중선) 어두운 색
-      const flank = f.tint ? '#6e7a64' : '#6a7480';  // 옆구리
-      const pale = f.tint ? '#a8b29a' : '#a6b0ba';   // 가장자리 밝은 톤
-      const fin = f.tint ? '#5a6654' : '#586068';
+      const alpha = (0.68 + f.depth * 0.22) * m.alphaMul;
 
-      // 물속 그림자
-      octx.globalAlpha = 0.13 * f.depth;
+      // 물속 그림자 — 몸과 같은 가느다란 실루엣
+      octx.globalAlpha = 0.1 * f.depth;
       octx.fillStyle = '#10161e';
       octx.beginPath();
-      octx.ellipse(sz * 0.02, sz * 0.1, sz * 0.46, sz * 0.13, 0, 0, Math.PI * 2);
+      octx.ellipse(sz * 0.02, sz * 0.06, sz * 0.42, sz * 0.045, 0, 0, Math.PI * 2);
       octx.fill();
       octx.globalAlpha = alpha;
 
-      // 척추 폴리라인: 머리(+x) → 꼬리(-x), 옆방향으로 물결
-      const segs = 12;
+      // 척추: 머리(+x) → 꼬리(-x). 폭은 실사처럼 극히 가늘게
+      const segs = 14;
       const spine = [];
       for (let i = 0; i <= segs; i++) {
         const u = i / segs;
-        const x = sz * (0.5 - u * 0.88); // 코 ~ 꼬리줄기
+        const x = sz * (0.48 - u * 0.92); // 코~꼬리, 길이 ≈ 0.92·sz
         const lag = u * 2.35;
-        const amp = wagAmp * sz * (0.012 + u * u * 0.155);
+        const amp = wagAmp * sz * (0.008 + u * u * 0.12);
         const y = Math.sin(f.ph - lag) * amp;
-        // 폭: 뾰족한 머리 → 중부 타원 → 꼬리줄기 가늘게
+        // halfW max ≈ 0.048·sz → 전폭 ≈ 0.096·sz → 길이:폭 ≈ 9.6:1
+        // 머리(아가미)가 살짝 넓고 꼬리로 매끈히 가늘어짐 — 중부 배불뚝이 없음
         let halfW;
-        if (u < 0.12) halfW = sz * (0.035 + (u / 0.12) * 0.075);
-        else if (u < 0.42) halfW = sz * (0.11 + ((u - 0.12) / 0.3) * 0.055);
-        else if (u < 0.72) halfW = sz * (0.165 - ((u - 0.42) / 0.3) * 0.045);
-        else halfW = sz * (0.12 - ((u - 0.72) / 0.28) * 0.07);
+        if (u < 0.08) halfW = sz * (0.018 + (u / 0.08) * 0.026);       // 코 끝 → 머리
+        else if (u < 0.22) halfW = sz * (0.044 + ((u - 0.08) / 0.14) * 0.006); // 머리~아가미 최대
+        else if (u < 0.55) halfW = sz * (0.05 - ((u - 0.22) / 0.33) * 0.014);  // 완만 테이퍼
+        else if (u < 0.82) halfW = sz * (0.036 - ((u - 0.55) / 0.27) * 0.016); // 후반 가늘게
+        else halfW = sz * (0.02 - ((u - 0.82) / 0.18) * 0.012);               // 바늘 꼬리
         spine.push({ x, y, halfW, u });
       }
 
-      // 몸 윤곽 (척추 수직 오프셋)
       function sidePoint(i, sign) {
         const s = spine[i];
         const prev = spine[Math.max(0, i - 1)];
@@ -713,6 +717,7 @@
         return { x: s.x + nx * s.halfW * sign, y: s.y + ny * s.halfW * sign };
       }
 
+      // 몸통 실루엣 (핵심)
       octx.beginPath();
       for (let i = 0; i < spine.length; i++) {
         const p = sidePoint(i, 1);
@@ -724,13 +729,13 @@
         octx.lineTo(p.x, p.y);
       }
       octx.closePath();
-      octx.fillStyle = flank;
+      octx.fillStyle = m.flank;
       octx.fill();
 
-      // 가장자리 밝은 옆구리 (위에서 본 톤 분리)
-      octx.globalAlpha = alpha * 0.4;
-      octx.strokeStyle = pale;
-      octx.lineWidth = Math.max(sz * 0.035, 1);
+      // 가장자리 살짝 밝은 톤 (얇은 하이라이트)
+      octx.globalAlpha = alpha * 0.28;
+      octx.strokeStyle = m.pale;
+      octx.lineWidth = Math.max(sz * 0.012, 0.6);
       octx.lineCap = 'round';
       octx.beginPath();
       for (let i = 1; i < spine.length - 1; i++) {
@@ -747,20 +752,10 @@
       }
       octx.stroke();
 
-      // 등 정중선 (위에서 본 송사리 핵심 신호)
-      octx.globalAlpha = alpha * 0.9;
-      octx.strokeStyle = dorsal;
-      octx.lineWidth = Math.max(sz * 0.06, 1.6);
-      octx.beginPath();
-      for (let i = 0; i < spine.length; i++) {
-        if (i === 0) octx.moveTo(spine[i].x, spine[i].y);
-        else octx.lineTo(spine[i].x, spine[i].y);
-      }
-      octx.stroke();
-      // 정중선 한가운데 살짝 더 진한 줄
-      octx.globalAlpha = alpha * 0.55;
-      octx.strokeStyle = '#1a2228';
-      octx.lineWidth = Math.max(sz * 0.022, 0.8);
+      // 등 정중선 — 야생색에서만 또렷, 주황/은백은 희미
+      octx.globalAlpha = alpha * m.dorsalA;
+      octx.strokeStyle = m.dorsal;
+      octx.lineWidth = Math.max(sz * 0.018, 0.7);
       octx.beginPath();
       for (let i = 1; i < spine.length - 1; i++) {
         if (i === 1) octx.moveTo(spine[i].x, spine[i].y);
@@ -769,25 +764,25 @@
       octx.stroke();
       octx.globalAlpha = alpha;
 
-      // 가슴지느러미: 양옆 작은 날개판 (위에서 보이도록)
-      const pec = spine[Math.floor(segs * 0.26)];
-      const pecFlap = 0.55 + Math.sin(f.ph * 1.25) * (0.22 + sAmt * 0.35);
+      // 가슴지느러미: 거의 투명한 작은 힌트
+      const pec = spine[Math.floor(segs * 0.2)];
+      const pecFlap = 0.4 + Math.sin(f.ph * 1.25) * (0.15 + sAmt * 0.28);
       for (const sign of [-1, 1]) {
         octx.save();
         octx.translate(pec.x, pec.y);
         octx.rotate(sign * pecFlap);
-        octx.fillStyle = fin;
-        octx.globalAlpha = alpha * 0.55;
+        octx.fillStyle = m.fin;
+        octx.globalAlpha = alpha * 0.35;
         octx.beginPath();
-        octx.moveTo(sz * 0.02, 0);
-        octx.quadraticCurveTo(sz * 0.01, sign * sz * 0.1, -sz * 0.06, sign * sz * 0.14);
-        octx.quadraticCurveTo(-sz * 0.02, sign * sz * 0.04, sz * 0.02, 0);
+        octx.moveTo(sz * 0.01, 0);
+        octx.quadraticCurveTo(sz * 0.005, sign * sz * 0.04, -sz * 0.03, sign * sz * 0.055);
+        octx.quadraticCurveTo(-sz * 0.01, sign * sz * 0.015, sz * 0.01, 0);
         octx.fill();
         octx.restore();
       }
       octx.globalAlpha = alpha;
 
-      // 꼬리(미병+가랑이): 위에서 본 갈래꼬리, 옆흔들림
+      // 꼬리: 가느다란 바늘 끝 + 살짝만 벌어지는 투명 미엽
       const tip = spine[spine.length - 1];
       const tipPrev = spine[spine.length - 2];
       const tdx = tip.x - tipPrev.x, tdy = tip.y - tipPrev.y;
@@ -797,63 +792,41 @@
       octx.save();
       octx.translate(tip.x, tip.y);
       octx.rotate(Math.atan2(tuy, tux) + wag * 0.55);
-      octx.fillStyle = fin;
+      octx.fillStyle = m.fin;
+      octx.globalAlpha = alpha * 0.4;
       octx.beginPath();
-      octx.moveTo(sz * 0.02, 0);
-      octx.quadraticCurveTo(-sz * 0.05, -sz * 0.02, -sz * 0.24, -sz * 0.14);
-      octx.quadraticCurveTo(-sz * 0.12, -sz * 0.02, -sz * 0.14, 0);
-      octx.quadraticCurveTo(-sz * 0.12, sz * 0.02, -sz * 0.24, sz * 0.14);
-      octx.quadraticCurveTo(-sz * 0.05, sz * 0.02, sz * 0.02, 0);
-      octx.closePath();
-      octx.fill();
-      octx.globalAlpha = alpha * 0.35;
-      octx.fillStyle = pale;
-      octx.beginPath();
-      octx.moveTo(0, 0);
-      octx.lineTo(-sz * 0.1, -sz * 0.035);
-      octx.lineTo(-sz * 0.08, 0);
-      octx.lineTo(-sz * 0.1, sz * 0.035);
+      octx.moveTo(sz * 0.01, 0);
+      octx.quadraticCurveTo(-sz * 0.03, -sz * 0.01, -sz * 0.1, -sz * 0.045);
+      octx.quadraticCurveTo(-sz * 0.05, -sz * 0.008, -sz * 0.055, 0);
+      octx.quadraticCurveTo(-sz * 0.05, sz * 0.008, -sz * 0.1, sz * 0.045);
+      octx.quadraticCurveTo(-sz * 0.03, sz * 0.01, sz * 0.01, 0);
       octx.closePath();
       octx.fill();
       octx.restore();
       octx.globalAlpha = alpha;
 
-      // 은빛 비늘 반짝임 (등선 따라)
+      // 은빛 반짝임 — 가느다란 등 위에만
       const glint = Math.sin(f.ph * 0.45 + f.glintPh) * Math.cos(f.ang * 1.6 + t * 0.00035);
-      if (glint > 0.2) {
-        const ga = Math.min((glint - 0.2) * 1.05, 0.55);
-        const mid = spine[Math.floor(segs * 0.35)];
-        const sg = octx.createLinearGradient(-sz * 0.2, 0, sz * 0.35, 0);
-        sg.addColorStop(0, 'rgba(238,246,250,0)');
-        sg.addColorStop(0.5, 'rgba(238,246,250,' + (ga * alpha * 0.85) + ')');
-        sg.addColorStop(1, 'rgba(238,246,250,0)');
-        octx.fillStyle = sg;
+      if (glint > 0.25 && f.morph !== 2) {
+        const ga = Math.min((glint - 0.25) * 1.1, 0.45);
+        const mid = spine[Math.floor(segs * 0.32)];
+        octx.fillStyle = 'rgba(255,255,255,' + (ga * alpha * 0.55) + ')';
         octx.beginPath();
-        octx.ellipse(mid.x, mid.y, sz * 0.28, sz * 0.04, 0, 0, Math.PI * 2);
+        octx.ellipse(mid.x, mid.y, sz * 0.18, sz * 0.012, 0, 0, Math.PI * 2);
         octx.fill();
-        if (ga > 0.38) {
-          octx.fillStyle = 'rgba(255,255,255,' + (ga * 0.65 * alpha) + ')';
-          octx.beginPath();
-          octx.arc(sz * f.sparkX, mid.y * 0.3, sz * 0.02, 0, Math.PI * 2);
-          octx.fill();
-        }
       }
 
-      // 눈: 머리 양옆 (조감에서 살짝 보이는 점)
-      const eye = spine[Math.floor(segs * 0.1)];
-      const er = Math.max(sz * 0.028, 1);
+      // 눈: 머리 양옆 작은 점 (실사처럼 바깥쪽)
+      const eye = spine[Math.floor(segs * 0.09)];
+      const er = Math.max(sz * 0.016, 0.9);
       for (const sign of [-1, 1]) {
-        const ep = sidePoint(Math.floor(segs * 0.1), sign);
-        const ex = eye.x * 0.35 + ep.x * 0.65;
-        const ey = eye.y * 0.35 + ep.y * 0.65;
-        octx.globalAlpha = alpha;
-        octx.fillStyle = '#12161c';
+        const ep = sidePoint(Math.floor(segs * 0.09), sign);
+        const ex = eye.x * 0.2 + ep.x * 0.8;
+        const ey = eye.y * 0.2 + ep.y * 0.8;
+        octx.globalAlpha = Math.min(1, alpha + 0.15);
+        octx.fillStyle = '#0e1014';
         octx.beginPath();
         octx.arc(ex, ey, er, 0, Math.PI * 2);
-        octx.fill();
-        octx.fillStyle = 'rgba(255,255,255,0.45)';
-        octx.beginPath();
-        octx.arc(ex + er * 0.25, ey - er * 0.25, er * 0.35, 0, Math.PI * 2);
         octx.fill();
       }
 
