@@ -217,7 +217,7 @@
     }
   }
 
-  const DAMP = 0.975;   // 파문이 멀리 못 가고 제자리에서 조용히 잦아듦
+  const DAMP = 0.982;   // 파문이 조금 더 멀리 번지며 콩알처럼 읽히게
   function stepWater() {
     for (let y = 1; y < gh-1; y++) {
       const row = y*gw;
@@ -242,13 +242,13 @@
         const sh = (gx*lx + gy*ly);
 
         const o = i * 4;
-        if (sh > 0) {           // 물마루: 은은한 흰 빛
-          imgData[o] = 232; imgData[o+1] = 238; imgData[o+2] = 242;
-          let a = sh * 5.5; if (a > 80) a = 80;
+        if (sh > 0) {           // 물마루: 더 또렷한 흰 빛 (콩알 파문)
+          imgData[o] = 236; imgData[o+1] = 242; imgData[o+2] = 246;
+          let a = sh * 9.5; if (a > 130) a = 130;
           imgData[o+3] = a;
-        } else {                // 골: 옅은 그늘
-          imgData[o] = 14; imgData[o+1] = 20; imgData[o+2] = 28;
-          let a = -sh * 4.5; if (a > 70) a = 70;
+        } else {                // 골: 더 깊은 그늘
+          imgData[o] = 10; imgData[o+1] = 16; imgData[o+2] = 24;
+          let a = -sh * 8.0; if (a > 115) a = 115;
           imgData[o+3] = a;
         }
       }
@@ -278,7 +278,7 @@
       const d = drops[i];
       d.t += dt;
       if (d.t >= d.dur) {
-        disturb(d.x, d.y, 1, -85);
+        disturb(d.x, d.y, 2, -145);
         lastSplash = { x: d.x, y: d.y, t: performance.now() };
         const n = 3 + (Math.random()*2|0);
         for (let j = 0; j < n; j++) {
@@ -379,7 +379,7 @@
         lf.fallT += dt;
         if (lf.fallT >= lf.fallDur) {
           lf.falling = false;
-          disturb(lf.landX, lf.landY, 2, -70);   // 착수의 잔잔한 파문
+          disturb(lf.landX, lf.landY, 2, -120);  // 착수의 또렷한 파문
         }
         continue;
       }
@@ -516,15 +516,22 @@
 
   /* ---------- 송사리: 물속을 헤엄치는 작은 물고기 ---------- */
   const fishes = [];
-  const FISH_N = 8;
+  const FISH_N = 11;
   let lastSplash = { x: -9999, y: -9999, t: -9999 };
+  // 처음부터 두 무리로 모여 출발 (송사리는 떼로)
+  const schoolSeeds = [
+    { x: rand(W*0.22, W*0.42), y: rand(H*0.28, H*0.55), ang: rand(0, Math.PI*2) },
+    { x: rand(W*0.55, W*0.78), y: rand(H*0.38, H*0.72), ang: rand(0, Math.PI*2) }
+  ];
   for (let i = 0; i < FISH_N; i++) {
-    const ang0 = rand(0, Math.PI*2);
+    const seed = schoolSeeds[i < Math.ceil(FISH_N / 2) ? 0 : 1];
+    const ang0 = seed.ang + rand(-0.45, 0.45);
     fishes.push({
-      x: rand(W*0.18, W*0.82), y: rand(H*0.2, H*0.8),
+      x: seed.x + rand(-55, 55), y: seed.y + rand(-42, 42),
       ang: ang0,
       speed: rand(0.35, 0.58),     // 중간 몸집에 맞춘 유영 속도
       dart: 0,                     // 화들짝 가속 (감쇠)
+      startle: 0,                  // 파르르 놀란 떨림 남은 시간(ms)
       turnT: rand(900, 2600),      // 다음 방향 전환까지
       turnTo: ang0,
       ph: rand(0, Math.PI*2),      // 꼬리 위상
@@ -545,30 +552,37 @@
 
   function updateFish(dt, t) {
     const k = dt/16.7;
+    const SCHOOL_R = 175;   // 무리 인식 반경
+    const SEP_R_MUL = 0.42; // 겹침만 피하고 떼는 유지
+
     for (let i = 0; i < fishes.length; i++) {
       const f = fishes[i];
       // 이따금 느긋하게 방향 바꾸기 (급선회 대신 완만한 곡선)
       f.turnT -= dt;
-      if (f.turnT <= 0) {
+      if (f.turnT <= 0 && f.startle <= 0) {
         f.turnTo = f.ang + rand(-0.85, 0.85);
         f.turnT = rand(1600, 4200);
       }
 
-      // 물장구에 화들짝: 가까운 파문에서 부드럽게 도망 (각도 순간이동 금지)
-      if (t - lastSplash.t < 850) {
+      // 물장구에 화들짝: 파르르 놀라며 도망 (순간 스냅 금지, 빠른 선회+펄럭)
+      if (t - lastSplash.t < 950) {
         const dx = f.x - lastSplash.x, dy = f.y - lastSplash.y;
         const d2 = dx*dx + dy*dy;
-        const R = 220;
+        const R = 250;
         if (d2 < R*R && d2 > 1) {
           const d = Math.sqrt(d2);
-          const flee = Math.atan2(dy, dx) + rand(-0.25, 0.25);
-          f.turnTo = flee;
-          // 가까운 물고기만 조금 더 빨리 선회·가속
-          const near = 1 - d/R;
-          f.ang += angDiff(flee, f.ang) * (0.08 + near*0.12) * k;
-          f.dart = Math.max(f.dart, 2.2 * near);
+          const near = 1 - d / R;
+          // 처음 놀랄 때만 도망 각도 고정 (매 프레임 랜덤으로 안 떨림)
+          if (f.startle <= 0) {
+            f.turnTo = Math.atan2(dy, dx) + rand(-0.35, 0.35);
+            f.startle = 260 + near * 380;
+          }
+          // 가까운 물고기일수록 기민하게 선회·돌진 (텔레포트 없이)
+          f.ang += angDiff(f.turnTo, f.ang) * (0.28 + near * 0.42) * k;
+          f.dart = Math.max(f.dart, (2.6 + near * 1.6) * Math.pow(near, 0.55));
         }
       }
+      if (f.startle > 0) f.startle = Math.max(0, f.startle - dt);
 
       // 가장자리 회피: 매 프레임 랜덤 덮어쓰기 대신 안쪽으로 부드럽게 편향
       const m = 90;
@@ -582,35 +596,61 @@
         f.turnTo = f.turnTo + angDiff(edgeAng, f.turnTo) * 0.18;
       }
 
-      // 서로 너무 겹치지 않게 살짝 밀어내기
+      // 떼 짓기: 응집 + 정렬 (너무 가까운 건 아래에서 분리)
+      let nNear = 0, cx = 0, cy = 0, ax = 0, ay = 0;
+      for (let j = 0; j < fishes.length; j++) {
+        if (j === i) continue;
+        const o = fishes[j];
+        const dx = o.x - f.x, dy = o.y - f.y;
+        const d2 = dx*dx + dy*dy;
+        if (d2 < SCHOOL_R * SCHOOL_R) {
+          nNear++;
+          cx += o.x; cy += o.y;
+          ax += Math.cos(o.ang); ay += Math.sin(o.ang);
+        }
+      }
+      if (nNear > 0 && f.startle <= 0) {
+        const mx = cx / nNear, my = cy / nNear;
+        const coh = Math.atan2(my - f.y, mx - f.x);
+        const ali = Math.atan2(ay, ax);
+        f.turnTo = f.turnTo + angDiff(coh, f.turnTo) * 0.085;
+        f.turnTo = f.turnTo + angDiff(ali, f.turnTo) * 0.11;
+        // 무리 중심에서 멀면 살짝 따라잡기
+        const gap = Math.hypot(mx - f.x, my - f.y);
+        if (gap > 70) f.dart = Math.max(f.dart, Math.min(0.55, (gap - 70) * 0.004));
+      }
+
+      // 서로 너무 겹치지 않게 살짝 밀어내기 (떼는 유지)
       for (let j = i + 1; j < fishes.length; j++) {
         const o = fishes[j];
         const dx = f.x - o.x, dy = f.y - o.y;
-        const minD = (f.size + o.size) * 0.55;
+        const minD = (f.size + o.size) * SEP_R_MUL;
         const d2 = dx*dx + dy*dy;
         if (d2 > 1 && d2 < minD*minD) {
           const d = Math.sqrt(d2);
-          const push = (minD - d) * 0.012 * k;
+          const push = (minD - d) * 0.014 * k;
           const nx = dx / d, ny = dy / d;
           f.x += nx * push * o.size;
           f.y += ny * push * o.size;
           o.x -= nx * push * f.size;
           o.y -= ny * push * f.size;
-          f.turnTo = f.turnTo + angDiff(Math.atan2(ny, nx), f.turnTo) * 0.04;
-          o.turnTo = o.turnTo + angDiff(Math.atan2(-ny, -nx), o.turnTo) * 0.04;
+          f.turnTo = f.turnTo + angDiff(Math.atan2(ny, nx), f.turnTo) * 0.05;
+          o.turnTo = o.turnTo + angDiff(Math.atan2(-ny, -nx), o.turnTo) * 0.05;
         }
       }
 
-      // 선회: 평소엔 느리게, 도망칠 땐 조금 더 기민하게
-      const turnRate = 0.018 + Math.min(f.dart, 2) * 0.02;
+      // 선회: 평소엔 느리게, 화들짝·도망칠 땐 기민하게
+      const startled = f.startle > 0 ? 0.1 : 0;
+      const turnRate = 0.02 + Math.min(f.dart, 3.2) * 0.028 + startled;
       f.ang += angDiff(f.turnTo, f.ang) * turnRate * k;
-      f.dart *= Math.pow(0.96, k);
+      f.dart *= Math.pow(0.955, k);
 
       const sp = f.speed + f.dart;
       f.x += Math.cos(f.ang) * sp * k;
       f.y += Math.sin(f.ang) * sp * k;
-      // 꼬리 박동: 속도에 맞춰 자연스럽게 (과도한 떨림 방지)
-      f.ph += dt * (0.0065 + sp * 0.0045);
+      // 꼬리 박동: 평소 자연스럽게, 놀라면 파르르 빠르게
+      const flutter = f.startle > 0 ? 0.022 : 0;
+      f.ph += dt * (0.0065 + sp * 0.0045 + f.dart * 0.005 + flutter);
     }
   }
 
@@ -620,12 +660,14 @@
     for (const f of order) {
       const sz = f.size;
       // 꼬리·몸 굽이는 이동 방향과 분리 — 바라보는 방향은 항상 ang
-      const wagAmp = 0.18 + Math.min(f.dart, 2) * 0.06;
+      const startled = f.startle > 0;
+      const wagAmp = 0.18 + Math.min(f.dart, 3.2) * 0.14 + (startled ? 0.28 : 0);
       const wig = Math.sin(f.ph) * wagAmp;
-      const bodyBend = Math.sin(f.ph - 0.45) * 0.05;
+      const bodyBend = Math.sin(f.ph - 0.45) * (0.05 + (startled ? 0.04 : 0));
+      const flutter = startled ? Math.sin(f.ph * 2.4) * 0.06 : 0;
       octx.save();
       octx.translate(f.x, f.y);
-      octx.rotate(f.ang);
+      octx.rotate(f.ang + flutter);
 
       const alpha = 0.72 + f.depth * 0.22;
       // 물속 그림자 (돌 위에 드리움)
@@ -763,7 +805,7 @@
   }
   waterC.addEventListener('pointerdown', e => {
     firstTouch();
-    disturb(e.clientX, e.clientY, 1, -110);
+    disturb(e.clientX, e.clientY, 2, -190);
     lastSplash = { x: e.clientX, y: e.clientY, t: performance.now() };
     lastMx = e.clientX; lastMy = e.clientY;
   });
@@ -771,7 +813,7 @@
     if (e.buttons === 0 && e.pointerType === 'mouse') return;
     const dx = e.clientX - lastMx, dy = e.clientY - lastMy;
     if (dx*dx + dy*dy < 64) return;
-    disturb(e.clientX, e.clientY, 1, -60);
+    disturb(e.clientX, e.clientY, 2, -105);
     lastMx = e.clientX; lastMy = e.clientY;
   });
   window.addEventListener('pointerup', () => { lastMx = lastMy = -1; });
@@ -859,7 +901,7 @@
   }
   setTimeout(showQuote, 3000);
 
-  setTimeout(() => disturb(W*0.5, H*0.45, 1, -100), 700);
+  setTimeout(() => disturb(W*0.5, H*0.45, 2, -165), 700);
 })();
 </script>
 </body>
