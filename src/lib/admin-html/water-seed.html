@@ -538,8 +538,9 @@
       glintPh: rand(0, Math.PI*2), // 비늘 반짝임 위상
       sparkX: rand(-0.02, 0.22),   // 반짝임 위치 (프레임마다 튀지 않게 고정)
       size: rand(40, 58) * Math.min(W, H) / 900 + 22,  // 기존↔2배 중간 (~1.45×)
-      // 진한 갈색 팔레트 내 미세 변이 (0/1/2 모두 갈색 계열)
+      // 자연 송사리 톤 패밀리 내 미세 변이 (올리브·앰버·은녹)
       morph: (() => { const r = Math.random(); return r < 0.4 ? 0 : r < 0.72 ? 1 : 2; })(),
+      markSeed: Math.random(),     // 개체별 얼룩/측선 위치 고정
       depth: rand(0.82, 1)         // 수심감: 살짝 흐리거나 진하게
     });
   }
@@ -658,11 +659,11 @@
   function drawFish(t) {
     // 조감 송사리 — 아주 날씬한 올챙이형 (길이:폭 ≈ 8:1, 머리 쪽 살짝 볼륨)
     const order = fishes.slice().sort((a, b) => a.depth - b.depth);
-    // morph 팔레트: 통일 진한 갈색 (미세 톤 차이만)
+    // morph 팔레트: 반투명 올리브·앰버·은녹 (납작한 단색 갈색 지양)
     const MORPHS = [
-      { flank: '#4a3224', pale: '#6b4e38', dorsal: '#2a1c14', fin: 'rgba(74,50,36,0.28)', alphaMul: 0.9, dorsalA: 0.5 },
-      { flank: '#3f2a1e', pale: '#5e4330', dorsal: '#241810', fin: 'rgba(63,42,30,0.26)', alphaMul: 0.88, dorsalA: 0.55 },
-      { flank: '#553828', pale: '#735040', dorsal: '#301e16', fin: 'rgba(85,56,40,0.24)', alphaMul: 0.86, dorsalA: 0.48 }
+      { flank: '#5a4a36', pale: '#8a7355', dorsal: '#3a3024', belly: '#7a6550', mottle: '#4a3c2c', undertone: 'rgba(138,158,128,0.34)', lateral: 'rgba(55,48,38,0.35)', fin: 'rgba(90,74,54,0.28)', alphaMul: 0.9, dorsalA: 0.42 },
+      { flank: '#4e4030', pale: '#756048', dorsal: '#2e261c', belly: '#6a5844', mottle: '#3d3226', undertone: 'rgba(120,145,125,0.3)', lateral: 'rgba(48,42,34,0.38)', fin: 'rgba(78,64,48,0.26)', alphaMul: 0.88, dorsalA: 0.48 },
+      { flank: '#6a553c', pale: '#9a8060', dorsal: '#453828', belly: '#8a7055', mottle: '#564636', undertone: 'rgba(155,170,140,0.32)', lateral: 'rgba(62,52,40,0.32)', fin: 'rgba(106,85,60,0.24)', alphaMul: 0.86, dorsalA: 0.4 }
     ];
     for (const f of order) {
       const sz = f.size;
@@ -672,6 +673,8 @@
       const flutter = startled ? Math.sin(f.ph * 3.8) * (0.045 + sAmt * 0.07) : 0;
       const bodyShake = startled ? Math.sin(f.ph * 5.2) * sz * 0.018 * sAmt : 0;
       const m = MORPHS[f.morph] || MORPHS[2];
+      const seed = f.markSeed || 0.5;
+      const fract = (x) => x - Math.floor(x);
 
       octx.save();
       octx.translate(f.x + bodyShake, f.y);
@@ -717,6 +720,23 @@
         return { x: s.x + nx * s.halfW * sign, y: s.y + ny * s.halfW * sign };
       }
 
+      function strokeSpine(fromI, toI, widthMul, yOff) {
+        octx.lineWidth = Math.max(sz * widthMul, 0.55);
+        octx.beginPath();
+        for (let i = fromI; i <= toI; i++) {
+          const s = spine[i];
+          const prev = spine[Math.max(0, i - 1)];
+          const next = spine[Math.min(spine.length - 1, i + 1)];
+          const tx = next.x - prev.x, ty = next.y - prev.y;
+          const len = Math.hypot(tx, ty) || 1;
+          const nx = -ty / len, ny = tx / len;
+          const px = s.x + nx * yOff, py = s.y + ny * yOff;
+          if (i === fromI) octx.moveTo(px, py);
+          else octx.lineTo(px, py);
+        }
+        octx.stroke();
+      }
+
       // 몸통 실루엣 (핵심)
       octx.beginPath();
       for (let i = 0; i < spine.length; i++) {
@@ -732,10 +752,81 @@
       octx.fillStyle = m.flank;
       octx.fill();
 
-      // 가장자리 살짝 밝은 톤 (얇은 하이라이트)
-      octx.globalAlpha = alpha * 0.28;
+      // 클리핑 안: 등·배·얼룩·측선·은녹 undertone (단색 평면감 제거)
+      octx.save();
+      octx.clip();
+
+      // 등쪽 어두운 톤 (부드러운 등 밴드)
+      octx.lineCap = 'round';
+      octx.lineJoin = 'round';
+      octx.strokeStyle = m.dorsal;
+      octx.globalAlpha = alpha * 0.22;
+      strokeSpine(1, spine.length - 2, 0.07, 0);
+      octx.globalAlpha = alpha * m.dorsalA;
+      strokeSpine(1, spine.length - 2, 0.032, 0);
+
+      // 옆구리·배 가장자리 밝은 앰버
+      octx.strokeStyle = m.belly;
+      octx.globalAlpha = alpha * 0.34;
+      strokeSpine(2, spine.length - 3, 0.028, sz * 0.028);
+      strokeSpine(2, spine.length - 3, 0.028, -sz * 0.028);
       octx.strokeStyle = m.pale;
-      octx.lineWidth = Math.max(sz * 0.012, 0.6);
+      octx.globalAlpha = alpha * 0.22;
+      strokeSpine(2, spine.length - 3, 0.016, sz * 0.038);
+      strokeSpine(2, spine.length - 3, 0.016, -sz * 0.038);
+
+      // 은녹 undertone — 중부 옆구리 살짝
+      octx.globalAlpha = alpha * 0.55;
+      octx.fillStyle = m.undertone;
+      for (let k = 0; k < 3; k++) {
+        const u = 0.22 + fract(seed * (2.1 + k * 1.7)) * 0.45;
+        const si = Math.max(2, Math.min(spine.length - 3, Math.floor(u * segs)));
+        const side = fract(seed * (4.3 + k)) > 0.5 ? 1 : -1;
+        const p = sidePoint(si, side);
+        octx.beginPath();
+        octx.ellipse(p.x * 0.55 + spine[si].x * 0.45, p.y * 0.55 + spine[si].y * 0.45,
+          sz * (0.07 + fract(seed * (5.1 + k)) * 0.04), sz * 0.012, 0, 0, Math.PI * 2);
+        octx.fill();
+      }
+
+      // 부드러운 얼룩(mottle) — 개체별 고정
+      octx.fillStyle = m.mottle;
+      for (let k = 0; k < 6; k++) {
+        const u = 0.14 + fract(seed * (7.3 + k * 2.9)) * 0.62;
+        const si = Math.max(2, Math.min(spine.length - 3, Math.floor(u * segs)));
+        const side = fract(seed * (11.1 + k * 3.3)) > 0.48 ? 1 : -1;
+        const off = 0.25 + fract(seed * (13.7 + k)) * 0.55;
+        const p = sidePoint(si, side);
+        const cx = spine[si].x * (1 - off) + p.x * off;
+        const cy = spine[si].y * (1 - off) + p.y * off;
+        octx.globalAlpha = alpha * (0.1 + fract(seed * (17.2 + k)) * 0.14);
+        octx.beginPath();
+        octx.ellipse(cx, cy,
+          sz * (0.035 + fract(seed * (19.5 + k)) * 0.03),
+          sz * (0.008 + fract(seed * (21.1 + k)) * 0.006),
+          fract(seed * (23 + k)) * 0.6 - 0.3, 0, Math.PI * 2);
+        octx.fill();
+      }
+
+      // 희미한 측선 힌트
+      octx.strokeStyle = m.lateral;
+      octx.globalAlpha = alpha * 0.38;
+      const latOff = (fract(seed * 31.7) > 0.5 ? 1 : -1) * sz * 0.018;
+      strokeSpine(2, spine.length - 3, 0.01, latOff);
+
+      // 한쪽 옆구리 소프트 하이라이트
+      const hiSign = fract(seed * 41.3) > 0.5 ? 1 : -1;
+      octx.strokeStyle = m.pale;
+      octx.globalAlpha = alpha * 0.2;
+      strokeSpine(3, Math.floor(segs * 0.55), 0.014, hiSign * sz * 0.022);
+
+      octx.restore();
+      octx.globalAlpha = alpha;
+
+      // 가장자리 살짝 밝은 톤 (얇은 하이라이트)
+      octx.globalAlpha = alpha * 0.3;
+      octx.strokeStyle = m.pale;
+      octx.lineWidth = Math.max(sz * 0.011, 0.55);
       octx.lineCap = 'round';
       octx.beginPath();
       for (let i = 1; i < spine.length - 1; i++) {
@@ -752,10 +843,10 @@
       }
       octx.stroke();
 
-      // 등 정중선 — 진한 갈색 등선
-      octx.globalAlpha = alpha * m.dorsalA;
+      // 등 정중선 — 옅은 등선 (클리핑 밴드 위에 한 줄)
+      octx.globalAlpha = alpha * m.dorsalA * 0.85;
       octx.strokeStyle = m.dorsal;
-      octx.lineWidth = Math.max(sz * 0.018, 0.7);
+      octx.lineWidth = Math.max(sz * 0.014, 0.6);
       octx.beginPath();
       for (let i = 1; i < spine.length - 1; i++) {
         if (i === 1) octx.moveTo(spine[i].x, spine[i].y);
