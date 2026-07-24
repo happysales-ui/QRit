@@ -44,15 +44,22 @@
   }
 
   #hint {
-    position:fixed; left:50%; bottom:9vh; transform:translateX(-50%);
-    z-index:6; pointer-events:none;
-    color:rgba(238,240,234,.65);
-    font-size:clamp(.8rem,2.4vw,.95rem); letter-spacing:.2em;
-    animation:hintPulse 3.4s ease-in-out infinite;
-    transition:opacity 1.6s ease;
-    text-shadow:0 1px 8px rgba(20,24,30,.85);
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:7; pointer-events:none;
+    color:rgba(255,255,255,.96);
+    font-size:clamp(1.05rem, 3.4vw, 1.45rem);
+    font-weight:700; letter-spacing:.08em;
+    text-align:center; word-break:keep-all;
+    padding:.85em 1.4em; border-radius:999px;
+    background:rgba(12,18,26,.46);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    box-shadow:0 4px 26px rgba(8,12,18,.4);
+    animation:hintPulse 2.8s ease-in-out infinite;
+    transition:opacity 1.2s ease;
+    text-shadow:0 1px 10px rgba(8,12,18,.9);
   }
-  @keyframes hintPulse { 0%,100%{opacity:.35} 50%{opacity:.85} }
+  @keyframes hintPulse { 0%,100%{opacity:.78} 50%{opacity:1} }
   #hint.gone { opacity:0 !important; animation:none; }
 
   @media (prefers-reduced-motion: reduce) { #hint { animation:none; opacity:.6; } }
@@ -67,7 +74,7 @@
 <div id="quote" aria-live="polite">
   <div class="line" id="quoteLine"></div>
 </div>
-<div id="hint">수면 어디든, 손끝으로 물장구쳐 보세요</div>
+<div id="hint">수면을 손끝으로 터치해 보세요<br>물결이 동그랗게 번져요</div>
 <div id="credit">QRit-터치멍 &lt;송사리떼&gt;</div>
 
 <script>
@@ -1307,6 +1314,8 @@
   function firstTouch() {
     if (!touched) { touched = true; hint.classList.add('gone'); }
   }
+  // 터치하지 않아도 안내는 충분히 보여준 뒤 스르르 사라짐
+  setTimeout(() => hint.classList.add('gone'), 14000);
   waterC.addEventListener('pointerdown', e => {
     firstTouch();
     disturb(e.clientX, e.clientY, 2, -190);
