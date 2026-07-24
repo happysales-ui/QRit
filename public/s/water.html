@@ -514,154 +514,239 @@
     }
   }
 
-  /* ---------- 송사리: 아주 작은 물고기 서너 마리 ---------- */
+  /* ---------- 송사리: 물속을 헤엄치는 작은 물고기 ---------- */
   const fishes = [];
   const FISH_N = 8;
   let lastSplash = { x: -9999, y: -9999, t: -9999 };
   for (let i = 0; i < FISH_N; i++) {
+    const ang0 = rand(0, Math.PI*2);
     fishes.push({
-      x: rand(W*0.15, W*0.85), y: rand(H*0.15, H*0.85),
-      ang: rand(0, Math.PI*2),
-      speed: rand(0.22, 0.4),      // 평상시 유영 속도
+      x: rand(W*0.18, W*0.82), y: rand(H*0.2, H*0.8),
+      ang: ang0,
+      speed: rand(0.38, 0.62),     // 몸집 대비 자연스러운 유영 속도
       dart: 0,                     // 화들짝 가속 (감쇠)
-      turnT: rand(1000, 3000),     // 다음 방향 전환까지
-      turnTo: 0,
+      turnT: rand(900, 2600),      // 다음 방향 전환까지
+      turnTo: ang0,
       ph: rand(0, Math.PI*2),      // 꼬리 위상
       glintPh: rand(0, Math.PI*2), // 비늘 반짝임 위상
-      size: rand(27, 39) * Math.min(W, H) / 900 + 15,   // 잘 보이는 크기
-      tint: Math.random() < 0.5 ? 0 : 1
+      sparkX: rand(-0.02, 0.22),   // 반짝임 위치 (프레임마다 튀지 않게 고정)
+      size: rand(54, 78) * Math.min(W, H) / 900 + 30,  // 기존 대비 약 2배
+      tint: Math.random() < 0.5 ? 0 : 1,
+      depth: rand(0.82, 1)         // 수심감: 살짝 흐리거나 진하게
     });
+  }
+
+  function angDiff(a, b) {
+    let d = a - b;
+    while (d > Math.PI) d -= Math.PI*2;
+    while (d < -Math.PI) d += Math.PI*2;
+    return d;
   }
 
   function updateFish(dt, t) {
     const k = dt/16.7;
-    for (const f of fishes) {
-      // 이따금 느긋하게 방향 바꾸기
+    for (let i = 0; i < fishes.length; i++) {
+      const f = fishes[i];
+      // 이따금 느긋하게 방향 바꾸기 (급선회 대신 완만한 곡선)
       f.turnT -= dt;
       if (f.turnT <= 0) {
-        f.turnTo = f.ang + rand(-1.2, 1.2);
-        f.turnT = rand(1400, 3800);
+        f.turnTo = f.ang + rand(-0.85, 0.85);
+        f.turnT = rand(1600, 4200);
       }
-      let da = f.turnTo - f.ang;
-      while (da > Math.PI) da -= Math.PI*2;
-      while (da < -Math.PI) da += Math.PI*2;
-      f.ang += da * 0.012 * k;
 
-      // 물장구에 화들짝: 가까운 파문 반대쪽으로 쏜살같이
-      if (t - lastSplash.t < 700) {
+      // 물장구에 화들짝: 가까운 파문에서 부드럽게 도망 (각도 순간이동 금지)
+      if (t - lastSplash.t < 850) {
         const dx = f.x - lastSplash.x, dy = f.y - lastSplash.y;
         const d2 = dx*dx + dy*dy;
-        if (d2 < 180*180 && d2 > 1) {
+        const R = 220;
+        if (d2 < R*R && d2 > 1) {
           const d = Math.sqrt(d2);
-          f.ang = Math.atan2(dy, dx) + rand(-0.4, 0.4);
-          f.turnTo = f.ang;
-          f.dart = Math.max(f.dart, 2.6 * (1 - d/180));
+          const flee = Math.atan2(dy, dx) + rand(-0.25, 0.25);
+          f.turnTo = flee;
+          // 가까운 물고기만 조금 더 빨리 선회·가속
+          const near = 1 - d/R;
+          f.ang += angDiff(flee, f.ang) * (0.08 + near*0.12) * k;
+          f.dart = Math.max(f.dart, 2.2 * near);
         }
       }
-      f.dart *= Math.pow(0.965, k);
 
-      // 가장자리 회피: 벽을 만나면 안쪽으로 완만히 선회
-      const m = 60;
-      if (f.x < m)      f.turnTo = 0 + rand(-0.5, 0.5);
-      else if (f.x > W-m) f.turnTo = Math.PI + rand(-0.5, 0.5);
-      if (f.y < m)      f.turnTo = Math.PI/2 + rand(-0.5, 0.5);
-      else if (f.y > H-m) f.turnTo = -Math.PI/2 + rand(-0.5, 0.5);
+      // 가장자리 회피: 매 프레임 랜덤 덮어쓰기 대신 안쪽으로 부드럽게 편향
+      const m = 90;
+      let edgeBiasX = 0, edgeBiasY = 0;
+      if (f.x < m) edgeBiasX += (m - f.x) / m;
+      else if (f.x > W - m) edgeBiasX -= (f.x - (W - m)) / m;
+      if (f.y < m) edgeBiasY += (m - f.y) / m;
+      else if (f.y > H - m) edgeBiasY -= (f.y - (H - m)) / m;
+      if (edgeBiasX || edgeBiasY) {
+        const edgeAng = Math.atan2(edgeBiasY, edgeBiasX);
+        f.turnTo = f.turnTo + angDiff(edgeAng, f.turnTo) * 0.18;
+      }
+
+      // 서로 너무 겹치지 않게 살짝 밀어내기
+      for (let j = i + 1; j < fishes.length; j++) {
+        const o = fishes[j];
+        const dx = f.x - o.x, dy = f.y - o.y;
+        const minD = (f.size + o.size) * 0.55;
+        const d2 = dx*dx + dy*dy;
+        if (d2 > 1 && d2 < minD*minD) {
+          const d = Math.sqrt(d2);
+          const push = (minD - d) * 0.012 * k;
+          const nx = dx / d, ny = dy / d;
+          f.x += nx * push * o.size;
+          f.y += ny * push * o.size;
+          o.x -= nx * push * f.size;
+          o.y -= ny * push * f.size;
+          f.turnTo = f.turnTo + angDiff(Math.atan2(ny, nx), f.turnTo) * 0.04;
+          o.turnTo = o.turnTo + angDiff(Math.atan2(-ny, -nx), o.turnTo) * 0.04;
+        }
+      }
+
+      // 선회: 평소엔 느리게, 도망칠 땐 조금 더 기민하게
+      const turnRate = 0.018 + Math.min(f.dart, 2) * 0.02;
+      f.ang += angDiff(f.turnTo, f.ang) * turnRate * k;
+      f.dart *= Math.pow(0.96, k);
 
       const sp = f.speed + f.dart;
       f.x += Math.cos(f.ang) * sp * k;
       f.y += Math.sin(f.ang) * sp * k;
-      f.ph += dt * (0.012 + f.dart * 0.01);
+      // 꼬리 박동: 속도에 맞춰 자연스럽게 (과도한 떨림 방지)
+      f.ph += dt * (0.0065 + sp * 0.0045);
     }
   }
 
   function drawFish(t) {
-    for (const f of fishes) {
+    // 앞에 있는 물고기가 위에 그려지도록 깊이 정렬
+    const order = fishes.slice().sort((a, b) => a.depth - b.depth);
+    for (const f of order) {
       const sz = f.size;
-      const wig = Math.sin(f.ph) * 0.35;          // 꼬리 살랑임
-      const bodyBend = Math.sin(f.ph) * 0.08;     // 몸통의 미세한 굽이
+      // 꼬리·몸 굽이는 이동 방향과 분리 — 바라보는 방향은 항상 ang
+      const wagAmp = 0.18 + Math.min(f.dart, 2) * 0.06;
+      const wig = Math.sin(f.ph) * wagAmp;
+      const bodyBend = Math.sin(f.ph - 0.45) * 0.05;
       octx.save();
       octx.translate(f.x, f.y);
-      octx.rotate(f.ang + bodyBend);
+      octx.rotate(f.ang);
 
+      const alpha = 0.72 + f.depth * 0.22;
       // 물속 그림자 (돌 위에 드리움)
-      octx.globalAlpha = 0.16;
+      octx.globalAlpha = 0.14 * f.depth;
       octx.fillStyle = '#10161e';
       octx.beginPath();
-      octx.ellipse(sz*0.05, sz*0.3, sz*0.55, sz*0.16, 0, 0, Math.PI*2);
+      octx.ellipse(sz*0.04, sz*0.28, sz*0.52, sz*0.15, 0, 0, Math.PI*2);
       octx.fill();
 
-      // 물속이라 살짝 흐릿하게
-      octx.globalAlpha = 0.8;
-      const body = f.tint ? '#5c6658' : '#5a6068';   // 올리브빛 / 회빛
-      const belly = f.tint ? '#9aa08c' : '#98a0a8';
+      octx.globalAlpha = alpha;
+      const body = f.tint ? '#4e5a4c' : '#4a545e';   // 올리브빛 / 회빛 — 물에 묻히지 않게
+      const belly = f.tint ? '#a8b09a' : '#a6b0ba';
+      const fin = f.tint ? '#667060' : '#636c76';
 
-      // 몸통: 가늘고 긴 물방울꼴
+      // 몸통: 송사리처럼 가늘되 너무 막대기 같지 않게
+      octx.save();
+      octx.rotate(bodyBend * 0.35); // 머리쪽은 거의 고정, 전체는 아주 살짝만
       octx.fillStyle = body;
       octx.beginPath();
-      octx.moveTo(sz*0.5, 0);                                  // 머리 끝
-      octx.quadraticCurveTo(sz*0.2, -sz*0.14, -sz*0.28, -sz*0.07);
-      octx.lineTo(-sz*0.34, 0);
-      octx.lineTo(-sz*0.28, sz*0.07);
-      octx.quadraticCurveTo(sz*0.2, sz*0.14, sz*0.5, 0);
+      octx.moveTo(sz*0.52, 0);                                   // 머리 끝
+      octx.quadraticCurveTo(sz*0.22, -sz*0.17, -sz*0.18, -sz*0.1);
+      octx.quadraticCurveTo(-sz*0.3, -sz*0.04, -sz*0.36, 0);     // 꼬리 연결
+      octx.quadraticCurveTo(-sz*0.3, sz*0.04, -sz*0.18, sz*0.1);
+      octx.quadraticCurveTo(sz*0.22, sz*0.17, sz*0.52, 0);
       octx.closePath();
       octx.fill();
 
       // 배쪽 밝은 결
-      octx.globalAlpha = 0.35;
+      octx.globalAlpha = alpha * 0.42;
       octx.fillStyle = belly;
       octx.beginPath();
-      octx.ellipse(sz*0.06, sz*0.03, sz*0.3, sz*0.06, 0, 0, Math.PI*2);
+      octx.ellipse(sz*0.06, sz*0.035, sz*0.28, sz*0.065, 0, 0, Math.PI*2);
       octx.fill();
-      octx.globalAlpha = 0.8;
 
-      // 꼬리지느러미: 살랑살랑
+      // 등의 어두운 결
+      octx.globalAlpha = alpha * 0.28;
+      octx.fillStyle = '#243038';
+      octx.beginPath();
+      octx.ellipse(sz*0.04, -sz*0.06, sz*0.3, sz*0.045, 0, 0, Math.PI*2);
+      octx.fill();
+      octx.globalAlpha = alpha;
+
+      // 등지느러미 (작은 송사리 실루엣)
+      octx.fillStyle = fin;
+      octx.globalAlpha = alpha * 0.75;
+      octx.beginPath();
+      octx.moveTo(sz*0.02, -sz*0.08);
+      octx.quadraticCurveTo(-sz*0.02, -sz*0.2, -sz*0.14, -sz*0.1);
+      octx.quadraticCurveTo(-sz*0.04, -sz*0.08, sz*0.02, -sz*0.08);
+      octx.fill();
+      octx.globalAlpha = alpha;
+
+      // 가슴지느러미: 헤엄에 맞춰 살짝 펄럭
       octx.save();
-      octx.translate(-sz*0.32, 0);
-      octx.rotate(wig);
-      octx.fillStyle = body;
+      octx.translate(sz*0.12, sz*0.05);
+      octx.rotate(0.35 + Math.sin(f.ph * 1.1) * 0.2);
+      octx.fillStyle = fin;
+      octx.globalAlpha = alpha * 0.55;
       octx.beginPath();
       octx.moveTo(0, 0);
-      octx.lineTo(-sz*0.24, -sz*0.13);
-      octx.lineTo(-sz*0.18, 0);
-      octx.lineTo(-sz*0.24, sz*0.13);
+      octx.quadraticCurveTo(sz*0.02, sz*0.1, -sz*0.08, sz*0.12);
+      octx.quadraticCurveTo(-sz*0.02, sz*0.04, 0, 0);
+      octx.fill();
+      octx.restore();
+      octx.globalAlpha = alpha;
+      octx.restore(); // bodyBend
+
+      // 꼬리지느러미: 갈라진 형태 + 부드러운 살랑임
+      octx.save();
+      octx.translate(-sz*0.34, 0);
+      octx.rotate(wig);
+      octx.fillStyle = fin;
+      octx.beginPath();
+      octx.moveTo(sz*0.02, 0);
+      octx.quadraticCurveTo(-sz*0.06, -sz*0.02, -sz*0.26, -sz*0.15);
+      octx.quadraticCurveTo(-sz*0.14, -sz*0.02, -sz*0.16, 0);
+      octx.quadraticCurveTo(-sz*0.14, sz*0.02, -sz*0.26, sz*0.15);
+      octx.quadraticCurveTo(-sz*0.06, sz*0.02, sz*0.02, 0);
+      octx.closePath();
+      octx.fill();
+      // 꼬리 안쪽 하이라이트
+      octx.globalAlpha = alpha * 0.35;
+      octx.fillStyle = belly;
+      octx.beginPath();
+      octx.moveTo(0, 0);
+      octx.lineTo(-sz*0.12, -sz*0.04);
+      octx.lineTo(-sz*0.1, 0);
+      octx.lineTo(-sz*0.12, sz*0.04);
       octx.closePath();
       octx.fill();
       octx.restore();
 
-      // ── 은빛 비늘 반짝임 ──
-      // 몸을 트는 각도와 시간에 따라 옆구리가 은빛으로 번쩍이는 실제 물고기의 광택
-      const glint = Math.sin(f.ph * 0.55 + f.glintPh) * Math.cos(f.ang * 2 + t * 0.0004);
-      if (glint > 0.15) {
-        const ga = Math.min((glint - 0.15) * 1.1, 0.75);
-        // 옆구리를 따라 흐르는 은빛 띠
-        const sg = octx.createLinearGradient(-sz*0.25, 0, sz*0.42, 0);
+      // ── 은빛 비늘 반짝임 (위치 고정 — 매 프레임 점프 금지) ──
+      const glint = Math.sin(f.ph * 0.45 + f.glintPh) * Math.cos(f.ang * 1.6 + t * 0.00035);
+      if (glint > 0.2) {
+        const ga = Math.min((glint - 0.2) * 1.05, 0.55);
+        const sg = octx.createLinearGradient(-sz*0.22, 0, sz*0.4, 0);
         sg.addColorStop(0, 'rgba(238,246,250,0)');
-        sg.addColorStop(0.5, 'rgba(238,246,250,' + ga + ')');
+        sg.addColorStop(0.5, 'rgba(238,246,250,' + (ga * alpha) + ')');
         sg.addColorStop(1, 'rgba(238,246,250,0)');
         octx.fillStyle = sg;
         octx.beginPath();
-        octx.ellipse(sz*0.08, -sz*0.02, sz*0.34, sz*0.055, 0, 0, Math.PI*2);
+        octx.ellipse(sz*0.08, -sz*0.015, sz*0.3, sz*0.05, 0, 0, Math.PI*2);
         octx.fill();
-        // 가장 밝은 순간엔 비늘 한두 점이 별처럼 톡
-        if (ga > 0.5) {
-          octx.fillStyle = 'rgba(255,255,255,' + (ga*0.9) + ')';
+        if (ga > 0.38) {
+          octx.fillStyle = 'rgba(255,255,255,' + (ga * 0.7 * alpha) + ')';
           octx.beginPath();
-          octx.arc(sz*rand(-0.05, 0.25), -sz*0.03, sz*0.03, 0, Math.PI*2);
+          octx.arc(sz * f.sparkX, -sz*0.025, sz*0.022, 0, Math.PI*2);
           octx.fill();
         }
       }
-      // 등의 어두운 결 (위에서 본 물고기의 명암)
-      octx.globalAlpha = 0.25;
-      octx.fillStyle = '#2c343c';
-      octx.beginPath();
-      octx.ellipse(sz*0.05, -sz*0.055, sz*0.32, sz*0.04, 0, 0, Math.PI*2);
-      octx.fill();
-      octx.globalAlpha = 0.8;
 
-      // 눈
-      octx.fillStyle = '#1a1e24';
+      // 눈 + 하이라이트
+      octx.globalAlpha = alpha;
+      octx.fillStyle = '#141820';
       octx.beginPath();
-      octx.arc(sz*0.34, -sz*0.03, Math.max(sz*0.035, 0.6), 0, Math.PI*2);
+      octx.arc(sz*0.36, -sz*0.025, Math.max(sz*0.032, 1.1), 0, Math.PI*2);
+      octx.fill();
+      octx.fillStyle = 'rgba(255,255,255,0.55)';
+      octx.beginPath();
+      octx.arc(sz*0.372, -sz*0.035, Math.max(sz*0.012, 0.5), 0, Math.PI*2);
       octx.fill();
 
       octx.restore();
