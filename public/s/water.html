@@ -523,14 +523,14 @@
     fishes.push({
       x: rand(W*0.18, W*0.82), y: rand(H*0.2, H*0.8),
       ang: ang0,
-      speed: rand(0.38, 0.62),     // 몸집 대비 자연스러운 유영 속도
+      speed: rand(0.35, 0.58),     // 중간 몸집에 맞춘 유영 속도
       dart: 0,                     // 화들짝 가속 (감쇠)
       turnT: rand(900, 2600),      // 다음 방향 전환까지
       turnTo: ang0,
       ph: rand(0, Math.PI*2),      // 꼬리 위상
       glintPh: rand(0, Math.PI*2), // 비늘 반짝임 위상
       sparkX: rand(-0.02, 0.22),   // 반짝임 위치 (프레임마다 튀지 않게 고정)
-      size: rand(54, 78) * Math.min(W, H) / 900 + 30,  // 기존 대비 약 2배
+      size: rand(40, 58) * Math.min(W, H) / 900 + 22,  // 기존↔2배 중간 (~1.45×)
       tint: Math.random() < 0.5 ? 0 : 1,
       depth: rand(0.82, 1)         // 수심감: 살짝 흐리거나 진하게
     });
