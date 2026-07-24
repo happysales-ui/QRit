@@ -575,11 +575,11 @@
           // 처음 놀랄 때만 도망 각도 고정 (매 프레임 랜덤으로 안 떨림)
           if (f.startle <= 0) {
             f.turnTo = Math.atan2(dy, dx) + rand(-0.35, 0.35);
-            f.startle = 260 + near * 380;
+            f.startle = 420 + near * 520; // 파르르 놀란 떨림 더 길게
           }
           // 가까운 물고기일수록 기민하게 선회·돌진 (텔레포트 없이)
-          f.ang += angDiff(f.turnTo, f.ang) * (0.28 + near * 0.42) * k;
-          f.dart = Math.max(f.dart, (2.6 + near * 1.6) * Math.pow(near, 0.55));
+          f.ang += angDiff(f.turnTo, f.ang) * (0.32 + near * 0.48) * k;
+          f.dart = Math.max(f.dart, (3.4 + near * 2.1) * Math.pow(near, 0.55));
         }
       }
       if (f.startle > 0) f.startle = Math.max(0, f.startle - dt);
@@ -640,156 +640,222 @@
       }
 
       // 선회: 평소엔 느리게, 화들짝·도망칠 땐 기민하게
-      const startled = f.startle > 0 ? 0.1 : 0;
-      const turnRate = 0.02 + Math.min(f.dart, 3.2) * 0.028 + startled;
+      const startled = f.startle > 0 ? 0.18 : 0;
+      const turnRate = 0.02 + Math.min(f.dart, 3.8) * 0.032 + startled;
       f.ang += angDiff(f.turnTo, f.ang) * turnRate * k;
-      f.dart *= Math.pow(0.955, k);
+      f.dart *= Math.pow(0.95, k);
 
       const sp = f.speed + f.dart;
       f.x += Math.cos(f.ang) * sp * k;
       f.y += Math.sin(f.ang) * sp * k;
       // 꼬리 박동: 평소 자연스럽게, 놀라면 파르르 빠르게
-      const flutter = f.startle > 0 ? 0.022 : 0;
-      f.ph += dt * (0.0065 + sp * 0.0045 + f.dart * 0.005 + flutter);
+      const flutter = f.startle > 0 ? 0.042 : 0;
+      f.ph += dt * (0.0065 + sp * 0.0045 + f.dart * 0.006 + flutter);
     }
   }
 
   function drawFish(t) {
-    // 앞에 있는 물고기가 위에 그려지도록 깊이 정렬
+    // 조감(위에서 내려다본) 송사리 — 물면 시점과 맞춤
     const order = fishes.slice().sort((a, b) => a.depth - b.depth);
     for (const f of order) {
       const sz = f.size;
-      // 꼬리·몸 굽이는 이동 방향과 분리 — 바라보는 방향은 항상 ang
       const startled = f.startle > 0;
-      const wagAmp = 0.18 + Math.min(f.dart, 3.2) * 0.14 + (startled ? 0.28 : 0);
-      const wig = Math.sin(f.ph) * wagAmp;
-      const bodyBend = Math.sin(f.ph - 0.45) * (0.05 + (startled ? 0.04 : 0));
-      const flutter = startled ? Math.sin(f.ph * 2.4) * 0.06 : 0;
+      const sAmt = startled ? Math.min(1, f.startle / 220) : 0; // 감쇠에 맞춰 파르르 세기
+      // 옆흔들림(횡요): 꼬리 쪽으로 갈수록 커짐 — 위에서 본 유영
+      const wagAmp = 0.2 + Math.min(f.dart, 3.8) * 0.17 + sAmt * 0.48;
+      const flutter = startled ? Math.sin(f.ph * 3.8) * (0.045 + sAmt * 0.07) : 0;
+      const bodyShake = startled ? Math.sin(f.ph * 5.2) * sz * 0.018 * sAmt : 0;
+
       octx.save();
-      octx.translate(f.x, f.y);
+      octx.translate(f.x + bodyShake, f.y);
       octx.rotate(f.ang + flutter);
 
       const alpha = 0.72 + f.depth * 0.22;
-      // 물속 그림자 (돌 위에 드리움)
-      octx.globalAlpha = 0.14 * f.depth;
+      const dorsal = f.tint ? '#2e382c' : '#2c343c'; // 등선(정중선) 어두운 색
+      const flank = f.tint ? '#6e7a64' : '#6a7480';  // 옆구리
+      const pale = f.tint ? '#a8b29a' : '#a6b0ba';   // 가장자리 밝은 톤
+      const fin = f.tint ? '#5a6654' : '#586068';
+
+      // 물속 그림자
+      octx.globalAlpha = 0.13 * f.depth;
       octx.fillStyle = '#10161e';
       octx.beginPath();
-      octx.ellipse(sz*0.04, sz*0.28, sz*0.52, sz*0.15, 0, 0, Math.PI*2);
+      octx.ellipse(sz * 0.02, sz * 0.1, sz * 0.46, sz * 0.13, 0, 0, Math.PI * 2);
       octx.fill();
-
       octx.globalAlpha = alpha;
-      const body = f.tint ? '#4e5a4c' : '#4a545e';   // 올리브빛 / 회빛 — 물에 묻히지 않게
-      const belly = f.tint ? '#a8b09a' : '#a6b0ba';
-      const fin = f.tint ? '#667060' : '#636c76';
 
-      // 몸통: 송사리처럼 가늘되 너무 막대기 같지 않게
-      octx.save();
-      octx.rotate(bodyBend * 0.35); // 머리쪽은 거의 고정, 전체는 아주 살짝만
-      octx.fillStyle = body;
+      // 척추 폴리라인: 머리(+x) → 꼬리(-x), 옆방향으로 물결
+      const segs = 12;
+      const spine = [];
+      for (let i = 0; i <= segs; i++) {
+        const u = i / segs;
+        const x = sz * (0.5 - u * 0.88); // 코 ~ 꼬리줄기
+        const lag = u * 2.35;
+        const amp = wagAmp * sz * (0.012 + u * u * 0.155);
+        const y = Math.sin(f.ph - lag) * amp;
+        // 폭: 뾰족한 머리 → 중부 타원 → 꼬리줄기 가늘게
+        let halfW;
+        if (u < 0.12) halfW = sz * (0.035 + (u / 0.12) * 0.075);
+        else if (u < 0.42) halfW = sz * (0.11 + ((u - 0.12) / 0.3) * 0.055);
+        else if (u < 0.72) halfW = sz * (0.165 - ((u - 0.42) / 0.3) * 0.045);
+        else halfW = sz * (0.12 - ((u - 0.72) / 0.28) * 0.07);
+        spine.push({ x, y, halfW, u });
+      }
+
+      // 몸 윤곽 (척추 수직 오프셋)
+      function sidePoint(i, sign) {
+        const s = spine[i];
+        const prev = spine[Math.max(0, i - 1)];
+        const next = spine[Math.min(spine.length - 1, i + 1)];
+        const tx = next.x - prev.x, ty = next.y - prev.y;
+        const len = Math.hypot(tx, ty) || 1;
+        const nx = -ty / len, ny = tx / len;
+        return { x: s.x + nx * s.halfW * sign, y: s.y + ny * s.halfW * sign };
+      }
+
       octx.beginPath();
-      octx.moveTo(sz*0.52, 0);                                   // 머리 끝
-      octx.quadraticCurveTo(sz*0.22, -sz*0.17, -sz*0.18, -sz*0.1);
-      octx.quadraticCurveTo(-sz*0.3, -sz*0.04, -sz*0.36, 0);     // 꼬리 연결
-      octx.quadraticCurveTo(-sz*0.3, sz*0.04, -sz*0.18, sz*0.1);
-      octx.quadraticCurveTo(sz*0.22, sz*0.17, sz*0.52, 0);
+      for (let i = 0; i < spine.length; i++) {
+        const p = sidePoint(i, 1);
+        if (i === 0) octx.moveTo(p.x, p.y);
+        else octx.lineTo(p.x, p.y);
+      }
+      for (let i = spine.length - 1; i >= 0; i--) {
+        const p = sidePoint(i, -1);
+        octx.lineTo(p.x, p.y);
+      }
       octx.closePath();
+      octx.fillStyle = flank;
       octx.fill();
 
-      // 배쪽 밝은 결
-      octx.globalAlpha = alpha * 0.42;
-      octx.fillStyle = belly;
+      // 가장자리 밝은 옆구리 (위에서 본 톤 분리)
+      octx.globalAlpha = alpha * 0.4;
+      octx.strokeStyle = pale;
+      octx.lineWidth = Math.max(sz * 0.035, 1);
+      octx.lineCap = 'round';
       octx.beginPath();
-      octx.ellipse(sz*0.06, sz*0.035, sz*0.28, sz*0.065, 0, 0, Math.PI*2);
-      octx.fill();
-
-      // 등의 어두운 결
-      octx.globalAlpha = alpha * 0.28;
-      octx.fillStyle = '#243038';
+      for (let i = 1; i < spine.length - 1; i++) {
+        const p = sidePoint(i, 1);
+        if (i === 1) octx.moveTo(p.x, p.y);
+        else octx.lineTo(p.x, p.y);
+      }
+      octx.stroke();
       octx.beginPath();
-      octx.ellipse(sz*0.04, -sz*0.06, sz*0.3, sz*0.045, 0, 0, Math.PI*2);
-      octx.fill();
-      octx.globalAlpha = alpha;
+      for (let i = 1; i < spine.length - 1; i++) {
+        const p = sidePoint(i, -1);
+        if (i === 1) octx.moveTo(p.x, p.y);
+        else octx.lineTo(p.x, p.y);
+      }
+      octx.stroke();
 
-      // 등지느러미 (작은 송사리 실루엣)
-      octx.fillStyle = fin;
-      octx.globalAlpha = alpha * 0.75;
+      // 등 정중선 (위에서 본 송사리 핵심 신호)
+      octx.globalAlpha = alpha * 0.9;
+      octx.strokeStyle = dorsal;
+      octx.lineWidth = Math.max(sz * 0.06, 1.6);
       octx.beginPath();
-      octx.moveTo(sz*0.02, -sz*0.08);
-      octx.quadraticCurveTo(-sz*0.02, -sz*0.2, -sz*0.14, -sz*0.1);
-      octx.quadraticCurveTo(-sz*0.04, -sz*0.08, sz*0.02, -sz*0.08);
-      octx.fill();
-      octx.globalAlpha = alpha;
-
-      // 가슴지느러미: 헤엄에 맞춰 살짝 펄럭
-      octx.save();
-      octx.translate(sz*0.12, sz*0.05);
-      octx.rotate(0.35 + Math.sin(f.ph * 1.1) * 0.2);
-      octx.fillStyle = fin;
+      for (let i = 0; i < spine.length; i++) {
+        if (i === 0) octx.moveTo(spine[i].x, spine[i].y);
+        else octx.lineTo(spine[i].x, spine[i].y);
+      }
+      octx.stroke();
+      // 정중선 한가운데 살짝 더 진한 줄
       octx.globalAlpha = alpha * 0.55;
+      octx.strokeStyle = '#1a2228';
+      octx.lineWidth = Math.max(sz * 0.022, 0.8);
+      octx.beginPath();
+      for (let i = 1; i < spine.length - 1; i++) {
+        if (i === 1) octx.moveTo(spine[i].x, spine[i].y);
+        else octx.lineTo(spine[i].x, spine[i].y);
+      }
+      octx.stroke();
+      octx.globalAlpha = alpha;
+
+      // 가슴지느러미: 양옆 작은 날개판 (위에서 보이도록)
+      const pec = spine[Math.floor(segs * 0.26)];
+      const pecFlap = 0.55 + Math.sin(f.ph * 1.25) * (0.22 + sAmt * 0.35);
+      for (const sign of [-1, 1]) {
+        octx.save();
+        octx.translate(pec.x, pec.y);
+        octx.rotate(sign * pecFlap);
+        octx.fillStyle = fin;
+        octx.globalAlpha = alpha * 0.55;
+        octx.beginPath();
+        octx.moveTo(sz * 0.02, 0);
+        octx.quadraticCurveTo(sz * 0.01, sign * sz * 0.1, -sz * 0.06, sign * sz * 0.14);
+        octx.quadraticCurveTo(-sz * 0.02, sign * sz * 0.04, sz * 0.02, 0);
+        octx.fill();
+        octx.restore();
+      }
+      octx.globalAlpha = alpha;
+
+      // 꼬리(미병+가랑이): 위에서 본 갈래꼬리, 옆흔들림
+      const tip = spine[spine.length - 1];
+      const tipPrev = spine[spine.length - 2];
+      const tdx = tip.x - tipPrev.x, tdy = tip.y - tipPrev.y;
+      const tlen = Math.hypot(tdx, tdy) || 1;
+      const tux = tdx / tlen, tuy = tdy / tlen;
+      const wag = Math.sin(f.ph) * wagAmp * (0.9 + sAmt * 1.1);
+      octx.save();
+      octx.translate(tip.x, tip.y);
+      octx.rotate(Math.atan2(tuy, tux) + wag * 0.55);
+      octx.fillStyle = fin;
+      octx.beginPath();
+      octx.moveTo(sz * 0.02, 0);
+      octx.quadraticCurveTo(-sz * 0.05, -sz * 0.02, -sz * 0.24, -sz * 0.14);
+      octx.quadraticCurveTo(-sz * 0.12, -sz * 0.02, -sz * 0.14, 0);
+      octx.quadraticCurveTo(-sz * 0.12, sz * 0.02, -sz * 0.24, sz * 0.14);
+      octx.quadraticCurveTo(-sz * 0.05, sz * 0.02, sz * 0.02, 0);
+      octx.closePath();
+      octx.fill();
+      octx.globalAlpha = alpha * 0.35;
+      octx.fillStyle = pale;
       octx.beginPath();
       octx.moveTo(0, 0);
-      octx.quadraticCurveTo(sz*0.02, sz*0.1, -sz*0.08, sz*0.12);
-      octx.quadraticCurveTo(-sz*0.02, sz*0.04, 0, 0);
+      octx.lineTo(-sz * 0.1, -sz * 0.035);
+      octx.lineTo(-sz * 0.08, 0);
+      octx.lineTo(-sz * 0.1, sz * 0.035);
+      octx.closePath();
       octx.fill();
       octx.restore();
       octx.globalAlpha = alpha;
-      octx.restore(); // bodyBend
 
-      // 꼬리지느러미: 갈라진 형태 + 부드러운 살랑임
-      octx.save();
-      octx.translate(-sz*0.34, 0);
-      octx.rotate(wig);
-      octx.fillStyle = fin;
-      octx.beginPath();
-      octx.moveTo(sz*0.02, 0);
-      octx.quadraticCurveTo(-sz*0.06, -sz*0.02, -sz*0.26, -sz*0.15);
-      octx.quadraticCurveTo(-sz*0.14, -sz*0.02, -sz*0.16, 0);
-      octx.quadraticCurveTo(-sz*0.14, sz*0.02, -sz*0.26, sz*0.15);
-      octx.quadraticCurveTo(-sz*0.06, sz*0.02, sz*0.02, 0);
-      octx.closePath();
-      octx.fill();
-      // 꼬리 안쪽 하이라이트
-      octx.globalAlpha = alpha * 0.35;
-      octx.fillStyle = belly;
-      octx.beginPath();
-      octx.moveTo(0, 0);
-      octx.lineTo(-sz*0.12, -sz*0.04);
-      octx.lineTo(-sz*0.1, 0);
-      octx.lineTo(-sz*0.12, sz*0.04);
-      octx.closePath();
-      octx.fill();
-      octx.restore();
-
-      // ── 은빛 비늘 반짝임 (위치 고정 — 매 프레임 점프 금지) ──
+      // 은빛 비늘 반짝임 (등선 따라)
       const glint = Math.sin(f.ph * 0.45 + f.glintPh) * Math.cos(f.ang * 1.6 + t * 0.00035);
       if (glint > 0.2) {
         const ga = Math.min((glint - 0.2) * 1.05, 0.55);
-        const sg = octx.createLinearGradient(-sz*0.22, 0, sz*0.4, 0);
+        const mid = spine[Math.floor(segs * 0.35)];
+        const sg = octx.createLinearGradient(-sz * 0.2, 0, sz * 0.35, 0);
         sg.addColorStop(0, 'rgba(238,246,250,0)');
-        sg.addColorStop(0.5, 'rgba(238,246,250,' + (ga * alpha) + ')');
+        sg.addColorStop(0.5, 'rgba(238,246,250,' + (ga * alpha * 0.85) + ')');
         sg.addColorStop(1, 'rgba(238,246,250,0)');
         octx.fillStyle = sg;
         octx.beginPath();
-        octx.ellipse(sz*0.08, -sz*0.015, sz*0.3, sz*0.05, 0, 0, Math.PI*2);
+        octx.ellipse(mid.x, mid.y, sz * 0.28, sz * 0.04, 0, 0, Math.PI * 2);
         octx.fill();
         if (ga > 0.38) {
-          octx.fillStyle = 'rgba(255,255,255,' + (ga * 0.7 * alpha) + ')';
+          octx.fillStyle = 'rgba(255,255,255,' + (ga * 0.65 * alpha) + ')';
           octx.beginPath();
-          octx.arc(sz * f.sparkX, -sz*0.025, sz*0.022, 0, Math.PI*2);
+          octx.arc(sz * f.sparkX, mid.y * 0.3, sz * 0.02, 0, Math.PI * 2);
           octx.fill();
         }
       }
 
-      // 눈 + 하이라이트
-      octx.globalAlpha = alpha;
-      octx.fillStyle = '#141820';
-      octx.beginPath();
-      octx.arc(sz*0.36, -sz*0.025, Math.max(sz*0.032, 1.1), 0, Math.PI*2);
-      octx.fill();
-      octx.fillStyle = 'rgba(255,255,255,0.55)';
-      octx.beginPath();
-      octx.arc(sz*0.372, -sz*0.035, Math.max(sz*0.012, 0.5), 0, Math.PI*2);
-      octx.fill();
+      // 눈: 머리 양옆 (조감에서 살짝 보이는 점)
+      const eye = spine[Math.floor(segs * 0.1)];
+      const er = Math.max(sz * 0.028, 1);
+      for (const sign of [-1, 1]) {
+        const ep = sidePoint(Math.floor(segs * 0.1), sign);
+        const ex = eye.x * 0.35 + ep.x * 0.65;
+        const ey = eye.y * 0.35 + ep.y * 0.65;
+        octx.globalAlpha = alpha;
+        octx.fillStyle = '#12161c';
+        octx.beginPath();
+        octx.arc(ex, ey, er, 0, Math.PI * 2);
+        octx.fill();
+        octx.fillStyle = 'rgba(255,255,255,0.45)';
+        octx.beginPath();
+        octx.arc(ex + er * 0.25, ey - er * 0.25, er * 0.35, 0, Math.PI * 2);
+        octx.fill();
+      }
 
       octx.restore();
       octx.globalAlpha = 1;
