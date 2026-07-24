@@ -656,7 +656,7 @@
   }
 
   function drawFish(t) {
-    // 조감 송사리 — 실사처럼 가느다란 어뢰형 (길이:폭 ≈ 9:1)
+    // 조감 송사리 — 아주 날씬한 올챙이형 (길이:폭 ≈ 8:1, 머리 쪽 살짝 볼륨)
     const order = fishes.slice().sort((a, b) => a.depth - b.depth);
     // morph 팔레트: 통일 진한 갈색 (미세 톤 차이만)
     const MORPHS = [
@@ -683,11 +683,11 @@
       octx.globalAlpha = 0.1 * f.depth;
       octx.fillStyle = '#10161e';
       octx.beginPath();
-      octx.ellipse(sz * 0.02, sz * 0.06, sz * 0.42, sz * 0.045, 0, 0, Math.PI * 2);
+      octx.ellipse(sz * 0.02, sz * 0.06, sz * 0.42, sz * 0.052, 0, 0, Math.PI * 2);
       octx.fill();
       octx.globalAlpha = alpha;
 
-      // 척추: 머리(+x) → 꼬리(-x). 폭은 실사처럼 극히 가늘게
+      // 척추: 머리(+x) → 꼬리(-x). 날씬한 올챙이 — 앞몸 살짝 볼륨, 바늘 꼬리 유지
       const segs = 14;
       const spine = [];
       for (let i = 0; i <= segs; i++) {
@@ -696,14 +696,14 @@
         const lag = u * 2.35;
         const amp = wagAmp * sz * (0.008 + u * u * 0.12);
         const y = Math.sin(f.ph - lag) * amp;
-        // halfW max ≈ 0.048·sz → 전폭 ≈ 0.096·sz → 길이:폭 ≈ 9.6:1
-        // 머리(아가미)가 살짝 넓고 꼬리로 매끈히 가늘어짐 — 중부 배불뚝이 없음
+        // halfW max ≈ 0.058·sz → 전폭 ≈ 0.116·sz → 길이:폭 ≈ 7.9:1
+        // 어깨가 살짝 두껍고 중후반으로 매끈히 가늘어짐 (막대기감 완화, 통통한 타원 아님)
         let halfW;
-        if (u < 0.08) halfW = sz * (0.018 + (u / 0.08) * 0.026);       // 코 끝 → 머리
-        else if (u < 0.22) halfW = sz * (0.044 + ((u - 0.08) / 0.14) * 0.006); // 머리~아가미 최대
-        else if (u < 0.55) halfW = sz * (0.05 - ((u - 0.22) / 0.33) * 0.014);  // 완만 테이퍼
-        else if (u < 0.82) halfW = sz * (0.036 - ((u - 0.55) / 0.27) * 0.016); // 후반 가늘게
-        else halfW = sz * (0.02 - ((u - 0.82) / 0.18) * 0.012);               // 바늘 꼬리
+        if (u < 0.07) halfW = sz * (0.016 + (u / 0.07) * 0.032);        // 코 끝 → 머리
+        else if (u < 0.20) halfW = sz * (0.048 + ((u - 0.07) / 0.13) * 0.01); // 머리~어깨 최대
+        else if (u < 0.42) halfW = sz * (0.058 - ((u - 0.20) / 0.22) * 0.016); // 앞몸 완만 테이퍼
+        else if (u < 0.82) halfW = sz * (0.042 - ((u - 0.42) / 0.40) * 0.022); // 중후반 → 바늘 직전
+        else halfW = sz * (0.02 - ((u - 0.82) / 0.18) * 0.012);               // 바늘 꼬리 (유지)
         spine.push({ x, y, halfW, u });
       }
 
