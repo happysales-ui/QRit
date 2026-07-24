@@ -538,8 +538,8 @@
       glintPh: rand(0, Math.PI*2), // 비늘 반짝임 위상
       sparkX: rand(-0.02, 0.22),   // 반짝임 위치 (프레임마다 튀지 않게 고정)
       size: rand(40, 58) * Math.min(W, H) / 900 + 22,  // 기존↔2배 중간 (~1.45×)
-      // 0=주황 1=은백 2=반투명 올리브 — 실사 송사리 색 믹스
-      morph: (() => { const r = Math.random(); return r < 0.34 ? 0 : r < 0.62 ? 1 : 2; })(),
+      // 진한 갈색 팔레트 내 미세 변이 (0/1/2 모두 갈색 계열)
+      morph: (() => { const r = Math.random(); return r < 0.4 ? 0 : r < 0.72 ? 1 : 2; })(),
       depth: rand(0.82, 1)         // 수심감: 살짝 흐리거나 진하게
     });
   }
@@ -658,11 +658,11 @@
   function drawFish(t) {
     // 조감 송사리 — 실사처럼 가느다란 어뢰형 (길이:폭 ≈ 9:1)
     const order = fishes.slice().sort((a, b) => a.depth - b.depth);
-    // morph 팔레트: 주황 / 은백 / 반투명 올리브갈
+    // morph 팔레트: 통일 진한 갈색 (미세 톤 차이만)
     const MORPHS = [
-      { flank: '#e07a28', pale: '#f0a858', dorsal: '#b85a18', fin: 'rgba(200,120,50,0.28)', alphaMul: 0.92, dorsalA: 0.35 },
-      { flank: '#e8e6dc', pale: '#f5f4ee', dorsal: '#c8c4b8', fin: 'rgba(210,208,198,0.22)', alphaMul: 0.88, dorsalA: 0.22 },
-      { flank: '#8a7a58', pale: '#a89870', dorsal: '#4a4030', fin: 'rgba(120,108,80,0.2)', alphaMul: 0.62, dorsalA: 0.55 }
+      { flank: '#4a3224', pale: '#6b4e38', dorsal: '#2a1c14', fin: 'rgba(74,50,36,0.28)', alphaMul: 0.9, dorsalA: 0.5 },
+      { flank: '#3f2a1e', pale: '#5e4330', dorsal: '#241810', fin: 'rgba(63,42,30,0.26)', alphaMul: 0.88, dorsalA: 0.55 },
+      { flank: '#553828', pale: '#735040', dorsal: '#301e16', fin: 'rgba(85,56,40,0.24)', alphaMul: 0.86, dorsalA: 0.48 }
     ];
     for (const f of order) {
       const sz = f.size;
@@ -752,7 +752,7 @@
       }
       octx.stroke();
 
-      // 등 정중선 — 야생색에서만 또렷, 주황/은백은 희미
+      // 등 정중선 — 진한 갈색 등선
       octx.globalAlpha = alpha * m.dorsalA;
       octx.strokeStyle = m.dorsal;
       octx.lineWidth = Math.max(sz * 0.018, 0.7);
@@ -805,20 +805,27 @@
       octx.restore();
       octx.globalAlpha = alpha;
 
-      // 은빛 반짝임 — 가느다란 등 위에만
-      const glint = Math.sin(f.ph * 0.45 + f.glintPh) * Math.cos(f.ang * 1.6 + t * 0.00035);
-      if (glint > 0.25 && f.morph !== 2) {
-        const ga = Math.min((glint - 0.25) * 1.1, 0.45);
-        const mid = spine[Math.floor(segs * 0.32)];
-        octx.fillStyle = 'rgba(255,255,255,' + (ga * alpha * 0.55) + ')';
+      // 은빛 반짝임 — 꼬리 wag 순간에만 비늘 반사 (상시 반짝임 아님)
+      const wagPhase = Math.sin(f.ph);
+      const wagFlash = Math.abs(wagPhase) * wagAmp * (0.7 + sAmt * 1.15);
+      if (wagFlash > 0.14) {
+        const ga = Math.min((wagFlash - 0.14) * 1.35, 0.58);
+        // 꼬리 쪽 옆구리 + 중부 등선에 짧은 은빛 스트릭
+        const rear = spine[Math.floor(segs * 0.62)];
+        const mid = spine[Math.floor(segs * 0.42)];
+        octx.fillStyle = 'rgba(210,225,235,' + (ga * alpha * 0.72) + ')';
         octx.beginPath();
-        octx.ellipse(mid.x, mid.y, sz * 0.18, sz * 0.012, 0, 0, Math.PI * 2);
+        octx.ellipse(rear.x + f.sparkX * sz * 0.15, rear.y, sz * 0.14, sz * 0.01, wagPhase * 0.2, 0, Math.PI * 2);
+        octx.fill();
+        octx.fillStyle = 'rgba(235,242,248,' + (ga * alpha * 0.45) + ')';
+        octx.beginPath();
+        octx.ellipse(mid.x, mid.y, sz * 0.1, sz * 0.007, 0, 0, Math.PI * 2);
         octx.fill();
       }
 
-      // 눈: 머리 양옆 작은 점 (실사처럼 바깥쪽)
+      // 눈: 머리 양옆 (기존 대비 2×)
       const eye = spine[Math.floor(segs * 0.09)];
-      const er = Math.max(sz * 0.016, 0.9);
+      const er = Math.max(sz * 0.032, 1.8);
       for (const sign of [-1, 1]) {
         const ep = sidePoint(Math.floor(segs * 0.09), sign);
         const ex = eye.x * 0.2 + ep.x * 0.8;
